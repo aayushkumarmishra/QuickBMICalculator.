@@ -1,23 +1,171 @@
+---
+import '../styles/global.css';
+import { faqData } from '../data/faq';
+
+interface Props {
+	title?: string;
+	description?: string;
+	robots?: string;
+}
+
+const { 
+	title = "BMI Calculator - Calculate Body Mass Index Online | QuickBMI",
+	description = "Calculate your Body Mass Index (BMI) easily with our free online tool. Supports metric and US units for adults and children, providing helpful health insights.",
+	robots = "index, follow"
+} = Astro.props;
+
+const faqSchemaEntities = faqData.map(faq => ({
+	"@type": "Question",
+	"name": faq.q,
+	"acceptedAnswer": {
+		"@type": "Answer",
+		"text": faq.a
+	}
+}));
+
+---
+
 <!doctype html>
 <html lang="en">
 	<head>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width" />
+		<link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<link rel="icon" href="/favicon.ico" />
+		<link rel="shortcut icon" href="/favicon.ico" />
+		<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+		<meta name="apple-mobile-web-app-title" content="QuickBMI" />
+		<link rel="manifest" href="/site.webmanifest" />
 		<meta name="generator" content={Astro.generator} />
-		<title>Astro Basics</title>
+		<link rel="canonical" href={Astro.url.href} />
+		<meta name="robots" content={robots} />
+		
+		<!-- Theme Detection -->
+		<script is:inline>
+			const theme = (() => {
+				if (typeof localStorage !== 'undefined' && localStorage.getItem('theme')) {
+					return localStorage.getItem('theme');
+				}
+				if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+					return 'dark';
+				}
+				return 'light';
+			})();
+		
+			if (theme === 'dark') {
+				document.documentElement.classList.add('dark');
+			} else {
+				document.documentElement.classList.remove('dark');
+			}
+			window.localStorage.setItem('theme', theme);
+		</script>
+
+		<!-- Primary Meta Tags -->
+		<title>{title}</title>
+		<meta name="title" content={title} />
+		<meta name="description" content={description} />
+		<meta name="keywords" content="BMI Calculator, online bmi calculator, bmi calculator for men, bmi calculator for women, bmi calculator kg" />
+
+		<!-- Open Graph / Facebook -->
+		<meta property="og:type" content="website" />
+		<meta property="og:url" content={Astro.url.href} />
+		<meta property="og:title" content={title} />
+		<meta property="og:description" content={description} />
+		<meta property="og:image" content={new URL('/og-image.png', Astro.url)} />
+
+		<!-- Twitter -->
+		<meta property="twitter:card" content="summary_large_image" />
+		<meta property="twitter:url" content={Astro.url.href} />
+		<meta property="twitter:title" content={title} />
+		<meta property="twitter:description" content={description} />
+		<meta property="twitter:image" content={new URL('/og-image.png', Astro.url)} />
+
+		<!-- Structured Data -->
+		<script type="application/ld+json" set:html={JSON.stringify({
+			"@context": "https://schema.org",
+			"@graph": [
+				{
+					"@type": "WebSite",
+					"@id": `${Astro.url.origin}/#website`,
+					"url": Astro.url.origin,
+					"name": "QuickBMI",
+					"description": description,
+					"publisher": {
+						"@type": "Organization",
+						"name": "QuickBMI",
+						"url": Astro.url.origin
+					}
+				},
+				{
+					"@type": "WebPage",
+					"@id": `${Astro.url.href}#webpage`,
+					"url": Astro.url.href,
+					"name": title,
+					"description": description,
+					"isPartOf": { "@id": `${Astro.url.origin}/#website` }
+				},
+				{
+					"@type": "SoftwareApplication",
+					"@id": `${Astro.url.origin}/#software`,
+					"name": "Quick BMI Calculator",
+					"applicationCategory": "HealthApplication",
+					"operatingSystem": "Web Browser",
+					"url": Astro.url.origin,
+					"description": description,
+					"offers": {
+						"@type": "Offer",
+						"price": "0",
+						"priceCurrency": "USD"
+					}
+				},
+				{
+					"@type": "FAQPage",
+					"@id": `${Astro.url.href}#faq`,
+					"mainEntity": faqSchemaEntities
+				}
+			]
+		})} />
+
+		<!-- Fonts -->
+		<link rel="preconnect" href="https://fonts.googleapis.com">
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+		<link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap" rel="stylesheet">
+
+		<!-- Google tag (gtag.js) -->
+		<script async src="https://www.googletagmanager.com/gtag/js?id=G-ZTL6D0NEJL"></script>
+		<script is:inline>
+			window.dataLayer = window.dataLayer || [];
+			function gtag(){dataLayer.push(arguments);}
+			gtag('js', new Date());
+
+			gtag('config', 'G-ZTL6D0NEJL');
+		</script>
 	</head>
-	<body>
-		<slot />
+	<body class="grain">
+		<div id="site-wrapper">
+			<slot />
+		</div>
 	</body>
 </html>
 
 <style>
-	html,
-	body {
-		margin: 0;
-		width: 100%;
+	html {
 		height: 100%;
+		overflow-x: clip;
+	}
+	body {
+		min-height: 100%;
+		margin: 0;
+		padding: 0;
+		display: block;
+		overflow-x: clip;
+	}
+	#site-wrapper {
+		display: flex;
+		flex-direction: column;
+		min-height: 100vh;
+		min-height: 100dvh;
+		width: 100%;
+		position: relative;
 	}
 </style>

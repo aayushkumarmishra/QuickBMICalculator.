@@ -1,0 +1,73 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { Navbar } from '../components/Navbar';
+import Footer from '../components/Footer';
+import { Mail, MessageCircle, Clock } from 'lucide-react';
+
+const title = "Contact Us - QuickBMI";
+const description = "Have questions or feedback about QuickBMI? Get in touch with our support team. We're here to help you with your BMI queries.";
+---
+
+<Layout title={title} description={description}>
+	<Navbar client:load />
+
+	<main class="flex-grow pt-32 pb-40 px-6">
+		<article class="max-w-4xl mx-auto space-y-16">
+			<header class="space-y-6 text-center">
+				<h1 class="text-4xl xs:text-5xl sm:text-7xl font-black tracking-tighter text-ink leading-none">Get in Touch.</h1>
+				<p class="text-base sm:text-lg sm:text-xl text-body max-w-2xl mx-auto font-medium opacity-70">
+					Have questions, feedback, or need support? We're here to help you get the most out of our BMI platform.
+				</p>
+			</header>
+
+			<div class="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
+				<div class="p-8 bg-canvas rounded-[2rem] border border-hairline shadow-premium-sm flex flex-col items-center text-center space-y-4">
+					<div class="w-12 h-12 bg-canvas-soft rounded-2xl flex items-center justify-center border border-hairline text-ink">
+						<Mail className="w-6 h-6" />
+					</div>
+					<div>
+						<h3 class="text-lg font-black tracking-tight text-ink">Email Support</h3>
+						<p class="text-sm text-body font-medium opacity-60 mt-1">Direct inquiries to our team</p>
+					</div>
+					<a href="mailto:support@quickbmicalculator.com" class="text-primary font-bold hover:underline">support@quickbmicalculator.com</a>
+				</div>
+
+				<div class="p-8 bg-canvas rounded-[2rem] border border-hairline shadow-premium-sm flex flex-col items-center text-center space-y-4">
+					<div class="w-12 h-12 bg-canvas-soft rounded-2xl flex items-center justify-center border border-hairline text-ink">
+						<MessageCircle className="w-6 h-6" />
+					</div>
+					<div>
+						<h3 class="text-lg font-black tracking-tight text-ink">Feedback</h3>
+						<p class="text-sm text-body font-medium opacity-60 mt-1">Help us improve QuickBMI</p>
+					</div>
+					<p class="text-ink font-bold">Via Social Channels</p>
+				</div>
+
+				<div class="p-8 bg-canvas rounded-[2rem] border border-hairline shadow-premium-sm flex flex-col items-center text-center space-y-4">
+					<div class="w-12 h-12 bg-canvas-soft rounded-2xl flex items-center justify-center border border-hairline text-ink">
+						<Clock className="w-6 h-6" />
+					</div>
+					<div>
+						<h3 class="text-lg font-black tracking-tight text-ink">Response Time</h3>
+						<p class="text-sm text-body font-medium opacity-60 mt-1">We value your time</p>
+					</div>
+					<p class="text-ink font-bold">~24-48 Hours</p>
+				</div>
+			</div>
+
+			<section class="max-w-2xl mx-auto p-10 bg-canvas-soft rounded-[2rem] border border-hairline shadow-premium-sm space-y-8">
+				<div class="text-center space-y-2">
+					<h2 class="text-2xl font-black tracking-tight text-ink">Help Center</h2>
+					<p class="text-body font-medium opacity-60">Check our FAQ for instant answers to common questions.</p>
+				</div>
+				<div class="flex justify-center">
+					<a href="/#faq" class="px-8 py-3 bg-ink text-canvas rounded-pill text-xs font-black uppercase tracking-widest shadow-premium-md hover:scale-105 transition-all">
+						View FAQ
+					</a>
+				</div>
+			</section>
+		</article>
+	</main>
+
+	<Footer client:visible />
+</Layout>

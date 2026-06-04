@@ -1,0 +1,142 @@
+@import "tailwindcss";
+
+@theme {
+  --color-canvas: #ffffff;
+  --color-canvas-soft: #fafafa;
+  --color-surface: #f5f5f5;
+  --color-ink: #111111;
+  --color-body: #444444;
+  --color-mute: #666666;
+  --color-primary: #111111;
+  --color-hairline: #eaeaea;
+  --color-hairline-strong: #d1d1d1;
+  
+  /* High Saturation Status Colors */
+  --color-status-under: #0070f3;
+  --color-status-healthy: #00dfd8;
+  --color-status-over: #f5a623;
+  --color-status-obese: #ff0000;
+
+  --font-sans: "Inter", "system-ui", "-apple-system", sans-serif;
+  --font-mono: "JetBrains Mono", "ui-monospace", "SFMono-Regular", "Menlo", "Monaco", monospace;
+
+  /* Breakpoints adjusted for premium responsive architecture */
+  --breakpoint-xs: 375px;
+  --breakpoint-sm: 640px;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 1024px;
+  --breakpoint-xl: 1366px;
+  --breakpoint-2xl: 1536px;
+
+  /* Re-aligned to GEMINI.md strictly */
+  --radius-ui: 6px;
+  --radius-marketing: 8px;
+  --radius-pill: 100px;
+  
+  /* Stacked Shadows as per GEMINI.md mandates */
+  --shadow-premium-sm: 0 1px 1px rgba(0,0,0,0.05), 0 2px 2px rgba(0,0,0,0.05);
+  --shadow-premium-md: 0 1px 1px rgba(0,0,0,0.02), 0 2px 2px rgba(0,0,0,0.02), 0 4px 4px rgba(0,0,0,0.02), 0 8px 8px rgba(0,0,0,0.02);
+  --shadow-premium-lg: 0 1px 1px rgba(0,0,0,0.03), 0 2px 2px rgba(0,0,0,0.03), 0 4px 4px rgba(0,0,0,0.03), 0 8px 8px rgba(0,0,0,0.03), 0 16px 16px rgba(0,0,0,0.03);
+  --shadow-premium-xl: 0 1px 1px rgba(0,0,0,0.04), 0 2px 2px rgba(0,0,0,0.04), 0 4px 4px rgba(0,0,0,0.04), 0 8px 8px rgba(0,0,0,0.04), 0 16px 16px rgba(0,0,0,0.04), 0 32px 32px rgba(0,0,0,0.04);
+  --shadow-inset: inset 0 2px 4px 0 rgba(0,0,0,0.02);
+
+  --animate-float: float 6s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  
+  body {
+    @apply bg-canvas-soft text-body font-sans antialiased selection:bg-ink selection:text-canvas transition-colors duration-300;
+    font-feature-settings: "ss01", "ss02", "cv01", "cv11";
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply text-ink font-bold tracking-tight;
+  }
+
+  .dark {
+    --color-canvas: #111111;
+    --color-canvas-soft: #000000;
+    --color-surface: #1a1a1a;
+    --color-ink: #ededed;
+    --color-body: #a1a1a1;
+    --color-mute: #888888;
+    --color-primary: #ededed;
+    --color-hairline: #222222;
+    --color-hairline-strong: #333333;
+  }
+}
+
+@layer utilities {
+  .grain {
+    position: relative;
+  }
+  .grain::before {
+    content: "";
+    position: fixed;
+    top: -100%;
+    left: -100%;
+    width: 300%;
+    height: 300%;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3%3Ffilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+    opacity: 0.02;
+    pointer-events: none;
+    z-index: 50;
+    animation: noise 0.2s infinite;
+  }
+
+  .dark .grain::before {
+    opacity: 0.04;
+  }
+
+  @keyframes noise {
+    0% { transform: translate(0, 0); }
+    10% { transform: translate(-5%, -5%); }
+    20% { transform: translate(-10%, 5%); }
+    30% { transform: translate(5%, -10%); }
+    40% { transform: translate(-5%, 15%); }
+    50% { transform: translate(-10%, 5%); }
+    60% { transform: translate(15%, 0); }
+    70% { transform: translate(0, 10%); }
+    80% { transform: translate(-15%, 0); }
+    90% { transform: translate(10%, 5%); }
+    100% { transform: translate(5%, 0); }
+  }
+
+  .glass {
+    @apply bg-canvas/70 backdrop-blur-md border border-hairline shadow-premium-lg;
+  }
+
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-br from-ink to-body dark:from-white dark:to-mute;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-primary text-canvas px-8 py-3.5 rounded-pill font-semibold transition-all hover:scale-[1.02] active:scale-[0.98] shadow-premium-md hover:shadow-premium-lg;
+  }
+  
+  .btn-secondary {
+    @apply bg-canvas text-ink border border-hairline px-8 py-3.5 rounded-pill font-semibold transition-all hover:bg-canvas-soft hover:scale-[1.02] active:scale-[0.98] shadow-premium-sm;
+  }
+
+  .card {
+    /* 1px inset hairline as per GEMINI.md mandate */
+    @apply bg-canvas rounded-marketing border border-hairline shadow-premium-md p-8 transition-all duration-300 relative after:absolute after:inset-0 after:rounded-marketing after:border after:border-white/10 after:pointer-events-none;
+  }
+  
+  @media (hover: hover) {
+    .card-hover {
+      @apply hover:shadow-premium-xl hover:-translate-y-1 hover:border-hairline-strong;
+    }
+  }
+}
