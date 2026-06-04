@@ -673,7 +673,7 @@ export const CalculatorCard: React.FC = () => {
                 title="Export Results to PDF"
               >
                 {copied ? <Check className="w-4 h-4 text-status-healthy" /> : (isExporting ? <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1 }}><RotateCcw className="w-4 h-4 text-mute" /></motion.div> : <Copy className="w-4 h-4 text-mute group-hover:text-ink transition-colors" />)}
-                <span className="hidden xs:inline">{copied ? 'Success' : (isExporting ? 'Exporting...' : 'Export')}</span>
+                <span className="hidden xs:inline">{copied ? 'Success' : (isExporting ? 'Downloading...' : 'Download')}</span>
               </button>
             </div>
 
