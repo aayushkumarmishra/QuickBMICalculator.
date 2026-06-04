@@ -5,12 +5,17 @@ import react from '@astrojs/react';
 import tailwindcss from '@tailwindcss/vite';
 import sitemap from '@astrojs/sitemap';
 
+import cloudflare from '@astrojs/cloudflare';
+
 // https://astro.build/config
 export default defineConfig({
   site: 'https://quickbmicalculator.com',
+  output: 'server',
+
   devToolbar: {
     enabled: false
   },
+
   integrations: [
     react(), 
     sitemap({
@@ -23,5 +28,7 @@ export default defineConfig({
 
   vite: {
     plugins: [tailwindcss()]
-  }
+  },
+
+  adapter: cloudflare()
 });
