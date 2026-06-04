@@ -1,27 +1,19 @@
 ---
 import '../styles/global.css';
-import { faqData } from '../data/faq';
 
 interface Props {
 	title?: string;
 	description?: string;
 	robots?: string;
+	extraSchema?: any[];
 }
 
 const { 
 	title = "BMI Calculator - Calculate Body Mass Index Online | QuickBMI",
 	description = "Calculate your Body Mass Index (BMI) easily with our free online tool. Supports metric and US units for adults and children, providing helpful health insights.",
-	robots = "index, follow"
+	robots = "index, follow",
+	extraSchema = []
 } = Astro.props;
-
-const faqSchemaEntities = faqData.map(faq => ({
-	"@type": "Question",
-	"name": faq.q,
-	"acceptedAnswer": {
-		"@type": "Answer",
-		"text": faq.a
-	}
-}));
 
 ---
 
@@ -118,11 +110,7 @@ const faqSchemaEntities = faqData.map(faq => ({
 						"priceCurrency": "USD"
 					}
 				},
-				{
-					"@type": "FAQPage",
-					"@id": `${Astro.url.href}#faq`,
-					"mainEntity": faqSchemaEntities
-				}
+				...extraSchema
 			]
 		})} />
 

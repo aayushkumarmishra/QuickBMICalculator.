@@ -6,9 +6,22 @@ import { CalculatorCard } from '../components/calculator/CalculatorCard';
 import { FAQAccordion } from '../components/FAQAccordion';
 import { faqData } from '../data/faq';
 import { AlertTriangle } from 'lucide-react';
+
+const faqSchema = {
+	"@type": "FAQPage",
+	"@id": `${Astro.url.href}#faq`,
+	"mainEntity": faqData.map(faq => ({
+		"@type": "Question",
+		"name": faq.q,
+		"acceptedAnswer": {
+			"@type": "Answer",
+			"text": faq.a
+		}
+	}))
+};
 ---
 
-<Layout>
+<Layout extraSchema={[faqSchema]}>
 	<Navbar client:load />
 
 	<main class="flex-grow">

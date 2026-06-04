@@ -35,7 +35,7 @@ export const CalculatorCard: React.FC = () => {
   // Constants
   const LBS_TO_KG = 0.45359237;
   const IN_TO_CM = 2.54;
-  const BMI_IMPERIAL_CONSTANT = 703.06958;
+  const BMI_IMPERIAL_CONSTANT = 703;
 
   const handleReset = () => {
     setWeight(''); setHeight(''); setFeet(''); setInches(''); setAge(''); setGender('');
@@ -509,23 +509,23 @@ export const CalculatorCard: React.FC = () => {
               <div className="space-y-6 lg:space-y-8">
                 {system === 'metric' ? (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 lg:gap-8">
-                    <InputGroup key="h-cm" id="height" label="Height" value={height} onChange={setHeight} unit="CM" placeholder="180" min={50} max={300} />
-                    <InputGroup key="w-kg" id="weight" label="Weight" value={weight} onChange={setWeight} unit="KG" placeholder="80" min={2} max={650} />
+                    <InputGroup key="h-cm" id="height" label="Height" value={height} onChange={setHeight} unit="CM" placeholder="180" min={50} max={272} />
+                    <InputGroup key="w-kg" id="weight" label="Weight" value={weight} onChange={setWeight} unit="KG" placeholder="80" min={10} max={635} />
                   </div>
                 ) : system === 'us' ? (
                   <div className="space-y-6 lg:space-y-8">
                     <div className="grid grid-cols-2 gap-4 lg:gap-6">
-                      <InputGroup key="h-ft" id="feet" label="Feet" value={feet} onChange={setFeet} unit="FT" placeholder="5" min={1} max={10} step="1" />
+                      <InputGroup key="h-ft" id="feet" label="Feet" value={feet} onChange={setFeet} unit="FT" placeholder="5" min={1} max={8} step="1" />
                       <InputGroup key="h-in" id="inches" label="Inches" value={inches} onChange={setInches} unit="IN" placeholder="11" min={0} max={11} step="1" />
                     </div>
-                    <InputGroup key="w-lb" id="weight-lb" label="Weight" value={weight} onChange={setWeight} unit="LB" placeholder="175" min={5} max={1400} />
+                    <InputGroup key="w-lb" id="weight-lb" label="Weight" value={weight} onChange={setWeight} unit="LB" placeholder="175" min={22} max={1400} />
                   </div>
                 ) : (
                   <div className="space-y-6 lg:space-y-8">
                     {heightUnitOther === 'ft+in' ? (
                       <div className="space-y-6">
                         <div className="grid grid-cols-2 gap-4 lg:gap-6">
-                          <InputGroup key="h-ft-other" id="feet-other" label="Feet" value={feet} onChange={setFeet} unit="FT" placeholder="5" min={1} max={10} step="1" />
+                          <InputGroup key="h-ft-other" id="feet-other" label="Feet" value={feet} onChange={setFeet} unit="FT" placeholder="5" min={1} max={8} step="1" />
                           <InputGroup key="h-in-other" id="inches-other" label="Inches" value={inches} onChange={setInches} unit="IN" placeholder="8" min={0} max={11} step="1" />
                         </div>
                         <div className="flex justify-end">
@@ -555,7 +555,7 @@ export const CalculatorCard: React.FC = () => {
                         onUnitChange={setHeightUnitOther}
                         placeholder={heightUnitOther === 'm' ? "1.8" : heightUnitOther === 'cm' ? "180" : "68"} 
                         min={heightUnitOther === 'm' ? 0.5 : heightUnitOther === 'cm' ? 50 : 20} 
-                        max={heightUnitOther === 'm' ? 3.0 : heightUnitOther === 'cm' ? 300 : 120} 
+                        max={heightUnitOther === 'm' ? 2.72 : heightUnitOther === 'cm' ? 272 : 107} 
                         step={heightUnitOther === 'm' ? "0.01" : "1"} 
                       />
                     )}
@@ -569,8 +569,8 @@ export const CalculatorCard: React.FC = () => {
                       unitOptions={['kg', 'lb']}
                       onUnitChange={setWeightUnitOther}
                       placeholder={weightUnitOther === 'kg' ? "80" : "175"} 
-                      min={weightUnitOther === 'kg' ? 2 : 5} 
-                      max={weightUnitOther === 'kg' ? 650 : 1400} 
+                      min={weightUnitOther === 'kg' ? 10 : 22} 
+                      max={weightUnitOther === 'kg' ? 635 : 1400} 
                     />
                   </div>
                 )}
