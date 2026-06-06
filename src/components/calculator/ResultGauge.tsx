@@ -43,6 +43,7 @@ export const ResultGauge: React.FC<ResultGaugeProps> = ({ bmi }) => {
               initial={false}
               animate={{ scale: bmi > 0 ? [1, 1.02, 1] : 1 }}
               transition={{ duration: 0.4 }}
+              style={{ WebkitTextFillColor: 'var(--color-ink)', color: 'var(--color-ink)' }}
             >
               {bmi > 0 ? bmi.toFixed(1) : '--'}
             </motion.span>
