@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 
 interface InputGroupProps {
@@ -28,6 +28,8 @@ export const InputGroup: React.FC<InputGroupProps> = ({
   unitOptions,
   onUnitChange
 }) => {
+  const [error, setError] = useState<string>('');
+
   return (
     <div className="flex flex-col gap-2.5 group">
       <label htmlFor={id} className="text-[10px] font-mono font-bold text-mute uppercase tracking-[0.25em] ml-1 group-focus-within:text-ink transition-all duration-300 dark:group-focus-within:text-white/90">
@@ -38,7 +40,32 @@ export const InputGroup: React.FC<InputGroupProps> = ({
           type="number"
           id={id}
           value={value}
-          onChange={(e) => onChange(e.target.value)}
+          onChange={(e) => {
+            const val = e.target.value;
+            if (val === '') {
+              setError('');
+              onChange(val);
+              return;
+            }
+            const num = parseFloat(val);
+            if (isNaN(num)) {
+              setError('Invalid number');
+              return;
+            }
+            if (min !== undefined && num < min) {
+              setError(`Min value is ${min}`);
+              onChange(val);
+              return;
+            }
+            if (max !== undefined && num > max) {
+              setError(`Max value is ${max}`);
+              onChange(val);
+              return;
+            }
+            setError('');
+            onChange(val);
+          }}
+          onBlur={() => { if (!value) setError(''); }}
           placeholder={placeholder}
           min={min}
           max={max}
@@ -67,6 +94,11 @@ export const InputGroup: React.FC<InputGroupProps> = ({
           )}
         </div>
       </div>
+      {error && (
+        <span className="text-[10px] font-mono font-bold text-red-500 ml-1 mt-1">
+          {error}
+        </span>
+      )}
     </div>
   );
 };

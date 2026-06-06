@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@variant dark (&:where(.dark, .dark *));
+
 @theme {
   --color-canvas: #ffffff;
   --color-canvas-soft: #fafafa;
@@ -61,18 +63,20 @@
   h1, h2, h3, h4, h5, h6 {
     @apply text-ink font-bold tracking-tight;
   }
+}
 
-  .dark {
-    --color-canvas: #111111;
-    --color-canvas-soft: #000000;
-    --color-surface: #1a1a1a;
-    --color-ink: #ededed;
-    --color-body: #a1a1a1;
-    --color-mute: #888888;
-    --color-primary: #ededed;
-    --color-hairline: #222222;
-    --color-hairline-strong: #333333;
-  }
+/* Theme Overrides - High Specificity */
+.dark {
+  color-scheme: dark;
+  --color-canvas: #111111;
+  --color-canvas-soft: #000000;
+  --color-surface: #1a1a1a;
+  --color-ink: #ededed;
+  --color-body: #a1a1a1;
+  --color-mute: #888888;
+  --color-primary: #ededed;
+  --color-hairline: #222222;
+  --color-hairline-strong: #333333;
 }
 
 @layer utilities {
@@ -93,7 +97,7 @@
     animation: noise 0.2s infinite;
   }
 
-  .dark .grain::before {
+  html.dark .grain::before {
     opacity: 0.04;
   }
 

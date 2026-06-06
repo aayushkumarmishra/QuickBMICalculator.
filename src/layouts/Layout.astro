@@ -31,25 +31,35 @@ const {
 		<meta name="generator" content={Astro.generator} />
 		<link rel="canonical" href={Astro.url.href} />
 		<meta name="robots" content={robots} />
+		<meta name="color-scheme" content="light dark" />
 		
 		<!-- Theme Detection -->
 		<script is:inline>
-			const theme = (() => {
-				if (typeof localStorage !== 'undefined' && localStorage.getItem('theme')) {
-					return localStorage.getItem('theme');
+			(function() {
+				function getTheme() {
+					try {
+						var saved = localStorage.getItem('theme');
+						var userSet = localStorage.getItem('theme-user-set');
+						if ((saved === 'dark' || saved === 'light') && userSet === 'true') return saved;
+					} catch(e) {}
+					return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 				}
-				if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-					return 'dark';
+
+				function applyTheme() {
+					var theme = getTheme();
+					var isDark = theme === 'dark';
+					if (isDark) {
+						document.documentElement.classList.add('dark');
+					} else {
+						document.documentElement.classList.remove('dark');
+					}
+					document.documentElement.style.colorScheme = isDark ? 'dark' : 'light';
+					window.__theme = theme;
 				}
-				return 'light';
+
+				applyTheme();
+				document.addEventListener('DOMContentLoaded', applyTheme);
 			})();
-		
-			if (theme === 'dark') {
-				document.documentElement.classList.add('dark');
-			} else {
-				document.documentElement.classList.remove('dark');
-			}
-			window.localStorage.setItem('theme', theme);
 		</script>
 
 		<!-- Primary Meta Tags -->
