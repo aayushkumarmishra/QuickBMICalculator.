@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Activity, Target, AlertCircle } from 'lucide-react';
+import { Activity, Target, AlertCircle, Info } from 'lucide-react';
 import { BrandLogo } from '../BrandLogo';
 
 interface InsightsPanelProps {
@@ -14,6 +14,11 @@ interface InsightsPanelProps {
   bmr?: number;
   tdee?: number;
   goal?: 'maintenance' | 'loss' | 'gain';
+  weight?: string;
+  height?: string;
+  displayPrime: string;
+  bmiPrime: number;
+  displayPI: string;
 }
 
 export const InsightsPanel: React.FC<InsightsPanelProps> = ({
@@ -27,10 +32,15 @@ export const InsightsPanel: React.FC<InsightsPanelProps> = ({
   bmr,
   tdee,
   goal,
+  weight,
+  height,
+  displayPrime,
+  bmiPrime,
+  displayPI,
 }) => {
   const isFaded = !bmi || bmi === 0 || isNaN(bmi);
   const numericAge = parseInt(age || '0');
-  const isPediatric = numericAge > 0 && numericAge < 20;
+  const isPediatric = numericAge >= 18 && numericAge < 20;
 
   const getInsightText = () => {
     if (isFaded) return "Enter your height and weight in the command panel to generate your personalized health report.";
@@ -138,8 +148,80 @@ export const InsightsPanel: React.FC<InsightsPanelProps> = ({
               <div className="text-base sm:text-lg font-black tracking-tighter">{displayTDEE}</div>
             </div>
           </div>
+          {(() => {
+            const missingFields: string[] = [];
+            if (!age || age === '') missingFields.push('Age');
+            if (!gender || gender === '') missingFields.push('Gender');
+            if (!weight || weight === '') missingFields.push('Weight');
+            if (!height || height === '') missingFields.push('Height');
+
+            const hasUserStarted = !!(
+              (age && age !== '') || 
+              (gender && gender !== '') || 
+              (weight && weight !== '') || 
+              (height && height !== '')
+            );
+
+            if (!bmr && hasUserStarted && missingFields.length > 0) {
+              return (
+                <p className="text-[11px] font-mono font-bold text-red-500 
+                text-center mt-2 tracking-widest uppercase">
+                  To see calorie estimates, please add: {missingFields.join(' & ')}
+                </p>
+              );
+            }
+            return null;
+          })()}
         </div>
       </motion.div>
+
+      {/* Advanced Biometrics Card */}
+      <div className="pt-2">
+        <div className="card bg-[#1a1a1a] text-white p-6 sm:p-8 relative overflow-hidden shadow-premium-xl border border-white/10 dark:border-white/10">
+          <div className="absolute top-0 right-0 p-6 sm:p-8 opacity-10 pointer-events-none">
+            <div className="dark:hidden">
+              <BrandLogo className="w-16 h-16 sm:w-24 sm:h-24" variant="canvas" />
+            </div>
+            <div className="hidden dark:block">
+              <BrandLogo className="w-16 h-16 sm:w-24 sm:h-24" variant="ink" />
+            </div>
+          </div>
+          
+          <div className="relative z-10 space-y-6">
+            <div className="text-[10px] sm:text-[11px] font-mono font-bold text-white/60 uppercase tracking-[0.4em]">Advanced Biometrics</div>
+            
+            <div className="grid grid-cols-2 gap-4 sm:gap-6">
+              <div className="p-4 sm:p-5 bg-white/5 border border-white/10 rounded-ui backdrop-blur-sm group hover:bg-white/10 transition-all">
+                <div className="flex justify-between items-center mb-3 sm:mb-4">
+                  <span className="text-[9px] sm:text-[10px] font-mono font-bold text-white/50 uppercase tracking-widest">BMI Prime</span>
+                  <Info className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white/40" />
+                </div>
+                <div className="text-2xl sm:text-3xl font-black tracking-tighter text-white">{displayPrime}</div>
+                <div className="mt-3 sm:mt-4 h-1 w-full bg-white/10 rounded-full overflow-hidden">
+                  <div className="h-full bg-primary transition-all duration-1000" style={{ width: `${Math.min(bmiPrime * 50, 100)}%` }} />
+                </div>
+              </div>
+
+              <div className="p-4 sm:p-5 bg-white/5 border border-white/10 rounded-ui backdrop-blur-sm group hover:bg-white/10 transition-all">
+                <div className="flex justify-between items-center mb-3 sm:mb-4">
+                  <span className="text-[9px] sm:text-[10px] font-mono font-bold text-white/50 uppercase tracking-widest">Ponderal</span>
+                  <Activity className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white/40" />
+                </div>
+                <div className="text-2xl sm:text-3xl font-black tracking-tighter text-white">{displayPI}</div>
+                <p className="mt-3 sm:mt-4 text-[8px] sm:text-[9px] font-bold text-white/40 uppercase tracking-widest">Alternative Index</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Medical Disclaimer */}
+      <div className="pt-6 sm:pt-8 border-t border-hairline/50">
+        <p className="text-[10px] leading-relaxed text-mute font-medium text-center sm:text-left">
+          <span className="font-bold text-ink/70 uppercase tracking-widest text-[9px] mr-1.5">Medical Disclaimer:</span> 
+          The BMI results provided by this calculator are for informational and educational purposes only and should not be considered medical advice, diagnosis, or treatment. Please consult a healthcare professional for medical guidance.
+        </p>
+      </div>
     </div>
   );
 };

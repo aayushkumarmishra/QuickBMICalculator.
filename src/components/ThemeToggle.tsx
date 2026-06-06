@@ -6,9 +6,36 @@ export const ThemeToggle: React.FC = () => {
   const [theme, setTheme] = useState<'light' | 'dark' | null>(null);
 
   useEffect(() => {
-    const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' | null;
-    const initialTheme = savedTheme || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    const getInitialTheme = () => {
+      try {
+        const saved = localStorage.getItem('theme');
+        const userSet = localStorage.getItem('theme-user-set');
+        if ((saved === 'dark' || saved === 'light') && userSet === 'true') return saved;
+      } catch (e) {}
+      if (document.documentElement.classList.contains('dark')) return 'dark';
+      return 'light';
+    };
+
+    const initialTheme = getInitialTheme();
     setTheme(initialTheme);
+
+    // Ensure global variable is in sync
+    if (typeof window !== 'undefined') {
+      (window as any).__theme = initialTheme;
+    }
+
+    // System theme change listener - only applies if no manual preference
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleSystemChange = (e: MediaQueryListEvent) => {
+      try {
+        const saved = localStorage.getItem('theme');
+        if (saved !== 'dark' && saved !== 'light') {
+          applyTheme(e.matches ? 'dark' : 'light', false);
+        }
+      } catch (err) {
+        applyTheme(e.matches ? 'dark' : 'light', false);
+      }
+    };
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key.toLowerCase() === 'd') {
@@ -19,12 +46,12 @@ export const ThemeToggle: React.FC = () => {
         );
 
         if (!isInput) {
-          const isDark = document.documentElement.classList.contains('dark');
-          const newTheme = isDark ? 'light' : 'dark';
+          const isDarkNow = document.documentElement.classList.contains('dark');
+          const newTheme = isDarkNow ? 'light' : 'dark';
           
           if (!(e as any).__themeToggled) {
             (e as any).__themeToggled = true;
-            setThemeMode(newTheme);
+            applyTheme(newTheme, true);
           }
         }
       }
@@ -36,17 +63,30 @@ export const ThemeToggle: React.FC = () => {
 
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('theme-sync', handleSync);
+    mediaQuery.addEventListener('change', handleSystemChange);
 
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('theme-sync', handleSync);
+      mediaQuery.removeEventListener('change', handleSystemChange);
     };
   }, []);
 
-  const setThemeMode = (mode: 'light' | 'dark') => {
+  const applyTheme = (mode: 'light' | 'dark', save: boolean = true) => {
     setTheme(mode);
-    localStorage.setItem('theme', mode);
-    document.documentElement.classList.toggle('dark', mode === 'dark');
+    if (save) {
+      try {
+        localStorage.setItem('theme', mode);
+        localStorage.setItem('theme-user-set', 'true');
+      } catch (e) {}
+    }
+    const isDark = mode === 'dark';
+    document.documentElement.classList.toggle('dark', isDark);
+    document.documentElement.style.colorScheme = isDark ? 'dark' : 'light';
+    // Update global for consistency
+    if (typeof window !== 'undefined') {
+      (window as any).__theme = mode;
+    }
     window.dispatchEvent(new CustomEvent('theme-sync', { detail: mode }));
   };
 
@@ -65,7 +105,7 @@ export const ThemeToggle: React.FC = () => {
       />
 
       <button
-        onClick={() => setThemeMode('light')}
+        onClick={() => applyTheme('light', true)}
         className={`relative z-10 flex items-center justify-center w-8 h-7 rounded-pill transition-all duration-300 group/btn ${
           theme === 'light' ? 'text-ink' : 'text-mute hover:text-ink'
         }`}
@@ -77,7 +117,7 @@ export const ThemeToggle: React.FC = () => {
       </button>
 
       <button
-        onClick={() => setThemeMode('dark')}
+        onClick={() => applyTheme('dark', true)}
         className={`relative z-10 flex items-center justify-center w-8 h-7 rounded-pill transition-all duration-300 group/btn ${
           theme === 'dark' ? 'text-ink' : 'text-mute hover:text-ink'
         }`}

@@ -43,6 +43,7 @@ export const ResultGauge: React.FC<ResultGaugeProps> = ({ bmi }) => {
               initial={false}
               animate={{ scale: bmi > 0 ? [1, 1.02, 1] : 1 }}
               transition={{ duration: 0.4 }}
+              style={{ WebkitTextFillColor: 'var(--color-ink)', color: 'var(--color-ink)' }}
             >
               {bmi > 0 ? bmi.toFixed(1) : '--'}
             </motion.span>
@@ -99,8 +100,8 @@ export const ResultGauge: React.FC<ResultGaugeProps> = ({ bmi }) => {
         <div className="grid grid-cols-4 mt-6 gap-1 sm:gap-2">
           {zones.map((zone, i) => (
             <div key={i} className="flex flex-col items-center sm:items-start text-center sm:text-left overflow-hidden">
-              <span className="text-[8px] sm:text-[9px] font-mono font-bold text-ink uppercase tracking-widest mb-1 truncate w-full">{zone.label}</span>
-              <span className="text-[7px] sm:text-[8px] font-mono font-bold text-body truncate w-full">{zone.range}</span>
+              <span className="text-[7px] sm:text-[9px] font-mono font-bold text-ink uppercase tracking-widest mb-1 leading-tight w-full overflow-hidden">{zone.label}</span>
+              <span className="text-[6px] sm:text-[8px] font-mono font-bold text-body leading-tight w-full overflow-hidden">{zone.range}</span>
             </div>
           ))}
         </div>

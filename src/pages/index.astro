@@ -109,7 +109,7 @@ const faqSchema = {
 						<h2 class="text-4xl sm:text-5xl font-black tracking-tighter text-ink leading-tight">BMI <br class="hidden sm:block" /> Categories.</h2>
 						<div class="flex-1 flex flex-col justify-center overflow-hidden">
 							<div class="overflow-x-auto -mx-6 px-6 sm:mx-0 sm:px-0">
-								<table class="w-full text-left border-collapse min-w-[280px] shadow-premium-sm bg-canvas rounded-xl overflow-hidden border border-hairline">
+								<table class="w-full text-left border-collapse shadow-premium-sm bg-canvas rounded-xl overflow-hidden border border-hairline">
 										<thead>
 											<tr class="border-b border-hairline bg-canvas-soft">
 												<th class="py-4 px-5 sm:py-5 sm:px-8 text-[10px] font-mono font-black text-ink uppercase tracking-[0.2em]">Category</th>
@@ -152,7 +152,7 @@ const faqSchema = {
 								{ title: 'Metabolic Impact', desc: 'High body mass is often linked to insulin resistance and Type 2 Diabetes.' },
 								{ title: 'Respiratory Health', desc: 'Increased weight around the chest can impact lung expansion and sleep quality.' }
 							].map((limit, i) => (
-								<div key={i} class="flex gap-4 sm:gap-8 group p-5 sm:p-8 rounded-2xl border border-transparent hover:border-hairline hover:bg-canvas transition-all shadow-none hover:shadow-premium-sm">
+								<div key={i} class="flex flex-col xs:flex-row gap-4 sm:gap-8 group p-5 sm:p-8 rounded-2xl border border-transparent hover:border-hairline hover:bg-canvas transition-all shadow-none hover:shadow-premium-sm">
 									<div class="w-10 h-10 sm:w-14 sm:h-14 rounded-full border border-hairline flex items-center justify-center shrink-0 mt-1 text-[10px] sm:text-sm font-mono font-bold text-ink bg-canvas-soft group-hover:bg-ink group-hover:text-canvas transition-all shadow-premium-sm">0{i+1}</div>
 									<div>
 										<h4 class="font-black mb-2 sm:mb-3 text-ink text-lg sm:text-2xl tracking-tight">{limit.title}</h4>
@@ -241,10 +241,6 @@ const faqSchema = {
 </Layout>
 
 <style>
-	@keyframes float {
-		0%, 100% { transform: translateY(0); }
-		50% { transform: translateY(-10px); }
-	}
 	.animate-float {
 		animation: float 6s ease-in-out infinite;
 	}

@@ -12,15 +12,6 @@ const Footer: React.FC = () => {
       icon: <X className="w-5 h-5" /> 
     },
     { 
-      name: 'GitHub', 
-      href: 'https://github.com/aayushkumarmishra', 
-      icon: (
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" title="GitHub">
-          <path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.28 1.15-.28 2.35 0 3.5-.73 1.02-1.08 2.25-1 3.5 0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/><path d="M9 18c-4.51 2-5-2-7-2"/>
-        </svg>
-      )
-    },
-    { 
       name: 'Telegram', 
       href: 'https://t.me/+3NlArnuptl8yZGRl', 
       icon: <Send className="w-5 h-5" /> 
@@ -79,10 +70,7 @@ const Footer: React.FC = () => {
                     className="relative w-10 h-10 flex items-center justify-center rounded-xl bg-canvas-soft border border-hairline text-mute hover:text-ink hover:border-hairline-strong transition-all duration-500 shadow-premium-sm hover:shadow-premium-md hover:-translate-y-1 active:scale-95 group"
                     aria-label={social.name}
                   >
-                    <div className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-ink text-canvas text-[9px] font-mono font-bold rounded-md opacity-0 group-hover:opacity-100 group-hover:-top-10 transition-all duration-500 pointer-events-none whitespace-nowrap shadow-premium-lg z-20">
-                      {social.name}
-                      <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 bg-ink rotate-45" />
-                    </div>
+
                     <span className="transition-transform duration-500 group-hover:scale-105 relative z-10 scale-90">
                       {social.icon}
                     </span>
@@ -133,7 +121,7 @@ const Footer: React.FC = () => {
         {/* Bottom Row */}
         <div className="pt-8 border-t border-hairline/50 flex flex-col md:flex-row justify-between items-center gap-6">
           <div className="text-[10px] font-mono font-bold text-mute uppercase tracking-[0.1em] text-center md:text-left">
-            © {currentYear} QuickBMI · Built by <span className="text-ink">Ayush Mishra</span>
+            © {currentYear} QuickBMI · Built by <span className="text-ink">Ayush Kumar Mishra</span>
           </div>
           <div className="text-[10px] font-mono font-bold text-mute uppercase tracking-[0.1em] opacity-60 text-center md:text-right">
             WHO Compliant • Privacy First • Real-Time Analysis

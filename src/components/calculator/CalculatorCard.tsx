@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { RotateCcw, Copy, Check, Activity, ChevronDown, Info } from 'lucide-react';
+import { RotateCcw, Copy, Check, Activity, ChevronDown } from 'lucide-react';
 import { InputGroup } from './InputGroup';
 import { ResultGauge } from './ResultGauge';
 import { InsightsPanel } from './InsightsPanel';
@@ -10,6 +10,7 @@ type UnitSystem = 'metric' | 'us' | 'other';
 type Goal = 'maintenance' | 'loss' | 'gain';
 
 const ACTIVITY_LEVELS = [
+  { label: 'Select Activity Level', value: '', desc: 'Required' },
   { label: 'Sedentary', value: '1.2', desc: 'Minimal movement, office job' },
   { label: 'Lightly Active', value: '1.375', desc: '1-3 days of exercise/week' },
   { label: 'Moderately Active', value: '1.55', desc: '3-5 days of exercise/week' },
@@ -28,9 +29,10 @@ export const CalculatorCard: React.FC = () => {
   const [age, setAge] = useState<string>('');
   const [gender, setGender] = useState<'male' | 'female' | ''>('');
   const [goal, setGoal] = useState<Goal>('maintenance');
-  const [activity, setActivity] = useState<string>('1.375');
+  const [activity, setActivity] = useState<string>('');
   const [copied, setCopied] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+  const [exportError, setExportError] = useState<string>('');
 
   // Constants
   const LBS_TO_KG = 0.45359237;
@@ -39,45 +41,47 @@ export const CalculatorCard: React.FC = () => {
 
   const handleReset = () => {
     setWeight(''); setHeight(''); setFeet(''); setInches(''); setAge(''); setGender('');
-    setGoal('maintenance'); setActivity('1.375');
+    setGoal('maintenance'); setActivity('');
   };
 
   const { bmi, category, idealWeightRange, ponderalIndex, bmr, tdee } = useMemo(() => {
+    const defaultResult = { bmi: 0, category: '', idealWeightRange: { min: 0, max: 0 }, ponderalIndex: 0, bmr: 0, tdee: 0 };
+
+    // 1. Validate Age and Gender
+    const a = parseInt(age);
+    if (!age || isNaN(a) || a < 18 || a > 120 || !gender || !activity) return defaultResult;
+
     let bmiValue = 0; let piValue = 0; let bmrValue = 0; let tdeeValue = 0;
     let w = parseFloat(weight) || 0; let h = 0;
 
     if (system === 'metric') {
       h = parseFloat(height) || 0;
-      if (w > 0 && h > 0) {
-        const hM = h / 100;
-        bmiValue = w / Math.pow(hM, 2);
-        piValue = w / Math.pow(hM, 3);
-        if (age && gender) {
-          const a = parseInt(age);
-          bmrValue = gender === 'male' 
-            ? 10 * w + 6.25 * h - 5 * a + 5 
-            : 10 * w + 6.25 * h - 5 * a - 161;
-          tdeeValue = bmrValue * parseFloat(activity);
-        }
-      }
+      if (w < 17 || w > 635 || h < 54 || h > 272) return defaultResult;
+      
+      const hM = h / 100;
+      bmiValue = w / Math.pow(hM, 2);
+      piValue = w / Math.pow(hM, 3);
+      bmrValue = gender === 'male' 
+        ? 10 * w + 6.25 * h - 5 * a + 5 
+        : 10 * w + 6.25 * h - 5 * a - 161;
+      tdeeValue = bmrValue * parseFloat(activity);
+
     } else if (system === 'us') {
       const f = parseFloat(feet) || 0;
       const i = parseFloat(inches) || 0;
       h = f * 12 + i;
-      if (w > 0 && h > 0) {
-        bmiValue = (w * BMI_IMPERIAL_CONSTANT) / Math.pow(h, 2);
-        const wKg = w * LBS_TO_KG; 
-        const hCm = h * IN_TO_CM; 
-        const hM = hCm / 100;
-        piValue = wKg / Math.pow(hM, 3);
-        if (age && gender) {
-          const a = parseInt(age);
-          bmrValue = gender === 'male' 
-            ? 10 * wKg + 6.25 * hCm - 5 * a + 5 
-            : 10 * wKg + 6.25 * hCm - 5 * a - 161;
-          tdeeValue = bmrValue * parseFloat(activity);
-        }
-      }
+      if (w < 37 || w > 1400 || h < 21 || h > 107) return defaultResult;
+
+      bmiValue = (w * BMI_IMPERIAL_CONSTANT) / Math.pow(h, 2);
+      const wKg = w * LBS_TO_KG; 
+      const hCm = h * IN_TO_CM; 
+      const hM = hCm / 100;
+      piValue = wKg / Math.pow(hM, 3);
+      bmrValue = gender === 'male' 
+        ? 10 * wKg + 6.25 * hCm - 5 * a + 5 
+        : 10 * wKg + 6.25 * hCm - 5 * a - 161;
+      tdeeValue = bmrValue * parseFloat(activity);
+
     } else {
         // OTHER mode
         let wKg = 0;
@@ -85,37 +89,41 @@ export const CalculatorCard: React.FC = () => {
 
         const wVal = parseFloat(weight) || 0;
         if (weightUnitOther === 'kg') {
+          if (wVal < 17 || wVal > 635) return defaultResult;
           wKg = wVal;
         } else {
+          if (wVal < 37 || wVal > 1400) return defaultResult;
           wKg = wVal * LBS_TO_KG;
         }
 
         if (heightUnitOther === 'cm') {
-          hM = (parseFloat(height) || 0) / 100;
+          const hVal = parseFloat(height) || 0;
+          if (hVal < 54 || hVal > 272) return defaultResult;
+          hM = hVal / 100;
         } else if (heightUnitOther === 'm') {
-          hM = parseFloat(height) || 0;
+          const hVal = parseFloat(height) || 0;
+          if (hVal < 0.54 || hVal > 2.72) return defaultResult;
+          hM = hVal;
         } else if (heightUnitOther === 'in') {
-          hM = (parseFloat(height) || 0) * IN_TO_CM / 100;
+          const hVal = parseFloat(height) || 0;
+          if (hVal < 21 || hVal > 107) return defaultResult;
+          hM = hVal * IN_TO_CM / 100;
         } else if (heightUnitOther === 'ft+in') {
           const f = parseFloat(feet) || 0;
           const i = parseFloat(inches) || 0;
-          hM = (f * 12 + i) * IN_TO_CM / 100;
+          const hTotalIn = f * 12 + i;
+          if (hTotalIn < 21 || hTotalIn > 107) return defaultResult;
+          hM = hTotalIn * IN_TO_CM / 100;
         }
 
         h = hM; // Use meters as base for 'other'
-
-        if (wKg > 0 && hM > 0) {
-            bmiValue = wKg / Math.pow(hM, 2);
-            piValue = wKg / Math.pow(hM, 3);
-            if (age && gender) {
-                const a = parseInt(age);
-                const hCm = hM * 100;
-                bmrValue = gender === 'male' 
-                  ? 10 * wKg + 6.25 * hCm - 5 * a + 5 
-                  : 10 * wKg + 6.25 * hCm - 5 * a - 161;
-                tdeeValue = bmrValue * parseFloat(activity);
-            }
-        }
+        bmiValue = wKg / Math.pow(hM, 2);
+        piValue = wKg / Math.pow(hM, 3);
+        const hCm = hM * 100;
+        bmrValue = gender === 'male' 
+          ? 10 * wKg + 6.25 * hCm - 5 * a + 5 
+          : 10 * wKg + 6.25 * hCm - 5 * a - 161;
+        tdeeValue = bmrValue * parseFloat(activity);
     }
 
     let cat = '';
@@ -130,16 +138,20 @@ export const CalculatorCard: React.FC = () => {
 
     let minW = 0, maxW = 0;
     if (h > 0) {
-      const hM = system === 'metric' ? h / 100 : system === 'us' ? (h * IN_TO_CM) / 100 : h;
+      const hMValue = system === 'metric' ? h / 100 : system === 'us' ? (h * IN_TO_CM) / 100 : h;
       const factor = (system === 'us' || (system === 'other' && weightUnitOther === 'lb')) ? 1/LBS_TO_KG : 1;
-      minW = 18.5 * Math.pow(hM, 2) * factor;
-      maxW = 24.9 * Math.pow(hM, 2) * factor;
+      minW = 18.5 * Math.pow(hMValue, 2) * factor;
+      maxW = 24.9 * Math.pow(hMValue, 2) * factor;
     }
 
     return { bmi: bmiValue, category: cat, idealWeightRange: { min: minW, max: maxW }, ponderalIndex: piValue, bmr: bmrValue, tdee: tdeeValue };
   }, [system, weight, height, feet, inches, age, gender, activity, heightUnitOther, weightUnitOther]);
 
   const isFaded = !bmi || bmi === 0 || isNaN(bmi);
+  const totalInchesUS = (parseFloat(feet) || 0) * 12 + (parseFloat(inches) || 0);
+  const isHeightTooLowFtIn = (system === 'us' || (system === 'other' && heightUnitOther === 'ft+in'))
+    && (parseFloat(feet) > 0 || parseFloat(inches) > 0)
+    && totalInchesUS < 21;
   const bmiPrime = isFaded ? 0 : bmi / 25;
   const displayPrime = isFaded ? '--' : bmiPrime.toFixed(2);
   const displayPI = isFaded || !ponderalIndex ? '--' : ponderalIndex.toFixed(1);
@@ -155,18 +167,9 @@ export const CalculatorCard: React.FC = () => {
     }
 
     try {
-      // Lazy load heavy libraries
-      const [{ toPng }, { jsPDF }] = await Promise.all([
-        import('html-to-image'),
-        import('jspdf')
-      ]);
+      // Lazy load jsPDF
+      const { jsPDF } = await import('jspdf');
 
-      const dataUrl = await toPng(element, { 
-        quality: 1, 
-        pixelRatio: 2,
-        backgroundColor: '#ffffff'
-      });
-      
       const pdf = new jsPDF('p', 'mm', 'a4');
       const pageWidth = pdf.internal.pageSize.getWidth();
       const margin = 20;
@@ -253,7 +256,7 @@ export const CalculatorCard: React.FC = () => {
       
       y += 34; // Card height + gap
 
-      // 3. BMI RESULT & EXISTING GRAPH
+      // 3. BMI RESULT & PROGRAMMATIC BAR
       y = drawHeader('Biometric Analysis', y);
       
       // Result Card
@@ -276,17 +279,50 @@ export const CalculatorCard: React.FC = () => {
       
       y += 28;
 
-      // Add Gauge Snapshot (The existing graph)
-      const imgProps = pdf.getImageProperties(dataUrl);
-      const imgWidth = pageWidth - (margin * 2);
-      let imgHeight = (imgProps.height * imgWidth) / imgProps.width;
-      
-      // Cap graph height to ensure one-page fit
-      if (imgHeight > 45) imgHeight = 45;
-      
-      pdf.addImage(dataUrl, 'PNG', margin, y, imgWidth, imgHeight);
-      
-      y += imgHeight + 8; // Gap after graph
+      // NEW: BMI Visual Bar (Programmatic replacement for gauge snapshot)
+      const barHeight = 8;
+      const barWidth = pageWidth - (margin * 2);
+
+      // Draw Colored Segments (Matching UI zones)
+      // Underweight (14%) - #0070f3
+      pdf.setFillColor(0, 112, 243);
+      pdf.rect(margin, y, barWidth * 0.14, barHeight, 'F');
+
+      // Normal (26%) - #00dfd8
+      pdf.setFillColor(0, 223, 216);
+      pdf.rect(margin + (barWidth * 0.14), y, barWidth * 0.26, barHeight, 'F');
+
+      // Overweight (20%) - #f5a623
+      pdf.setFillColor(245, 166, 35);
+      pdf.rect(margin + (barWidth * 0.40), y, barWidth * 0.20, barHeight, 'F');
+
+      // Obese (40%) - #ff0000
+      pdf.setFillColor(255, 0, 0);
+      pdf.rect(margin + (barWidth * 0.60), y, barWidth * 0.40, barHeight, 'F');
+
+      // Calculate Marker Position (Scale: 15 to 40)
+      const minBMI = 15;
+      const maxBMI = 40;
+      const percentage = Math.min(Math.max(((bmi - minBMI) / (maxBMI - minBMI)) * 100, 0), 100);
+      const markerX = margin + (barWidth * (percentage / 100));
+
+      // Draw Marker Line & Pin
+      pdf.setDrawColor(23, 23, 23);
+      pdf.setLineWidth(0.6);
+      pdf.line(markerX, y - 2, markerX, y + barHeight + 2);
+      pdf.setFillColor(23, 23, 23);
+      pdf.circle(markerX, y - 3, 1.2, 'FD');
+
+      // Scale Labels
+      pdf.setFontSize(7);
+      pdf.setTextColor(150, 150, 150);
+      pdf.text('15', margin, y + barHeight + 5);
+      pdf.text('18.5', margin + (barWidth * 0.14), y + barHeight + 5, { align: 'center' });
+      pdf.text('25', margin + (barWidth * 0.40), y + barHeight + 5, { align: 'center' });
+      pdf.text('30', margin + (barWidth * 0.60), y + barHeight + 5, { align: 'center' });
+      pdf.text('40+', margin + barWidth, y + barHeight + 5, { align: 'right' });
+
+      y += barHeight + 15; // Gap after bar
 
       // 4. HEALTHY WEIGHT & INSIGHTS
       const leftColWidth = (pageWidth - (margin * 2) - 10) * 0.55;
@@ -431,13 +467,14 @@ export const CalculatorCard: React.FC = () => {
       
       pdf.setFont('helvetica', 'bold');
       pdf.text('quickbmicalculator.com', margin, footerY);
-      pdf.text('Powered by Analysis Engine 2.0', pageWidth - margin - 40, footerY);
 
       pdf.save(`QuickBMI-Report-${bmi.toFixed(1)}.pdf`);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (error) {
       console.error('Export failed:', error);
+      setExportError('Export failed. Please try again.');
+      setTimeout(() => setExportError(''), 3000);
     } finally {
       setIsExporting(false);
     }
@@ -479,7 +516,7 @@ export const CalculatorCard: React.FC = () => {
                   {['us', 'metric', 'other'].map((s) => (
                     <button 
                       key={s} 
-                      onClick={() => setSystem(s as UnitSystem)}
+                      onClick={() => { setSystem(s as UnitSystem); setWeight(''); }}
                       className={`flex-1 py-2.5 text-[10px] font-black uppercase tracking-[0.15em] transition-all duration-300 rounded-[4px] ${system === s ? 'bg-canvas text-ink shadow-premium-sm ring-1 ring-hairline' : 'text-mute hover:text-ink hover:bg-canvas/50'}`}
                     >
                       {s === 'us' ? 'US Units' : s.charAt(0).toUpperCase() + s.slice(1)}
@@ -489,7 +526,7 @@ export const CalculatorCard: React.FC = () => {
               </div>
 
               <div className="grid grid-cols-2 gap-6 lg:gap-8">
-                <InputGroup id="age" label="Age" value={age} onChange={setAge} unit="YRS" placeholder="25" min={1} max={120} step="1" />
+                <InputGroup id="age" label="Age" value={age} onChange={setAge} unit="YRS" placeholder="25" min={18} max={120} step="1" />
                 <div className="flex flex-col gap-3">
                   <span className="text-[10px] font-mono font-bold text-mute uppercase tracking-[0.3em] ml-1">Gender</span>
                   <div className="flex p-1 bg-canvas-soft border border-hairline rounded-ui h-14 gap-1">
@@ -509,8 +546,8 @@ export const CalculatorCard: React.FC = () => {
               <div className="space-y-6 lg:space-y-8">
                 {system === 'metric' ? (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 lg:gap-8">
-                    <InputGroup key="h-cm" id="height" label="Height" value={height} onChange={setHeight} unit="CM" placeholder="180" min={50} max={272} />
-                    <InputGroup key="w-kg" id="weight" label="Weight" value={weight} onChange={setWeight} unit="KG" placeholder="80" min={10} max={635} />
+                    <InputGroup key="h-cm" id="height" label="Height" value={height} onChange={setHeight} unit="CM" placeholder="180" min={54} max={272} />
+                    <InputGroup key="w-kg" id="weight" label="Weight" value={weight} onChange={setWeight} unit="KG" placeholder="80" min={17} max={635} />
                   </div>
                 ) : system === 'us' ? (
                   <div className="space-y-6 lg:space-y-8">
@@ -518,14 +555,14 @@ export const CalculatorCard: React.FC = () => {
                       <InputGroup key="h-ft" id="feet" label="Feet" value={feet} onChange={setFeet} unit="FT" placeholder="5" min={1} max={8} step="1" />
                       <InputGroup key="h-in" id="inches" label="Inches" value={inches} onChange={setInches} unit="IN" placeholder="11" min={0} max={11} step="1" />
                     </div>
-                    <InputGroup key="w-lb" id="weight-lb" label="Weight" value={weight} onChange={setWeight} unit="LB" placeholder="175" min={22} max={1400} />
+                    <InputGroup key="w-lb" id="weight-lb" label="Weight" value={weight} onChange={setWeight} unit="LB" placeholder="175" min={37} max={1400} />
                   </div>
                 ) : (
                   <div className="space-y-6 lg:space-y-8">
                     {heightUnitOther === 'ft+in' ? (
                       <div className="space-y-6">
                         <div className="grid grid-cols-2 gap-4 lg:gap-6">
-                          <InputGroup key="h-ft-other" id="feet-other" label="Feet" value={feet} onChange={setFeet} unit="FT" placeholder="5" min={1} max={8} step="1" />
+                          <InputGroup key="h-ft-other" id="feet-other" label="Height" value={feet} onChange={setFeet} unit="FT" placeholder="5" min={1} max={8} step="1" />
                           <InputGroup key="h-in-other" id="inches-other" label="Inches" value={inches} onChange={setInches} unit="IN" placeholder="8" min={0} max={11} step="1" />
                         </div>
                         <div className="flex justify-end">
@@ -554,7 +591,7 @@ export const CalculatorCard: React.FC = () => {
                         unitOptions={['cm', 'm', 'ft+in', 'in']}
                         onUnitChange={setHeightUnitOther}
                         placeholder={heightUnitOther === 'm' ? "1.8" : heightUnitOther === 'cm' ? "180" : "68"} 
-                        min={heightUnitOther === 'm' ? 0.5 : heightUnitOther === 'cm' ? 50 : 20} 
+                        min={heightUnitOther === 'm' ? 0.54 : heightUnitOther === 'cm' ? 54 : 21} 
                         max={heightUnitOther === 'm' ? 2.72 : heightUnitOther === 'cm' ? 272 : 107} 
                         step={heightUnitOther === 'm' ? "0.01" : "1"} 
                       />
@@ -569,7 +606,7 @@ export const CalculatorCard: React.FC = () => {
                       unitOptions={['kg', 'lb']}
                       onUnitChange={setWeightUnitOther}
                       placeholder={weightUnitOther === 'kg' ? "80" : "175"} 
-                      min={weightUnitOther === 'kg' ? 10 : 22} 
+                      min={weightUnitOther === 'kg' ? 17 : 37} 
                       max={weightUnitOther === 'kg' ? 635 : 1400} 
                     />
                   </div>
@@ -609,45 +646,6 @@ export const CalculatorCard: React.FC = () => {
                     <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-mute pointer-events-none group-hover:text-ink transition-colors" />
                   </div>
                 </div>
-
-                <div className="pt-6 border-t border-hairline/50">
-                  <div className="card bg-[#1a1a1a] text-white p-6 sm:p-8 relative overflow-hidden shadow-premium-xl border border-white/10 dark:border-white/10">
-                    <div className="absolute top-0 right-0 p-6 sm:p-8 opacity-10 pointer-events-none">
-                      <div className="dark:hidden">
-                        <BrandLogo className="w-16 h-16 sm:w-24 sm:h-24" variant="canvas" />
-                      </div>
-                      <div className="hidden dark:block">
-                        <BrandLogo className="w-16 h-16 sm:w-24 sm:h-24" variant="ink" />
-                      </div>
-                    </div>
-                    
-                    <div className="relative z-10 space-y-6">
-                      <div className="text-[10px] sm:text-[11px] font-mono font-bold text-white/60 uppercase tracking-[0.4em]">Advanced Biometrics</div>
-                      
-                      <div className="grid grid-cols-2 gap-4 sm:gap-6">
-                        <div className="p-4 sm:p-5 bg-white/5 border border-white/10 rounded-ui backdrop-blur-sm group hover:bg-white/10 transition-all">
-                          <div className="flex justify-between items-center mb-3 sm:mb-4">
-                            <span className="text-[9px] sm:text-[10px] font-mono font-bold text-white/50 uppercase tracking-widest">BMI Prime</span>
-                            <Info className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white/40" />
-                          </div>
-                          <div className="text-2xl sm:text-3xl font-black tracking-tighter text-white">{displayPrime}</div>
-                          <div className="mt-3 sm:mt-4 h-1 w-full bg-white/10 rounded-full overflow-hidden">
-                            <div className="h-full bg-primary transition-all duration-1000" style={{ width: `${Math.min(bmiPrime * 50, 100)}%` }} />
-                          </div>
-                        </div>
-
-                        <div className="p-4 sm:p-5 bg-white/5 border border-white/10 rounded-ui backdrop-blur-sm group hover:bg-white/10 transition-all">
-                          <div className="flex justify-between items-center mb-3 sm:mb-4">
-                            <span className="text-[9px] sm:text-[10px] font-mono font-bold text-white/50 uppercase tracking-widest">Ponderal</span>
-                            <Activity className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white/40" />
-                          </div>
-                          <div className="text-2xl sm:text-3xl font-black tracking-tighter text-white">{displayPI}</div>
-                          <p className="mt-3 sm:mt-4 text-[8px] sm:text-[9px] font-bold text-white/40 uppercase tracking-widest">Alternative Index</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
               </div>
             </div>
           </div>
@@ -669,23 +667,55 @@ export const CalculatorCard: React.FC = () => {
               <button 
                 onClick={handleExport} 
                 disabled={isExporting || bmi <= 0}
-                className="px-5 py-2.5 bg-canvas border border-hairline hover:bg-canvas-soft rounded-xl transition-all text-ink font-bold text-xs uppercase tracking-widest shadow-premium-md flex items-center gap-2 group active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed" 
+                className="px-5 py-3 bg-canvas border border-hairline hover:bg-canvas-soft rounded-xl transition-all text-ink font-bold text-xs uppercase tracking-widest shadow-premium-md flex items-center gap-2 group active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed" 
                 title="Export Results to PDF"
               >
                 {copied ? <Check className="w-4 h-4 text-status-healthy" /> : (isExporting ? <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1 }}><RotateCcw className="w-4 h-4 text-mute" /></motion.div> : <Copy className="w-4 h-4 text-mute group-hover:text-ink transition-colors" />)}
-                <span className="hidden xs:inline">{copied ? 'Success' : (isExporting ? 'Downloading...' : 'Download')}</span>
+                <span>{copied ? 'Success' : (isExporting ? 'Downloading...' : 'Download')}</span>
               </button>
+              {exportError && (
+                <p className="text-red-500 font-mono font-bold text-xs mt-2 text-right">
+                  {exportError}
+                </p>
+              )}
             </div>
 
             <div className="space-y-8 lg:space-y-10">
-              <ResultGauge bmi={bmi} />
+              {isHeightTooLowFtIn ? (
+                <div className="flex items-center justify-center py-8">
+                  <p className="text-red-500 font-mono font-bold text-sm text-center">
+                    Height too low — minimum is 1 ft 9 in (world record)
+                  </p>
+                </div>
+              ) : bmi > 0 && (bmi < 10 || bmi > 70) ? (
+                <div className="flex items-center justify-center py-8">
+                  <p className="text-red-500 font-mono font-bold text-sm text-center">
+                    Please check your inputs — values seem unrealistic
+                  </p>
+                </div>
+              ) : (
+                <ResultGauge bmi={bmi} />
+              )}
               
-              <InsightsPanel 
-                bmi={bmi} category={category} idealWeightRange={idealWeightRange} 
-                unit={system === 'other' ? weightUnitOther : (system === 'metric' ? 'kg' : 'lb')}
-                age={age} gender={gender} ponderalIndex={ponderalIndex}
-                bmr={bmr} tdee={tdee} goal={goal}
-              />
+              {bmi >= 10 && bmi <= 70 && (
+                <InsightsPanel 
+                  bmi={bmi} category={category} idealWeightRange={idealWeightRange} 
+                  unit={system === 'other' ? weightUnitOther : (system === 'metric' ? 'kg' : 'lb')}
+                  age={age} gender={gender} ponderalIndex={ponderalIndex}
+                  bmr={bmr} tdee={tdee} goal={goal}
+                  weight={weight}
+                  height={
+                    system === 'us' 
+                      ? feet 
+                      : (system === 'other' && heightUnitOther === 'ft+in') 
+                        ? feet 
+                        : height
+                  }
+                  displayPrime={displayPrime}
+                  bmiPrime={bmiPrime}
+                  displayPI={displayPI}
+                />
+              )}
             </div>
           </div>
         </div>

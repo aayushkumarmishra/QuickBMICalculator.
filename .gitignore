@@ -28,3 +28,6 @@ pnpm-debug.log*
 wrangler-backup.jsonc
 wrangler.jsonc.backup
 *.bak
+
+# gemini
+.gemini/
