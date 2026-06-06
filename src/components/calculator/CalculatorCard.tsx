@@ -31,6 +31,7 @@ export const CalculatorCard: React.FC = () => {
   const [activity, setActivity] = useState<string>('1.375');
   const [copied, setCopied] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+  const [exportError, setExportError] = useState<string>('');
 
   // Constants
   const LBS_TO_KG = 0.45359237;
@@ -442,6 +443,8 @@ export const CalculatorCard: React.FC = () => {
       setTimeout(() => setCopied(false), 2000);
     } catch (error) {
       console.error('Export failed:', error);
+      setExportError('Export failed. Please try again.');
+      setTimeout(() => setExportError(''), 3000);
     } finally {
       setIsExporting(false);
     }
@@ -483,7 +486,7 @@ export const CalculatorCard: React.FC = () => {
                   {['us', 'metric', 'other'].map((s) => (
                     <button 
                       key={s} 
-                      onClick={() => setSystem(s as UnitSystem)}
+                      onClick={() => { setSystem(s as UnitSystem); setWeight(''); }}
                       className={`flex-1 py-2.5 text-[10px] font-black uppercase tracking-[0.15em] transition-all duration-300 rounded-[4px] ${system === s ? 'bg-canvas text-ink shadow-premium-sm ring-1 ring-hairline' : 'text-mute hover:text-ink hover:bg-canvas/50'}`}
                     >
                       {s === 'us' ? 'US Units' : s.charAt(0).toUpperCase() + s.slice(1)}
@@ -679,6 +682,11 @@ export const CalculatorCard: React.FC = () => {
                 {copied ? <Check className="w-4 h-4 text-status-healthy" /> : (isExporting ? <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1 }}><RotateCcw className="w-4 h-4 text-mute" /></motion.div> : <Copy className="w-4 h-4 text-mute group-hover:text-ink transition-colors" />)}
                 <span className="hidden xs:inline">{copied ? 'Success' : (isExporting ? 'Downloading...' : 'Download')}</span>
               </button>
+              {exportError && (
+                <p className="text-red-500 font-mono font-bold text-xs mt-2 text-right">
+                  {exportError}
+                </p>
+              )}
             </div>
 
             <div className="space-y-8 lg:space-y-10">
