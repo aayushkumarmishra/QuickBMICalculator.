@@ -10,6 +10,7 @@ type UnitSystem = 'metric' | 'us' | 'other';
 type Goal = 'maintenance' | 'loss' | 'gain';
 
 const ACTIVITY_LEVELS = [
+  { label: 'Select Activity Level', value: '', desc: 'Required' },
   { label: 'Sedentary', value: '1.2', desc: 'Minimal movement, office job' },
   { label: 'Lightly Active', value: '1.375', desc: '1-3 days of exercise/week' },
   { label: 'Moderately Active', value: '1.55', desc: '3-5 days of exercise/week' },
@@ -28,7 +29,7 @@ export const CalculatorCard: React.FC = () => {
   const [age, setAge] = useState<string>('');
   const [gender, setGender] = useState<'male' | 'female' | ''>('');
   const [goal, setGoal] = useState<Goal>('maintenance');
-  const [activity, setActivity] = useState<string>('1.375');
+  const [activity, setActivity] = useState<string>('');
   const [copied, setCopied] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [exportError, setExportError] = useState<string>('');
@@ -40,7 +41,7 @@ export const CalculatorCard: React.FC = () => {
 
   const handleReset = () => {
     setWeight(''); setHeight(''); setFeet(''); setInches(''); setAge(''); setGender('');
-    setGoal('maintenance'); setActivity('1.375');
+    setGoal('maintenance'); setActivity('');
   };
 
   const { bmi, category, idealWeightRange, ponderalIndex, bmr, tdee } = useMemo(() => {
@@ -48,7 +49,7 @@ export const CalculatorCard: React.FC = () => {
 
     // 1. Validate Age and Gender
     const a = parseInt(age);
-    if (!age || isNaN(a) || a < 18 || a > 120 || !gender) return defaultResult;
+    if (!age || isNaN(a) || a < 18 || a > 120 || !gender || !activity) return defaultResult;
 
     let bmiValue = 0; let piValue = 0; let bmrValue = 0; let tdeeValue = 0;
     let w = parseFloat(weight) || 0; let h = 0;
