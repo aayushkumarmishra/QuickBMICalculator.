@@ -79,7 +79,7 @@ export const InputGroup: React.FC<InputGroupProps> = ({
           step={step}
           inputMode={step === "1" ? "numeric" : "decimal"}
           style={{ WebkitTextFillColor: 'var(--color-ink)', color: 'var(--color-ink)' }}
-          className="w-full [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none bg-canvas border border-hairline dark:border-white/[0.08] rounded-ui h-14 px-5 pr-16 text-xl font-bold tracking-tighter text-ink dark:text-[#f5f5f5] transition-all duration-300 placeholder:text-mute/30 focus:outline-none focus:ring-[6px] focus:ring-primary/[0.03] focus:border-ink dark:focus:border-white/20 shadow-premium-sm hover:border-hairline-strong dark:hover:border-white/15 focus:bg-canvas"
+          className={`w-full [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none bg-canvas border border-hairline dark:border-white/[0.08] rounded-ui h-14 px-5 ${unitOptions ? 'pr-20' : 'pr-14'} text-xl font-bold tracking-tighter text-ink dark:text-[#f5f5f5] transition-all duration-300 placeholder:text-mute/30 focus:outline-none focus:ring-[6px] focus:ring-primary/[0.03] focus:border-ink dark:focus:border-white/20 shadow-premium-sm hover:border-hairline-strong dark:hover:border-white/15 focus:bg-canvas`}
         />
         <div className={`absolute right-3 top-1/2 -translate-y-1/2 flex items-center ${unitOptions ? 'pointer-events-auto' : 'pointer-events-none'}`}>
           {unitOptions ? (

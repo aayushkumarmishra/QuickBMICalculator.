@@ -70,10 +70,7 @@ const Footer: React.FC = () => {
                     className="relative w-10 h-10 flex items-center justify-center rounded-xl bg-canvas-soft border border-hairline text-mute hover:text-ink hover:border-hairline-strong transition-all duration-500 shadow-premium-sm hover:shadow-premium-md hover:-translate-y-1 active:scale-95 group"
                     aria-label={social.name}
                   >
-                    <div className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-ink text-canvas text-[9px] font-mono font-bold rounded-md opacity-0 group-hover:opacity-100 group-hover:-top-10 transition-all duration-500 pointer-events-none whitespace-nowrap shadow-premium-lg z-20">
-                      {social.name}
-                      <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 bg-ink rotate-45" />
-                    </div>
+
                     <span className="transition-transform duration-500 group-hover:scale-105 relative z-10 scale-90">
                       {social.icon}
                     </span>

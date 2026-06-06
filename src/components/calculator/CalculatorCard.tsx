@@ -667,7 +667,7 @@ export const CalculatorCard: React.FC = () => {
               <button 
                 onClick={handleExport} 
                 disabled={isExporting || bmi <= 0}
-                className="px-5 py-2.5 bg-canvas border border-hairline hover:bg-canvas-soft rounded-xl transition-all text-ink font-bold text-xs uppercase tracking-widest shadow-premium-md flex items-center gap-2 group active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed" 
+                className="px-5 py-3 bg-canvas border border-hairline hover:bg-canvas-soft rounded-xl transition-all text-ink font-bold text-xs uppercase tracking-widest shadow-premium-md flex items-center gap-2 group active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed" 
                 title="Export Results to PDF"
               >
                 {copied ? <Check className="w-4 h-4 text-status-healthy" /> : (isExporting ? <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1 }}><RotateCcw className="w-4 h-4 text-mute" /></motion.div> : <Copy className="w-4 h-4 text-mute group-hover:text-ink transition-colors" />)}
