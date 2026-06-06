@@ -56,7 +56,11 @@ export const InputGroup: React.FC<InputGroupProps> = ({
               return;
             }
             if (min !== undefined && num < min) {
-              setError(`Min value is ${min}`);
+              if (id === 'age' && min === 18) {
+                setError('Min value is 18');
+              } else {
+                setError(`Min value is ${min}`);
+              }
               onChange(val);
               return;
             }
