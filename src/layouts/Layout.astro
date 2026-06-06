@@ -29,7 +29,7 @@ const {
 		<meta name="apple-mobile-web-app-title" content="QuickBMI" />
 		<link rel="manifest" href="/site.webmanifest" />
 		<meta name="generator" content={Astro.generator} />
-		<link rel="canonical" href={Astro.url.href} />
+		<link rel="canonical" href={"https://quickbmicalculator.com" + new URL(Astro.url.href).pathname} />
 		<meta name="robots" content={robots} />
 		<meta name="color-scheme" content="light dark" />
 		
