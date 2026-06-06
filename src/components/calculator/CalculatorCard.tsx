@@ -466,7 +466,6 @@ export const CalculatorCard: React.FC = () => {
       
       pdf.setFont('helvetica', 'bold');
       pdf.text('quickbmicalculator.com', margin, footerY);
-      pdf.text('Powered by Analysis Engine 2.0', pageWidth - margin - 40, footerY);
 
       pdf.save(`QuickBMI-Report-${bmi.toFixed(1)}.pdf`);
       setCopied(true);
