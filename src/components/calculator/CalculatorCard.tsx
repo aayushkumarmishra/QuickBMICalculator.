@@ -49,23 +49,25 @@ export const CalculatorCard: React.FC = () => {
 
     if (system === 'metric') {
       h = parseFloat(height) || 0;
-      if (w > 0 && h > 0) {
+      if (w >= 17 && w <= 635 && h >= 54 && h <= 272) {
         const hM = h / 100;
         bmiValue = w / Math.pow(hM, 2);
         piValue = w / Math.pow(hM, 3);
         if (age && gender) {
           const a = parseInt(age);
-          bmrValue = gender === 'male' 
-            ? 10 * w + 6.25 * h - 5 * a + 5 
-            : 10 * w + 6.25 * h - 5 * a - 161;
-          tdeeValue = bmrValue * parseFloat(activity);
+          if (a >= 2 && a <= 120) {
+            bmrValue = gender === 'male' 
+              ? 10 * w + 6.25 * h - 5 * a + 5 
+              : 10 * w + 6.25 * h - 5 * a - 161;
+            tdeeValue = bmrValue * parseFloat(activity);
+          }
         }
       }
     } else if (system === 'us') {
       const f = parseFloat(feet) || 0;
       const i = parseFloat(inches) || 0;
       h = f * 12 + i;
-      if (w > 0 && h > 0) {
+      if (w >= 37 && w <= 1400 && h >= 21 && h <= 107) {
         bmiValue = (w * BMI_IMPERIAL_CONSTANT) / Math.pow(h, 2);
         const wKg = w * LBS_TO_KG; 
         const hCm = h * IN_TO_CM; 
@@ -73,10 +75,12 @@ export const CalculatorCard: React.FC = () => {
         piValue = wKg / Math.pow(hM, 3);
         if (age && gender) {
           const a = parseInt(age);
-          bmrValue = gender === 'male' 
-            ? 10 * wKg + 6.25 * hCm - 5 * a + 5 
-            : 10 * wKg + 6.25 * hCm - 5 * a - 161;
-          tdeeValue = bmrValue * parseFloat(activity);
+          if (a >= 2 && a <= 120) {
+            bmrValue = gender === 'male' 
+              ? 10 * wKg + 6.25 * hCm - 5 * a + 5 
+              : 10 * wKg + 6.25 * hCm - 5 * a - 161;
+            tdeeValue = bmrValue * parseFloat(activity);
+          }
         }
       }
     } else {
@@ -85,36 +89,50 @@ export const CalculatorCard: React.FC = () => {
         let hM = 0;
 
         const wVal = parseFloat(weight) || 0;
+        let isWeightValid = false;
         if (weightUnitOther === 'kg') {
+          isWeightValid = wVal >= 17 && wVal <= 635;
           wKg = wVal;
         } else {
+          isWeightValid = wVal >= 37 && wVal <= 1400;
           wKg = wVal * LBS_TO_KG;
         }
 
+        let isHeightValid = false;
         if (heightUnitOther === 'cm') {
-          hM = (parseFloat(height) || 0) / 100;
+          const hVal = parseFloat(height) || 0;
+          isHeightValid = hVal >= 54 && hVal <= 272;
+          hM = hVal / 100;
         } else if (heightUnitOther === 'm') {
-          hM = parseFloat(height) || 0;
+          const hVal = parseFloat(height) || 0;
+          isHeightValid = hVal >= 0.54 && hVal <= 2.72;
+          hM = hVal;
         } else if (heightUnitOther === 'in') {
-          hM = (parseFloat(height) || 0) * IN_TO_CM / 100;
+          const hVal = parseFloat(height) || 0;
+          isHeightValid = hVal >= 21 && hVal <= 107;
+          hM = hVal * IN_TO_CM / 100;
         } else if (heightUnitOther === 'ft+in') {
           const f = parseFloat(feet) || 0;
           const i = parseFloat(inches) || 0;
-          hM = (f * 12 + i) * IN_TO_CM / 100;
+          const hTotalIn = f * 12 + i;
+          isHeightValid = hTotalIn >= 21 && hTotalIn <= 107;
+          hM = hTotalIn * IN_TO_CM / 100;
         }
 
         h = hM; // Use meters as base for 'other'
 
-        if (wKg > 0 && hM > 0) {
+        if (isWeightValid && isHeightValid) {
             bmiValue = wKg / Math.pow(hM, 2);
             piValue = wKg / Math.pow(hM, 3);
             if (age && gender) {
                 const a = parseInt(age);
-                const hCm = hM * 100;
-                bmrValue = gender === 'male' 
-                  ? 10 * wKg + 6.25 * hCm - 5 * a + 5 
-                  : 10 * wKg + 6.25 * hCm - 5 * a - 161;
-                tdeeValue = bmrValue * parseFloat(activity);
+                if (a >= 2 && a <= 120) {
+                  const hCm = hM * 100;
+                  bmrValue = gender === 'male' 
+                    ? 10 * wKg + 6.25 * hCm - 5 * a + 5 
+                    : 10 * wKg + 6.25 * hCm - 5 * a - 161;
+                  tdeeValue = bmrValue * parseFloat(activity);
+                }
             }
         }
     }
@@ -532,7 +550,7 @@ export const CalculatorCard: React.FC = () => {
                     {heightUnitOther === 'ft+in' ? (
                       <div className="space-y-6">
                         <div className="grid grid-cols-2 gap-4 lg:gap-6">
-                          <InputGroup key="h-ft-other" id="feet-other" label="Feet" value={feet} onChange={setFeet} unit="FT" placeholder="5" min={1} max={8} step="1" />
+                          <InputGroup key="h-ft-other" id="feet-other" label="Height" value={feet} onChange={setFeet} unit="FT" placeholder="5" min={1} max={8} step="1" />
                           <InputGroup key="h-in-other" id="inches-other" label="Inches" value={inches} onChange={setInches} unit="IN" placeholder="8" min={0} max={11} step="1" />
                         </div>
                         <div className="flex justify-end">
@@ -711,6 +729,14 @@ export const CalculatorCard: React.FC = () => {
                 unit={system === 'other' ? weightUnitOther : (system === 'metric' ? 'kg' : 'lb')}
                 age={age} gender={gender} ponderalIndex={ponderalIndex}
                 bmr={bmr} tdee={tdee} goal={goal}
+                weight={weight}
+                height={
+                  system === 'us' 
+                    ? feet 
+                    : (system === 'other' && heightUnitOther === 'ft+in') 
+                      ? feet 
+                      : height
+                }
               />
             </div>
           </div>

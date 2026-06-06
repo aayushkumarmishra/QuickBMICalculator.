@@ -14,6 +14,8 @@ interface InsightsPanelProps {
   bmr?: number;
   tdee?: number;
   goal?: 'maintenance' | 'loss' | 'gain';
+  weight?: string;
+  height?: string;
 }
 
 export const InsightsPanel: React.FC<InsightsPanelProps> = ({
@@ -27,6 +29,8 @@ export const InsightsPanel: React.FC<InsightsPanelProps> = ({
   bmr,
   tdee,
   goal,
+  weight,
+  height,
 }) => {
   const isFaded = !bmi || bmi === 0 || isNaN(bmi);
   const numericAge = parseInt(age || '0');
@@ -138,8 +142,40 @@ export const InsightsPanel: React.FC<InsightsPanelProps> = ({
               <div className="text-base sm:text-lg font-black tracking-tighter">{displayTDEE}</div>
             </div>
           </div>
+          {(() => {
+            const missingFields: string[] = [];
+            if (!age || age === '') missingFields.push('Age');
+            if (!gender || gender === '') missingFields.push('Gender');
+            if (!weight || weight === '') missingFields.push('Weight');
+            if (!height || height === '') missingFields.push('Height');
+
+            const hasUserStarted = !!(
+              (age && age !== '') || 
+              (gender && gender !== '') || 
+              (weight && weight !== '') || 
+              (height && height !== '')
+            );
+
+            if (!bmr && hasUserStarted && missingFields.length > 0) {
+              return (
+                <p className="text-[11px] font-mono font-bold text-red-500 
+                text-center mt-2 tracking-widest uppercase">
+                  To see calorie estimates, please add: {missingFields.join(' & ')}
+                </p>
+              );
+            }
+            return null;
+          })()}
         </div>
       </motion.div>
+
+      {/* Medical Disclaimer */}
+      <div className="pt-6 sm:pt-8 border-t border-hairline/50">
+        <p className="text-[10px] leading-relaxed text-mute font-medium text-center sm:text-left">
+          <span className="font-bold text-ink/70 uppercase tracking-widest text-[9px] mr-1.5">Medical Disclaimer:</span> 
+          The BMI results provided by this calculator are for informational and educational purposes only and should not be considered medical advice, diagnosis, or treatment. Please consult a healthcare professional for medical guidance.
+        </p>
+      </div>
     </div>
   );
 };

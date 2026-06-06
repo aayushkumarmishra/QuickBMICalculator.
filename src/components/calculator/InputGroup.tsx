@@ -54,10 +54,12 @@ export const InputGroup: React.FC<InputGroupProps> = ({
             }
             if (min !== undefined && num < min) {
               setError(`Min value is ${min}`);
+              onChange(val);
               return;
             }
             if (max !== undefined && num > max) {
               setError(`Max value is ${max}`);
+              onChange(val);
               return;
             }
             setError('');
