@@ -569,7 +569,7 @@ export const CalculatorCard: React.FC = () => {
                            <div className="relative flex items-center">
                               <select
                                 value={heightUnitOther}
-                                onChange={(e) => setHeightUnitOther(e.target.value as any)}
+                                onChange={(e) => { setHeightUnitOther(e.target.value as any); setHeight(''); setFeet(''); setInches(''); }}
                                 className="appearance-none bg-canvas-soft pl-2 pr-6 py-1 rounded border border-hairline text-[9px] font-mono font-bold text-mute uppercase tracking-widest focus:outline-none focus:border-ink focus:text-ink transition-colors cursor-pointer hover:bg-surface"
                               >
                                 {['cm', 'm', 'ft+in', 'in'].map(opt => (
@@ -589,7 +589,7 @@ export const CalculatorCard: React.FC = () => {
                         onChange={setHeight} 
                         unit={heightUnitOther} 
                         unitOptions={['cm', 'm', 'ft+in', 'in']}
-                        onUnitChange={setHeightUnitOther}
+                        onUnitChange={(val) => { setHeightUnitOther(val as any); setHeight(''); setFeet(''); setInches(''); }}
                         placeholder={heightUnitOther === 'm' ? "1.8" : heightUnitOther === 'cm' ? "180" : "68"} 
                         min={heightUnitOther === 'm' ? 0.54 : heightUnitOther === 'cm' ? 54 : 21} 
                         max={heightUnitOther === 'm' ? 2.72 : heightUnitOther === 'cm' ? 272 : 107} 
@@ -604,7 +604,7 @@ export const CalculatorCard: React.FC = () => {
                       onChange={setWeight} 
                       unit={weightUnitOther} 
                       unitOptions={['kg', 'lb']}
-                      onUnitChange={setWeightUnitOther}
+                      onUnitChange={(val) => { setWeightUnitOther(val as any); setWeight(''); }}
                       placeholder={weightUnitOther === 'kg' ? "80" : "175"} 
                       min={weightUnitOther === 'kg' ? 17 : 37} 
                       max={weightUnitOther === 'kg' ? 635 : 1400} 
