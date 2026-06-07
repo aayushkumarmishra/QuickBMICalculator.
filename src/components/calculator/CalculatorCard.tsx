@@ -203,7 +203,7 @@ export const CalculatorCard: React.FC = () => {
       y = 50;
 
       // 2. PATIENT METRICS SUMMARY
-      y = drawHeader('Patient Metrics', y);
+      y = drawHeader('Your Profile', y);
       pdf.setDrawColor(240, 240, 240);
       pdf.setFillColor(252, 252, 252);
       pdf.roundedRect(margin, y, pageWidth - (margin * 2), 30, 2, 2, 'FD');
