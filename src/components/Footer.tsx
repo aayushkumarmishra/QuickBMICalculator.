@@ -8,7 +8,7 @@ const Footer: React.FC = () => {
   const socialLinks = [
     { 
       name: 'X (Twitter)', 
-      href: 'https://x.com/AyushMishra', 
+      href: 'https://x.com/AysuhMishra', 
       icon: <X className="w-5 h-5" /> 
     },
     { 
