@@ -26,13 +26,22 @@ export const CalculatorCard: React.FC = () => {
   const [height, setHeight] = useState<string>('');
   const [feet, setFeet] = useState<string>('');
   const [inches, setInches] = useState<string>('');
+  const [name, setName] = useState<string>('');
   const [age, setAge] = useState<string>('');
   const [gender, setGender] = useState<'male' | 'female' | ''>('');
   const [goal, setGoal] = useState<Goal>('maintenance');
   const [activity, setActivity] = useState<string>('');
   const [copied, setCopied] = useState(false);
+  const [nameError, setNameError] = useState<string>('');
   const [isExporting, setIsExporting] = useState(false);
   const [exportError, setExportError] = useState<string>('');
+  const [isResetting, setIsResetting] = useState(false);
+
+  const handleResetWithAnimation = () => {
+    setIsResetting(true);
+    handleReset();
+    setTimeout(() => setIsResetting(false), 700);
+  };
 
   // Constants
   const LBS_TO_KG = 0.45359237;
@@ -41,15 +50,15 @@ export const CalculatorCard: React.FC = () => {
 
   const handleReset = () => {
     setWeight(''); setHeight(''); setFeet(''); setInches(''); setAge(''); setGender('');
-    setGoal('maintenance'); setActivity('');
+    setGoal('maintenance'); setActivity(''); setName(''); setNameError('');
   };
 
   const { bmi, category, idealWeightRange, ponderalIndex, bmr, tdee } = useMemo(() => {
     const defaultResult = { bmi: 0, category: '', idealWeightRange: { min: 0, max: 0 }, ponderalIndex: 0, bmr: 0, tdee: 0 };
 
-    // 1. Validate Age and Gender
+    // 1. Validate Name, Age and Gender
     const a = parseInt(age);
-    if (!age || isNaN(a) || a < 18 || a > 120 || !gender || !activity) return defaultResult;
+    if (!name || name.length < 2 || !age || isNaN(a) || a < 18 || a > 120 || !gender || !activity) return defaultResult;
 
     let bmiValue = 0; let piValue = 0; let bmrValue = 0; let tdeeValue = 0;
     let w = parseFloat(weight) || 0; let h = 0;
@@ -145,7 +154,7 @@ export const CalculatorCard: React.FC = () => {
     }
 
     return { bmi: bmiValue, category: cat, idealWeightRange: { min: minW, max: maxW }, ponderalIndex: piValue, bmr: bmrValue, tdee: tdeeValue };
-  }, [system, weight, height, feet, inches, age, gender, activity, heightUnitOther, weightUnitOther]);
+  }, [name, system, weight, height, feet, inches, age, gender, activity, heightUnitOther, weightUnitOther]);
 
   const isFaded = !bmi || bmi === 0 || isNaN(bmi);
   const totalInchesUS = (parseFloat(feet) || 0) * 12 + (parseFloat(inches) || 0);
@@ -194,6 +203,11 @@ export const CalculatorCard: React.FC = () => {
       pdf.setFontSize(10);
       pdf.setFont('helvetica', 'normal');
       pdf.text('Professional Biometric Analysis', margin, 28);
+      
+      pdf.setFontSize(10);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setTextColor(255, 255, 255);
+      pdf.text(name.toUpperCase(), margin, 35);
       
       pdf.setTextColor(255, 255, 255);
       pdf.setFontSize(8);
@@ -468,7 +482,7 @@ export const CalculatorCard: React.FC = () => {
       pdf.setFont('helvetica', 'bold');
       pdf.text('quickbmicalculator.com', margin, footerY);
 
-      pdf.save(`QuickBMI-Report-${bmi.toFixed(1)}.pdf`);
+      pdf.save(`QuickBMICalculator-Report-${bmi.toFixed(1)}.pdf`);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (error) {
@@ -504,8 +518,8 @@ export const CalculatorCard: React.FC = () => {
                   </div>
                 </div>
               </div>
-              <button onClick={handleReset} className="p-3 bg-canvas-soft border border-hairline hover:bg-surface rounded-xl transition-all text-mute hover:text-ink shadow-premium-sm active:scale-95" title="Reset Data">
-                <RotateCcw className="w-5 h-5" />
+              <button onClick={handleResetWithAnimation} className={`p-3 bg-canvas-soft border border-hairline hover:bg-surface rounded-xl transition-all text-mute hover:text-ink shadow-premium-sm active:scale-95 ${isResetting ? 'ring-2 ring-primary/40 shadow-[0_0_15px_rgba(99,102,241,0.5)]' : ''}`} title="Reset Data">
+                <RotateCcw className={`w-5 h-5 transition-transform ${isResetting ? 'animate-spin' : ''}`} />
               </button>
             </div>
 
@@ -526,6 +540,30 @@ export const CalculatorCard: React.FC = () => {
               </div>
 
               <div className="grid grid-cols-2 gap-6 lg:gap-8">
+                <div className="flex flex-col gap-1.5 col-span-2">
+                  <label className="text-[10px] font-mono font-bold text-mute uppercase tracking-widest">Name</label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      id="name"
+                      value={name}
+                      onChange={(e) => {
+                        const val = e.target.value
+                          .replace(/[^a-zA-Z ]/g, '')
+                          .replace(/^ /, '')
+                          .replace(/ {2,}/g, ' ')
+                          .toUpperCase();
+                        if (val.length <= 50) setName(val);
+                        setNameError(val.length < 2 && val.length > 0 ? 'Min 2 characters required' : '');
+                      }}
+                      placeholder="YOUR NAME"
+                      maxLength={50}
+                      className="w-full bg-canvas border border-hairline dark:border-white/[0.08] rounded-ui h-14 px-5 text-xl font-bold tracking-tighter text-ink dark:text-[#f5f5f5] transition-all duration-300 placeholder:text-mute/20 dark:placeholder:text-mute/40 focus:outline-none focus:ring-[6px] focus:ring-primary/[0.03] focus:border-ink dark:focus:border-white/20 shadow-premium-sm hover:border-hairline-strong dark:hover:border-white/15 focus:bg-canvas uppercase"
+                    />
+                  </div>
+                  {nameError && <p className="text-red-500 text-[10px] font-mono font-bold">{nameError}</p>}
+                </div>
+
                 <InputGroup id="age" label="Age" value={age} onChange={setAge} unit="YRS" placeholder="25" min={18} max={120} step="1" />
                 <div className="flex flex-col gap-3">
                   <span className="text-[10px] font-mono font-bold text-mute uppercase tracking-[0.3em] ml-1">Gender</span>
@@ -699,6 +737,7 @@ export const CalculatorCard: React.FC = () => {
               
               {bmi >= 10 && bmi <= 70 && (
                 <InsightsPanel 
+                  name={name}
                   bmi={bmi} category={category} idealWeightRange={idealWeightRange} 
                   unit={system === 'other' ? weightUnitOther : (system === 'metric' ? 'kg' : 'lb')}
                   age={age} gender={gender} ponderalIndex={ponderalIndex}

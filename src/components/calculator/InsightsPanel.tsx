@@ -4,6 +4,7 @@ import { Activity, Target, AlertCircle, Info } from 'lucide-react';
 import { BrandLogo } from '../BrandLogo';
 
 interface InsightsPanelProps {
+  name?: string;
   bmi: number;
   category: string;
   idealWeightRange: { min: number; max: number };
@@ -22,6 +23,7 @@ interface InsightsPanelProps {
 }
 
 export const InsightsPanel: React.FC<InsightsPanelProps> = ({
+  name,
   bmi,
   category,
   idealWeightRange,
