@@ -8,7 +8,7 @@ const Footer: React.FC = () => {
   const socialLinks = [
     { 
       name: 'X (Twitter)', 
-      href: 'https://x.com/ayushmishra9615', 
+      href: 'https://x.com/AysuhMishra', 
       icon: <X className="w-5 h-5" /> 
     },
     { 
@@ -121,7 +121,7 @@ const Footer: React.FC = () => {
         {/* Bottom Row */}
         <div className="pt-8 border-t border-hairline/50 flex flex-col md:flex-row justify-between items-center gap-6">
           <div className="text-[10px] font-mono font-bold text-mute uppercase tracking-[0.1em] text-center md:text-left">
-            © {currentYear} QuickBMI · Built by <span className="text-ink">Ayush Kumar Mishra</span>
+            © {currentYear} QuickBMICalculator · Built by <span className="text-ink">Ayush Kumar Mishra</span>
           </div>
           <div className="text-[10px] font-mono font-bold text-mute uppercase tracking-[0.1em] opacity-60 text-center md:text-right">
             WHO Compliant • Privacy First • Real-Time Analysis

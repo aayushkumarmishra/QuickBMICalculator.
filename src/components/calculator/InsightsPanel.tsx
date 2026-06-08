@@ -43,10 +43,10 @@ export const InsightsPanel: React.FC<InsightsPanelProps> = ({
   const isPediatric = numericAge >= 18 && numericAge < 20;
 
   const getInsightText = () => {
-    if (isFaded) return "Enter your height and weight in the command panel to generate your personalized health report.";
+    if (isFaded) return "Enter your details to see your personalized health report.";
     let base = category === 'Normal Weight' 
       ? "Your weight is in a healthy range for your height. Maintaining a healthy weight helps lower the risk of chronic conditions."
-      : `Classified as ${category.toLowerCase()} based on standard WHO guidelines.`;
+      : `Your result falls into ${category.toLowerCase()} based on standard WHO guidelines.`;
     if (numericAge > 65) base += " Older adults may naturally have a slightly higher healthy BMI range.";
     return base;
   };
