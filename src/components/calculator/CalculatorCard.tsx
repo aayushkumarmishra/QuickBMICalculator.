@@ -737,7 +737,6 @@ export const CalculatorCard: React.FC = () => {
               
               {bmi >= 10 && bmi <= 70 && (
                 <InsightsPanel 
-                  name={name}
                   bmi={bmi} category={category} idealWeightRange={idealWeightRange} 
                   unit={system === 'other' ? weightUnitOther : (system === 'metric' ? 'kg' : 'lb')}
                   age={age} gender={gender} ponderalIndex={ponderalIndex}
