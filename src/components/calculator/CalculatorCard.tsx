@@ -7,7 +7,7 @@ import { InsightsPanel } from './InsightsPanel';
 import { BrandLogo } from '../BrandLogo';
 
 type UnitSystem = 'metric' | 'us' | 'other';
-type Goal = 'maintenance' | 'loss' | 'gain';
+type Goal = 'maintenance' | 'loss' | 'gain' | '';
 
 const ACTIVITY_LEVELS = [
   { label: 'Select Activity Level', value: '', desc: 'Required' },
@@ -29,7 +29,7 @@ export const CalculatorCard: React.FC = () => {
   const [name, setName] = useState<string>('');
   const [age, setAge] = useState<string>('');
   const [gender, setGender] = useState<'male' | 'female' | ''>('');
-  const [goal, setGoal] = useState<Goal>('maintenance');
+  const [goal, setGoal] = useState<Goal>('');
   const [activity, setActivity] = useState<string>('');
   const [copied, setCopied] = useState(false);
   const [nameError, setNameError] = useState<string>('');
@@ -50,7 +50,7 @@ export const CalculatorCard: React.FC = () => {
 
   const handleReset = () => {
     setWeight(''); setHeight(''); setFeet(''); setInches(''); setAge(''); setGender('');
-    setGoal('maintenance'); setActivity(''); setName(''); setNameError('');
+    setGoal(''); setActivity(''); setName(''); setNameError('');
   };
 
   const { bmi, category, idealWeightRange, ponderalIndex, bmr, tdee } = useMemo(() => {
@@ -566,7 +566,9 @@ export const CalculatorCard: React.FC = () => {
 
                 <InputGroup id="age" label="Age" value={age} onChange={setAge} unit="YRS" placeholder="25" min={18} max={120} step="1" />
                 <div className="flex flex-col gap-3">
-                  <span className="text-[10px] font-mono font-bold text-mute uppercase tracking-[0.3em] ml-1">Gender</span>
+                  <span className="text-[10px] font-mono font-bold text-mute uppercase tracking-[0.3em] ml-1">
+  Gender{gender === '' && <span className="normal-case font-normal text-mute/30 tracking-normal ml-1">— select one</span>}
+</span>
                   <div className="flex p-1 bg-canvas-soft border border-hairline rounded-ui h-14 gap-1">
                     {['male', 'female'].map((g) => (
                       <button 
@@ -653,7 +655,9 @@ export const CalculatorCard: React.FC = () => {
 
               <div className="space-y-6 lg:space-y-8 pt-6 border-t border-hairline/50">
                 <div className="space-y-4">
-                  <span className="text-[10px] font-mono font-bold text-mute uppercase tracking-[0.3em] ml-1">Body Goal</span>
+                  <span className="text-[10px] font-mono font-bold text-mute uppercase tracking-[0.3em] ml-1">
+  Body Goal{goal === '' && <span className="normal-case font-normal text-mute/30 tracking-normal ml-1">— select one</span>}
+</span>
                   <div className="flex p-1 bg-canvas-soft border border-hairline rounded-ui gap-1">
                     {['loss', 'maintenance', 'gain'].map((g) => (
                       <button 
