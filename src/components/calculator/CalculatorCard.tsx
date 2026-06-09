@@ -566,9 +566,7 @@ export const CalculatorCard: React.FC = () => {
 
                 <InputGroup id="age" label="Age" value={age} onChange={setAge} unit="YRS" placeholder="25" min={18} max={120} step="1" />
                 <div className="flex flex-col gap-3">
-                  <span className="text-[10px] font-mono font-bold text-mute uppercase tracking-[0.3em] ml-1">
-  Gender{gender === '' && <span className="normal-case font-normal text-mute/30 tracking-normal ml-1">— select one</span>}
-</span>
+                  <span className="text-[10px] font-mono font-bold text-mute uppercase tracking-[0.3em] ml-1">Gender</span>
                   <div className="flex p-1 bg-canvas-soft border border-hairline rounded-ui h-14 gap-1">
                     {['male', 'female'].map((g) => (
                       <button 
@@ -655,9 +653,7 @@ export const CalculatorCard: React.FC = () => {
 
               <div className="space-y-6 lg:space-y-8 pt-6 border-t border-hairline/50">
                 <div className="space-y-4">
-                  <span className="text-[10px] font-mono font-bold text-mute uppercase tracking-[0.3em] ml-1">
-  Body Goal{goal === '' && <span className="normal-case font-normal text-mute/30 tracking-normal ml-1">— select one</span>}
-</span>
+                  <span className="text-[10px] font-mono font-bold text-mute uppercase tracking-[0.3em] ml-1">Body Goal</span>
                   <div className="flex p-1 bg-canvas-soft border border-hairline rounded-ui gap-1">
                     {['loss', 'maintenance', 'gain'].map((g) => (
                       <button 
