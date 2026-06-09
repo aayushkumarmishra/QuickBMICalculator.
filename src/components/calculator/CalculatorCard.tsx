@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { RotateCcw, Copy, Check, Activity, ChevronDown } from 'lucide-react';
+import { RotateCcw, Download, Check, Activity, ChevronDown } from 'lucide-react';
 import { InputGroup } from './InputGroup';
 import { ResultGauge } from './ResultGauge';
 import { InsightsPanel } from './InsightsPanel';
@@ -471,7 +471,7 @@ export const CalculatorCard: React.FC = () => {
       y = Math.max(y, 270); 
       
       pdf.setFontSize(7);
-      pdf.setTextColor(180, 180, 180);
+      pdf.setTextColor(100, 100, 100);
       const disclaimer = "DISCLAIMER: This report is for informational purposes only and does not constitute medical advice. BMI has limitations and does not account for muscle mass, bone density, or fat distribution. Always consult with a qualified healthcare professional before making health or diet changes.";
       const splitDisclaimer = pdf.splitTextToSize(disclaimer, pageWidth - (margin * 2));
       pdf.text(splitDisclaimer, margin, y);
@@ -708,7 +708,7 @@ export const CalculatorCard: React.FC = () => {
                 className="px-5 py-3 bg-canvas border border-hairline hover:bg-canvas-soft rounded-xl transition-all text-ink font-bold text-xs uppercase tracking-widest shadow-premium-md flex items-center gap-2 group active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed" 
                 title="Export Results to PDF"
               >
-                {copied ? <Check className="w-4 h-4 text-status-healthy" /> : (isExporting ? <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1 }}><RotateCcw className="w-4 h-4 text-mute" /></motion.div> : <Copy className="w-4 h-4 text-mute group-hover:text-ink transition-colors" />)}
+                {copied ? <Check className="w-4 h-4 text-status-healthy" /> : (isExporting ? <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1 }}><RotateCcw className="w-4 h-4 text-mute" /></motion.div> : <Download className="w-4 h-4 text-mute group-hover:text-ink transition-colors" />)}
                 <span>{copied ? 'Success' : (isExporting ? 'Downloading...' : 'Download')}</span>
               </button>
               {exportError && (
