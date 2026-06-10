@@ -14,6 +14,7 @@ interface InsightsPanelProps {
   bmr?: number;
   tdee?: number;
   goal?: 'maintenance' | 'loss' | 'gain';
+  activity?: string;
   weight?: string;
   height?: string;
   displayPrime: string;
@@ -32,6 +33,7 @@ export const InsightsPanel: React.FC<InsightsPanelProps> = ({
   bmr,
   tdee,
   goal,
+  activity,
   weight,
   height,
   displayPrime,
@@ -39,6 +41,28 @@ export const InsightsPanel: React.FC<InsightsPanelProps> = ({
   displayPI,
 }) => {
   const isFaded = !bmi || bmi === 0 || isNaN(bmi);
+
+  // Shared Source of Truth for Recommendations & Suggested Activity
+  const activityData: Record<string, { walking: string; steps: string; stepsNum: number }> = {
+    'Underweight':     { walking: '20–30 min/day', steps: '5,000–7,000 steps/day', stepsNum: 6000 },
+    'Normal Weight':   { walking: '30 min/day',    steps: '7,000–8,000 steps/day', stepsNum: 7500 },
+    'Overweight':      { walking: '30–45 min/day', steps: '7,000–9,000 steps/day', stepsNum: 8000 },
+    'Obesity Class I': { walking: '30–45 min/day', steps: '9,000+ steps/day',      stepsNum: 9000 },
+    'Obesity Class II':  { walking: '30–45 min/day', steps: '9,000+ steps/day',    stepsNum: 9000 },
+    'Obesity Class III': { walking: '30–45 min/day', steps: '9,000+ steps/day',    stepsNum: 9000 },
+  };
+  const activeRec = { ...(activityData[category] || activityData['Normal Weight']) };
+
+  if (!isFaded && goal === 'loss') {
+    activeRec.walking = activity === '1.2' ? '30–45 min/day' : '45 min/day';
+    activeRec.steps = '9,000–10,000 steps/day';
+    activeRec.stepsNum = 9500;
+  } else if (!isFaded && goal === 'gain') {
+    activeRec.walking = '20 min/day';
+    activeRec.steps = '5,000–6,000 steps/day';
+    activeRec.stepsNum = 5500;
+  }
+
   const numericAge = parseInt(age || '0');
   const isPediatric = numericAge >= 18 && numericAge < 20;
 
@@ -125,17 +149,17 @@ export const InsightsPanel: React.FC<InsightsPanelProps> = ({
           },
           'Normal Weight': {
             icon: '✓',
-            tips: ['Maintain balanced nutrition', 'Stay active 30 min/day', 
+            tips: ['Maintain balanced nutrition', `Stay active ${activeRec.walking}`, 
                    'Keep consistent sleep schedule', 'Track progress monthly']
           },
           'Overweight': {
             icon: '↓',
-            tips: ['Walk 30–45 min daily', 'Target 7,000–9,000 steps/day', 
+            tips: [`Walk ${activeRec.walking} daily`, `Target ${activeRec.steps}`, 
                    'Aim for calorie deficit', 'Reduce processed foods']
           },
           'Obesity Class I': {
             icon: '↓',
-            tips: ['Walk 30–45 min daily', 'Target 9,000+ steps/day', 
+            tips: [`Walk ${activeRec.walking} daily`, `Target ${activeRec.steps}`, 
                    'Consult a nutritionist', 'Track calories daily']
           },
           'Obesity Class II': {
@@ -187,16 +211,7 @@ export const InsightsPanel: React.FC<InsightsPanelProps> = ({
 
       {/* Walking + Steps Card */}
       {!isFaded && (() => {
-        const activityData: Record<string, { walking: string; steps: string; stepsNum: number }> = {
-          'Underweight':     { walking: '20–30 min/day', steps: '5,000–7,000 steps/day', stepsNum: 6000 },
-          'Normal Weight':   { walking: '30 min/day',    steps: '7,000–8,000 steps/day', stepsNum: 7500 },
-          'Overweight':      { walking: '30–45 min/day', steps: '7,000–9,000 steps/day', stepsNum: 8000 },
-          'Obesity Class I': { walking: '30–45 min/day', steps: '9,000+ steps/day',      stepsNum: 9000 },
-          'Obesity Class II':  { walking: '30–45 min/day', steps: '9,000+ steps/day',    stepsNum: 9000 },
-          'Obesity Class III': { walking: '30–45 min/day', steps: '9,000+ steps/day',    stepsNum: 9000 },
-        };
-        const data = activityData[category] || activityData['Normal Weight'];
-        const progressPct = Math.min((data.stepsNum / 10000) * 100, 100);
+        const progressPct = Math.min((activeRec.stepsNum / 10000) * 100, 100);
 
         return (
           <div className="card glass border-hairline p-6 sm:p-8">
@@ -206,11 +221,11 @@ export const InsightsPanel: React.FC<InsightsPanelProps> = ({
             <div className="grid grid-cols-2 gap-4 sm:gap-6 mb-4 sm:mb-5">
               <div>
                 <div className="text-[8px] sm:text-[9px] font-mono font-bold text-mute uppercase tracking-widest mb-1">Walking</div>
-                <div className="text-base sm:text-lg font-black tracking-tight text-ink">{data.walking}</div>
+                <div className="text-base sm:text-lg font-black tracking-tight text-ink">{activeRec.walking}</div>
               </div>
               <div>
                 <div className="text-[8px] sm:text-[9px] font-mono font-bold text-mute uppercase tracking-widest mb-1">Steps / Day</div>
-                <div className="text-base sm:text-lg font-black tracking-tight text-ink">{data.steps}</div>
+                <div className="text-base sm:text-lg font-black tracking-tight text-ink">{activeRec.steps}</div>
               </div>
             </div>
             <div className="h-1.5 w-full bg-hairline rounded-full overflow-hidden">
@@ -283,18 +298,18 @@ export const InsightsPanel: React.FC<InsightsPanelProps> = ({
         <div className="relative z-10 flex flex-col gap-5 sm:gap-6">
           <div className="text-left">
             <div className="text-[9px] sm:text-[10px] font-mono font-bold text-white/60 uppercase tracking-[0.4em] mb-4">Daily Calorie Goals</div>
-            <div className="grid grid-cols-3 gap-3 sm:gap-4">
-              <div className="flex flex-col gap-1">
+            <div className="grid grid-cols-3 gap-2 sm:gap-4 -mx-2">
+              <div className={`flex flex-col gap-1 p-2 rounded-ui transition-all duration-300 ${goal === 'maintenance' ? 'bg-white/10 ring-1 ring-white/20' : 'opacity-60'}`}>
                 <div className="text-[8px] sm:text-[9px] font-mono font-bold text-white/50 uppercase tracking-widest">Maintain</div>
                 <div className="text-lg sm:text-2xl font-black tracking-tight text-white">{displayTDEE}</div>
                 <div className="text-[8px] font-mono text-white/40 uppercase tracking-widest">kcal</div>
               </div>
-              <div className="flex flex-col gap-1">
+              <div className={`flex flex-col gap-1 p-2 rounded-ui transition-all duration-300 ${goal === 'loss' ? 'bg-white/10 ring-1 ring-white/20' : 'opacity-60'}`}>
                 <div className="text-[8px] sm:text-[9px] font-mono font-bold text-white/50 uppercase tracking-widest">Fat Loss</div>
                 <div className="text-lg sm:text-2xl font-black tracking-tight text-red-400">{isFaded || !tdee ? '--' : Math.round(tdee - 500).toLocaleString()}</div>
                 <div className="text-[8px] font-mono text-white/40 uppercase tracking-widest">kcal</div>
               </div>
-              <div className="flex flex-col gap-1">
+              <div className={`flex flex-col gap-1 p-2 rounded-ui transition-all duration-300 ${goal === 'gain' ? 'bg-white/10 ring-1 ring-white/20' : 'opacity-60'}`}>
                 <div className="text-[8px] sm:text-[9px] font-mono font-bold text-white/50 uppercase tracking-widest">Weight Gain</div>
                 <div className="text-lg sm:text-2xl font-black tracking-tight text-green-400">{isFaded || !tdee ? '--' : Math.round(tdee + 500).toLocaleString()}</div>
                 <div className="text-[8px] font-mono text-white/40 uppercase tracking-widest">kcal</div>

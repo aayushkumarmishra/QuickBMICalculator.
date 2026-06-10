@@ -56,9 +56,9 @@ export const CalculatorCard: React.FC = () => {
   const { bmi, category, idealWeightRange, ponderalIndex, bmr, tdee } = useMemo(() => {
     const defaultResult = { bmi: 0, category: '', idealWeightRange: { min: 0, max: 0 }, ponderalIndex: 0, bmr: 0, tdee: 0 };
 
-    // 1. Validate Name, Age and Gender
     const a = parseInt(age);
-    if (!name || name.length < 2 || !age || isNaN(a) || a < 18 || a > 120 || !gender || !activity) return defaultResult;
+    if (!weight || (!height && !feet && !inches)) return defaultResult;
+    const hasFullInputs = !!(age && !isNaN(a) && a >= 18 && a <= 120 && gender && activity);
 
     let bmiValue = 0; let piValue = 0; let bmrValue = 0; let tdeeValue = 0;
     let w = parseFloat(weight) || 0; let h = 0;
@@ -70,10 +70,12 @@ export const CalculatorCard: React.FC = () => {
       const hM = h / 100;
       bmiValue = w / Math.pow(hM, 2);
       piValue = w / Math.pow(hM, 3);
-      bmrValue = gender === 'male' 
-        ? 10 * w + 6.25 * h - 5 * a + 5 
-        : 10 * w + 6.25 * h - 5 * a - 161;
-      tdeeValue = bmrValue * parseFloat(activity);
+      if (hasFullInputs) {
+        bmrValue = gender === 'male' 
+          ? 10 * w + 6.25 * h - 5 * a + 5 
+          : 10 * w + 6.25 * h - 5 * a - 161;
+        tdeeValue = bmrValue * parseFloat(activity);
+      }
 
     } else if (system === 'us') {
       const f = parseFloat(feet) || 0;
@@ -86,10 +88,12 @@ export const CalculatorCard: React.FC = () => {
       const hCm = h * IN_TO_CM; 
       const hM = hCm / 100;
       piValue = wKg / Math.pow(hM, 3);
-      bmrValue = gender === 'male' 
-        ? 10 * wKg + 6.25 * hCm - 5 * a + 5 
-        : 10 * wKg + 6.25 * hCm - 5 * a - 161;
-      tdeeValue = bmrValue * parseFloat(activity);
+      if (hasFullInputs) {
+        bmrValue = gender === 'male' 
+          ? 10 * wKg + 6.25 * hCm - 5 * a + 5 
+          : 10 * wKg + 6.25 * hCm - 5 * a - 161;
+        tdeeValue = bmrValue * parseFloat(activity);
+      }
 
     } else {
         // OTHER mode
@@ -129,10 +133,12 @@ export const CalculatorCard: React.FC = () => {
         bmiValue = wKg / Math.pow(hM, 2);
         piValue = wKg / Math.pow(hM, 3);
         const hCm = hM * 100;
-        bmrValue = gender === 'male' 
-          ? 10 * wKg + 6.25 * hCm - 5 * a + 5 
-          : 10 * wKg + 6.25 * hCm - 5 * a - 161;
-        tdeeValue = bmrValue * parseFloat(activity);
+        if (hasFullInputs) {
+          bmrValue = gender === 'male' 
+            ? 10 * wKg + 6.25 * hCm - 5 * a + 5 
+            : 10 * wKg + 6.25 * hCm - 5 * a - 161;
+          tdeeValue = bmrValue * parseFloat(activity);
+        }
     }
 
     let cat = '';
@@ -154,7 +160,7 @@ export const CalculatorCard: React.FC = () => {
     }
 
     return { bmi: bmiValue, category: cat, idealWeightRange: { min: minW, max: maxW }, ponderalIndex: piValue, bmr: bmrValue, tdee: tdeeValue };
-  }, [name, system, weight, height, feet, inches, age, gender, activity, heightUnitOther, weightUnitOther]);
+  }, [name, system, weight, height, feet, inches, age, gender, activity, heightUnitOther, weightUnitOther, goal]);
 
   const isFaded = !bmi || bmi === 0 || isNaN(bmi);
   const totalInchesUS = (parseFloat(feet) || 0) * 12 + (parseFloat(inches) || 0);
@@ -539,10 +545,10 @@ export const CalculatorCard: React.FC = () => {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
     >
-      <div className="grid grid-cols-1 lg:grid-cols-12 min-h-[700px]">
+      <div className="grid grid-cols-1 lg:grid-cols-12 items-start min-h-fit">
         
         {/* LEFT: Command Panel (Inputs) */}
-        <div className="lg:col-span-5 p-6 sm:p-10 lg:p-12 border-b lg:border-b-0 lg:border-r border-hairline bg-canvas relative z-20">
+        <div className="lg:col-span-5 p-6 sm:p-10 lg:p-12 border-b lg:border-b-0 lg:border-r border-hairline bg-canvas relative z-20 h-full overflow-y-auto">
           <div className="flex flex-col gap-6 lg:gap-8">
             <div className="flex items-center justify-between border-b border-hairline pb-8">
               <div className="flex items-center gap-4">
@@ -727,7 +733,7 @@ export const CalculatorCard: React.FC = () => {
         </div>
 
         {/* RIGHT: Intelligence Panel (Results) */}
-        <div className="lg:col-span-7 bg-canvas-soft/40 p-6 sm:p-10 lg:p-12 relative border-t lg:border-t-0 border-hairline">
+        <div className="lg:col-span-7 bg-canvas-soft/40 p-6 sm:p-10 lg:p-12 relative border-t lg:border-t-0 border-hairline h-full overflow-y-auto">
           <div className="flex flex-col gap-6 lg:gap-8">
             <div className="flex items-center justify-between border-b border-hairline/50 pb-8">
               <div className="flex items-center gap-4">
@@ -739,10 +745,10 @@ export const CalculatorCard: React.FC = () => {
                   <p className="text-[10px] font-mono font-bold text-mute uppercase tracking-widest">Real-time Feedback</p>
                 </div>
               </div>
-              <button 
-                onClick={handleExport} 
-                disabled={isExporting || bmi <= 0}
-                className="px-5 py-3 bg-canvas border border-hairline hover:bg-canvas-soft rounded-xl transition-all text-ink font-bold text-xs uppercase tracking-widest shadow-premium-md flex items-center gap-2 group active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed" 
+              <button
+                onClick={handleExport}
+                disabled={isExporting || bmi <= 0 || name.trim().length < 2}
+                className="px-5 py-3 bg-canvas border border-hairline hover:bg-canvas-soft rounded-xl transition-all text-ink font-bold text-xs uppercase tracking-widest shadow-premium-md flex items-center gap-2 group active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                 title="Export Results to PDF"
               >
                 {copied ? <Check className="w-4 h-4 text-status-healthy" /> : (isExporting ? <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1 }}><RotateCcw className="w-4 h-4 text-mute" /></motion.div> : <Download className="w-4 h-4 text-mute group-hover:text-ink transition-colors" />)}
@@ -762,7 +768,7 @@ export const CalculatorCard: React.FC = () => {
                     Height too low — minimum is 1 ft 9 in (world record)
                   </p>
                 </div>
-              ) : bmi > 0 && (bmi < 10 || bmi > 70) ? (
+              ) : bmi > 0 && (bmi < 5 || bmi > 120) ? (
                 <div className="flex items-center justify-center py-8">
                   <p className="text-red-500 font-mono font-bold text-sm text-center">
                     Please check your inputs — values seem unrealistic
@@ -772,12 +778,12 @@ export const CalculatorCard: React.FC = () => {
                 <ResultGauge bmi={bmi} />
               )}
               
-              {bmi >= 10 && bmi <= 70 && (
+              {bmi >= 5 && bmi <= 120 && (
                 <InsightsPanel 
                   bmi={bmi} category={category} idealWeightRange={idealWeightRange} 
                   unit={system === 'other' ? weightUnitOther : (system === 'metric' ? 'kg' : 'lb')}
                   age={age} gender={gender} ponderalIndex={ponderalIndex}
-                  bmr={bmr} tdee={tdee} goal={goal}
+                  bmr={bmr} tdee={tdee} goal={goal} activity={activity}
                   weight={weight}
                   height={
                     system === 'us' 
