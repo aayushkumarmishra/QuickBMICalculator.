@@ -115,6 +115,157 @@ export const InsightsPanel: React.FC<InsightsPanelProps> = ({
         </div>
       </div>
 
+      {/* Smart Recommendation Card */}
+      {!isFaded && (() => {
+        const rec: Record<string, { icon: string; tips: string[] }> = {
+          'Underweight': {
+            icon: '↑',
+            tips: ['Focus on protein-rich foods', 'Add strength training 3x/week', 
+                   'Increase daily calorie intake', 'Eat 5–6 smaller meals/day']
+          },
+          'Normal Weight': {
+            icon: '✓',
+            tips: ['Maintain balanced nutrition', 'Stay active 30 min/day', 
+                   'Keep consistent sleep schedule', 'Track progress monthly']
+          },
+          'Overweight': {
+            icon: '↓',
+            tips: ['Walk 30–45 min daily', 'Target 7,000–9,000 steps/day', 
+                   'Aim for calorie deficit', 'Reduce processed foods']
+          },
+          'Obesity Class I': {
+            icon: '↓',
+            tips: ['Walk 30–45 min daily', 'Target 9,000+ steps/day', 
+                   'Consult a nutritionist', 'Track calories daily']
+          },
+          'Obesity Class II': {
+            icon: '↓',
+            tips: ['Start with light walking', 'Consult a healthcare professional', 
+                   'Focus on dietary changes', 'Monitor progress weekly']
+          },
+          'Obesity Class III': {
+            icon: '!',
+            tips: ['Seek medical guidance immediately', 'Work with a specialist', 
+                   'Gradual lifestyle changes', 'Monitor health markers regularly']
+          },
+        };
+        const current = rec[category] || rec['Normal Weight'];
+        const borderColor = category === 'Normal Weight' 
+          ? 'border-status-healthy/30' 
+          : category === 'Underweight' 
+            ? 'border-status-under/30' 
+            : category === 'Overweight' 
+              ? 'border-status-over/30' 
+              : 'border-status-obese/30';
+        const iconColor = category === 'Normal Weight' 
+          ? 'text-status-healthy' 
+          : category === 'Underweight' 
+            ? 'text-status-under' 
+            : category === 'Overweight' 
+              ? 'text-status-over' 
+              : 'text-status-obese';
+
+        return (
+          <div className={`card glass border ${borderColor} p-6 sm:p-8`}>
+            <div className="flex items-center justify-between mb-4 sm:mb-5">
+              <div className="text-[9px] sm:text-[10px] font-mono font-bold text-mute uppercase tracking-[0.4em]">
+                Recommendations
+              </div>
+              <span className={`text-xs font-black ${iconColor}`}>{current.icon}</span>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
+              {current.tips.map((tip, i) => (
+                <div key={i} className="flex items-start gap-2">
+                  <span className={`text-[10px] font-black mt-0.5 shrink-0 ${iconColor}`}>—</span>
+                  <p className="text-[11px] sm:text-xs font-medium text-ink/80 leading-relaxed">{tip}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* Walking + Steps Card */}
+      {!isFaded && (() => {
+        const activityData: Record<string, { walking: string; steps: string; stepsNum: number }> = {
+          'Underweight':     { walking: '20–30 min/day', steps: '5,000–7,000 steps/day', stepsNum: 6000 },
+          'Normal Weight':   { walking: '30 min/day',    steps: '7,000–8,000 steps/day', stepsNum: 7500 },
+          'Overweight':      { walking: '30–45 min/day', steps: '7,000–9,000 steps/day', stepsNum: 8000 },
+          'Obesity Class I': { walking: '30–45 min/day', steps: '9,000+ steps/day',      stepsNum: 9000 },
+          'Obesity Class II':  { walking: '30–45 min/day', steps: '9,000+ steps/day',    stepsNum: 9000 },
+          'Obesity Class III': { walking: '30–45 min/day', steps: '9,000+ steps/day',    stepsNum: 9000 },
+        };
+        const data = activityData[category] || activityData['Normal Weight'];
+        const progressPct = Math.min((data.stepsNum / 10000) * 100, 100);
+
+        return (
+          <div className="card glass border-hairline p-6 sm:p-8">
+            <div className="text-[9px] sm:text-[10px] font-mono font-bold text-mute uppercase tracking-[0.4em] mb-4 sm:mb-5">
+              Suggested Activity
+            </div>
+            <div className="grid grid-cols-2 gap-4 sm:gap-6 mb-4 sm:mb-5">
+              <div>
+                <div className="text-[8px] sm:text-[9px] font-mono font-bold text-mute uppercase tracking-widest mb-1">Walking</div>
+                <div className="text-base sm:text-lg font-black tracking-tight text-ink">{data.walking}</div>
+              </div>
+              <div>
+                <div className="text-[8px] sm:text-[9px] font-mono font-bold text-mute uppercase tracking-widest mb-1">Steps / Day</div>
+                <div className="text-base sm:text-lg font-black tracking-tight text-ink">{data.steps}</div>
+              </div>
+            </div>
+            <div className="h-1.5 w-full bg-hairline rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-status-healthy rounded-full transition-all duration-1000" 
+                style={{ width: `${progressPct}%` }} 
+              />
+            </div>
+            <div className="flex justify-between mt-1.5">
+              <span className="text-[8px] font-mono text-mute">0</span>
+              <span className="text-[8px] font-mono text-mute">10,000 steps</span>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* Water Intake Card */}
+      {!isFaded && (() => {
+        const numericWeight = parseFloat(weight || '0');
+        const weightInKg = unit === 'lb' ? numericWeight * 0.453592 : numericWeight;
+        const waterLitres = weightInKg > 0 ? (weightInKg * 35) / 1000 : null;
+        const displayWater = waterLitres ? waterLitres.toFixed(1) : '--';
+        const waterPct = waterLitres ? Math.min((waterLitres / 4) * 100, 100) : 0;
+        return (
+          <div className="card glass border-hairline p-6 sm:p-8">
+            <div className="flex items-center justify-between mb-4 sm:mb-5">
+              <div className="text-[9px] sm:text-[10px] font-mono font-bold text-mute uppercase tracking-[0.4em]">
+                Daily Water Intake
+              </div>
+              <div className="text-[9px] font-mono font-bold text-mute uppercase tracking-widest bg-canvas-soft px-2 py-1 rounded-full border border-hairline">
+                Weight x 35ml
+              </div>
+            </div>
+            <div className="flex items-baseline gap-2 mb-4 sm:mb-5">
+              <span className="text-3xl sm:text-4xl font-black tracking-tight text-ink">
+                {displayWater}
+              </span>
+              <span className="text-[10px] sm:text-xs font-bold text-mute uppercase font-mono tracking-widest">
+                L / DAY
+              </span>
+            </div>
+            <div className="h-1.5 w-full bg-hairline rounded-full overflow-hidden">
+              <div
+                className="h-full bg-status-under rounded-full transition-all duration-1000"
+                style={{ width: waterPct + '%' }}
+              />
+            </div>
+            <div className="flex justify-between mt-1.5">
+              <span className="text-[8px] font-mono text-mute">0L</span>
+              <span className="text-[8px] font-mono text-mute">4L max</span>
+            </div>
+          </div>
+        );
+      })()}
+
       {/* Energy Plan - Massive Readability */}
       <motion.div 
         initial={{ opacity: 0, y: 10 }}
@@ -130,11 +281,24 @@ export const InsightsPanel: React.FC<InsightsPanelProps> = ({
           </div>
         </div>
         <div className="relative z-10 flex flex-col gap-5 sm:gap-6">
-          <div className="text-center sm:text-left">
-            <div className="text-[9px] sm:text-[10px] font-mono font-bold text-white/60 uppercase tracking-[0.4em] mb-2 sm:mb-3">Daily Calorie Estimate</div>
-            <div className="text-3xl xs:text-4xl sm:text-5xl font-black tracking-[-0.06em] flex items-baseline justify-center sm:justify-start gap-2 sm:gap-3">
-              {displayGoalCals}
-              <span className="text-[10px] sm:text-sm font-mono text-white/60 uppercase tracking-[0.2em]">KCAL / DAY</span>
+          <div className="text-left">
+            <div className="text-[9px] sm:text-[10px] font-mono font-bold text-white/60 uppercase tracking-[0.4em] mb-4">Daily Calorie Goals</div>
+            <div className="grid grid-cols-3 gap-3 sm:gap-4">
+              <div className="flex flex-col gap-1">
+                <div className="text-[8px] sm:text-[9px] font-mono font-bold text-white/50 uppercase tracking-widest">Maintain</div>
+                <div className="text-lg sm:text-2xl font-black tracking-tight text-white">{displayTDEE}</div>
+                <div className="text-[8px] font-mono text-white/40 uppercase tracking-widest">kcal</div>
+              </div>
+              <div className="flex flex-col gap-1">
+                <div className="text-[8px] sm:text-[9px] font-mono font-bold text-white/50 uppercase tracking-widest">Fat Loss</div>
+                <div className="text-lg sm:text-2xl font-black tracking-tight text-red-400">{isFaded || !tdee ? '--' : Math.round(tdee - 500).toLocaleString()}</div>
+                <div className="text-[8px] font-mono text-white/40 uppercase tracking-widest">kcal</div>
+              </div>
+              <div className="flex flex-col gap-1">
+                <div className="text-[8px] sm:text-[9px] font-mono font-bold text-white/50 uppercase tracking-widest">Weight Gain</div>
+                <div className="text-lg sm:text-2xl font-black tracking-tight text-green-400">{isFaded || !tdee ? '--' : Math.round(tdee + 500).toLocaleString()}</div>
+                <div className="text-[8px] font-mono text-white/40 uppercase tracking-widest">kcal</div>
+              </div>
             </div>
           </div>
           <div className="flex justify-center sm:justify-start gap-6 sm:gap-8 pt-5 sm:pt-6 border-t border-white/20">
