@@ -399,6 +399,41 @@ export const CalculatorCard: React.FC = () => {
       
       y += 26; // Gap after calorie plan
 
+      // 6. ACTIVITY & HYDRATION GUIDE
+      y = drawHeader('Activity & Hydration Guide', y);
+      pdf.setDrawColor(240, 240, 240);
+      pdf.setFillColor(252, 252, 252);
+      pdf.roundedRect(margin, y, pageWidth - (margin * 2), 20, 2, 2, 'FD');
+
+      const activityMap: Record<string, { walking: string; steps: string }> = {
+        'Underweight':     { walking: '20-30 min/day', steps: '5,000-7,000 steps/day' },
+        'Normal Weight':   { walking: '30 min/day',    steps: '7,000-8,000 steps/day' },
+        'Overweight':      { walking: '30-45 min/day', steps: '7,000-9,000 steps/day' },
+        'Obesity Class I': { walking: '30-45 min/day', steps: '9,000+ steps/day' },
+        'Obesity Class II':  { walking: '30-45 min/day', steps: '9,000+ steps/day' },
+        'Obesity Class III': { walking: '30-45 min/day', steps: '9,000+ steps/day' },
+      };
+      const actData = activityMap[category] || activityMap['Normal Weight'];
+      const wNum = parseFloat(weight) || 0;
+      const wKg = (system === 'us' || (system === 'other' && weightUnitOther === 'lb')) ? wNum * 0.453592 : wNum;
+      const waterL = wKg > 0 ? (wKg * 35 / 1000).toFixed(1) : '--';
+
+      const ahCol = (pageWidth - (margin * 2)) / 3;
+      pdf.setFontSize(7);
+      pdf.setTextColor(100, 100, 100);
+      pdf.setFont('helvetica', 'normal');
+      pdf.text('WALKING', margin + 5, y + 6);
+      pdf.text('STEPS / DAY', margin + 5 + ahCol, y + 6);
+      pdf.text('WATER INTAKE', margin + 5 + (ahCol * 2), y + 6);
+      pdf.setFontSize(9);
+      pdf.setTextColor(23, 23, 23);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text(actData.walking, margin + 5, y + 14);
+      pdf.text(actData.steps, margin + 5 + ahCol, y + 14);
+      pdf.text(`${waterL} L / day`, margin + 5 + (ahCol * 2), y + 14);
+
+      y += 26; // Gap after activity guide
+
       // 6. HEALTH INSIGHT & RECOMMENDATIONS
       const insights = {
         'Underweight': "Your BMI indicates lower body mass. Nutritional optimization may help support metabolic health.",
@@ -447,13 +482,15 @@ export const CalculatorCard: React.FC = () => {
 
       pdf.setFont('helvetica', 'normal');
       pdf.setTextColor(80, 80, 80);
-      const recs = [
-        'Prioritize hydration (2-3L daily)',
-        'Maintain consistent sleep patterns',
-        'Focus on whole, nutrient-dense foods',
-        'Engage in regular physical activity',
-        'Track biometric trends monthly'
-      ];
+      const recsMap: Record<string, string[]> = {
+        'Underweight':     ['Focus on protein-rich foods', 'Add strength training 3x/week', 'Increase daily calorie intake', 'Eat 5-6 smaller meals/day', 'Track weight weekly'],
+        'Normal Weight':   ['Maintain balanced nutrition', 'Stay active 30 min/day', 'Keep consistent sleep schedule', 'Track progress monthly', 'Stay hydrated daily'],
+        'Overweight':      ['Walk 30-45 min daily', 'Target 7,000-9,000 steps/day', 'Aim for calorie deficit', 'Reduce processed foods', 'Track calories daily'],
+        'Obesity Class I': ['Walk 30-45 min daily', 'Target 9,000+ steps/day', 'Consult a nutritionist', 'Track calories daily', 'Monitor progress weekly'],
+        'Obesity Class II':  ['Start with light walking', 'Consult a healthcare professional', 'Focus on dietary changes', 'Monitor progress weekly', 'Reduce sugar intake'],
+        'Obesity Class III': ['Seek medical guidance immediately', 'Work with a specialist', 'Gradual lifestyle changes', 'Monitor health markers regularly', 'Professional diet plan'],
+      };
+      const recs = recsMap[category] || recsMap['Normal Weight'];
       recs.forEach((rec, i) => {
         const recY = y + (i * 4.5);
         // Draw custom checkmark
