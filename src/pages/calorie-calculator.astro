@@ -1,0 +1,56 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { Navbar } from '../components/Navbar';
+import Footer from '../components/Footer';
+import { CalorieCalculatorCard } from '../components/calculator/CalorieCalculatorCard';
+---
+
+<Layout 
+  title="Calorie Calculator – Daily Calories for Weight Loss & Maintenance"
+  description="Calculate your daily calorie needs for fat loss, maintenance, or muscle gain using age, height, weight, and activity level."
+  canonical="https://quickbmicalculator.com/calorie-calculator/"
+>
+  <Navbar client:load />
+
+  <main class="flex-grow">
+    <section class="relative pt-16 pb-16 sm:pt-24 sm:pb-20 lg:pb-28 px-4 sm:px-6 flex flex-col items-center bg-canvas">
+      <div class="max-w-4xl mx-auto text-center space-y-4 sm:space-y-6 relative z-10">
+        <h1 class="text-4xl sm:text-6xl lg:text-7xl font-black tracking-[-0.06em] leading-[0.9] text-ink">
+          <span class="tracking-normal bg-linear-to-r from-status-healthy to-status-under bg-clip-text text-transparent dark:bg-none dark:text-ink">Calorie</span> Calculator
+        </h1>
+        <p class="text-base sm:text-xl text-body max-w-2xl mx-auto leading-tight font-medium opacity-70">
+          Determine your daily calorie requirements for weight loss, maintenance, or muscle gain based on your unique profile.
+        </p>
+      </div>
+    </section>
+
+    <section class="relative z-20 px-4 sm:px-6 pt-4 sm:pt-8 lg:pt-10 mb-12 sm:mb-16 lg:mb-24 pb-16 sm:pb-24">
+      <CalorieCalculatorCard client:load />
+    </section>
+
+    <section class="py-12 sm:py-16 px-6 bg-canvas-soft border-y border-hairline">
+      <div class="max-w-4xl mx-auto space-y-6">
+        <h2 class="text-3xl sm:text-4xl font-black tracking-tighter text-ink">Understanding Calorie Needs</h2>
+        <p class="text-body leading-relaxed font-medium opacity-80 text-base">
+          Every individual has unique energy requirements. Your <strong>Total Daily Energy Expenditure (TDEE)</strong> is an estimation of how many calories you burn per day when exercise is taken into account. It is calculated by first finding your <strong>Basal Metabolic Rate (BMR)</strong> and then multiplying it by an activity factor.
+        </p>
+        <p class="text-body leading-relaxed font-medium opacity-80 text-base">
+          To lose weight, you typically need to consume fewer calories than your TDEE (a calorie deficit). To gain weight, you consume more (a calorie surplus). Our calculator uses the scientifically validated <strong>Mifflin-St Jeor formula</strong> to provide the most accurate estimations for your fitness journey.
+        </p>
+      </div>
+    </section>
+
+    <section class="py-12 px-6 bg-canvas border-b border-hairline">
+      <div class="max-w-4xl mx-auto text-center">
+        <p class="text-sm text-mute font-medium">
+          Need to check your BMI? Try our 
+          <a href="/" class="text-ink font-bold underline underline-offset-2 hover:text-status-healthy transition-colors">BMI Calculator</a>
+          or find your 
+          <a href="/bmr-calculator" class="text-ink font-bold underline underline-offset-2 hover:text-status-healthy transition-colors">BMR</a>.
+        </p>
+      </div>
+    </section>
+  </main>
+
+  <Footer client:visible />
+</Layout>
