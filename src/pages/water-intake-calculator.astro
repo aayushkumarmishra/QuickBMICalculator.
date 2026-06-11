@@ -1,0 +1,56 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { Navbar } from '../components/Navbar';
+import Footer from '../components/Footer';
+import { WaterIntakeCalculatorCard } from '../components/calculator/WaterIntakeCalculatorCard';
+---
+
+<Layout 
+  title="Water Intake Calculator – Daily Hydration Goal for Health"
+  description="Calculate your recommended daily water intake based on weight, activity level, and climate to stay properly hydrated."
+  canonical="https://quickbmicalculator.com/water-intake-calculator/"
+>
+  <Navbar client:load />
+
+  <main class="flex-grow">
+    <section class="relative pt-16 pb-16 sm:pt-24 sm:pb-20 lg:pb-28 px-4 sm:px-6 flex flex-col items-center bg-canvas">
+      <div class="max-w-4xl mx-auto text-center space-y-4 sm:space-y-6 relative z-10">
+        <h1 class="text-4xl sm:text-6xl lg:text-7xl font-black tracking-[-0.06em] leading-[0.9] text-ink">
+          <span class="tracking-normal bg-linear-to-r from-status-healthy to-status-under bg-clip-text text-transparent dark:bg-none dark:text-ink">Water</span> Calculator
+        </h1>
+        <p class="text-base sm:text-xl text-body max-w-2xl mx-auto leading-tight font-medium opacity-70">
+          Determine your optimal daily water intake based on your unique body profile, lifestyle, and environment.
+        </p>
+      </div>
+    </section>
+
+    <section class="relative z-20 px-4 sm:px-6 pt-4 sm:pt-8 lg:pt-10 mb-12 sm:mb-16 lg:mb-24 pb-16 sm:pb-24">
+      <WaterIntakeCalculatorCard client:load />
+    </section>
+
+    <section class="py-12 sm:py-16 px-6 bg-canvas-soft border-y border-hairline">
+      <div class="max-w-4xl mx-auto space-y-6">
+        <h2 class="text-3xl sm:text-4xl font-black tracking-tighter text-ink">The Importance of Hydration</h2>
+        <p class="text-body leading-relaxed font-medium opacity-80 text-base">
+          Staying hydrated is crucial for nearly every bodily function, from regulating temperature to maintaining cognitive performance and supporting metabolism. While the "8 glasses a day" rule is a common guideline, actual water needs vary significantly based on your <strong>body weight</strong>, <strong>physical activity</strong>, and the <strong>climate</strong> you live in.
+        </p>
+        <p class="text-body leading-relaxed font-medium opacity-80 text-base">
+          Our calculator uses a base requirement of approximately 35ml of water per kilogram of body weight, adjusted for increased loss through sweat during exercise or in hot environments. Ensuring you hit your daily hydration goal can improve energy levels, skin health, and overall physical well-being.
+        </p>
+      </div>
+    </section>
+
+    <section class="py-12 px-6 bg-canvas border-b border-hairline">
+      <div class="max-w-4xl mx-auto text-center">
+        <p class="text-sm text-mute font-medium">
+          Check your other health metrics: 
+          <a href="/" class="text-ink font-bold underline underline-offset-2 hover:text-status-healthy transition-colors">BMI Calculator</a>,
+          <a href="/bmr-calculator" class="text-ink font-bold underline underline-offset-2 hover:text-status-healthy transition-colors">BMR</a>, or
+          <a href="/calorie-calculator" class="text-ink font-bold underline underline-offset-2 hover:text-status-healthy transition-colors">Daily Calories</a>.
+        </p>
+      </div>
+    </section>
+  </main>
+
+  <Footer client:visible />
+</Layout>
