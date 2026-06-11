@@ -3,12 +3,27 @@ import Layout from '../layouts/Layout.astro';
 import { Navbar } from '../components/Navbar';
 import Footer from '../components/Footer';
 import { WaterIntakeCalculatorCard } from '../components/calculator/WaterIntakeCalculatorCard';
+import { FAQAccordion } from '../components/FAQAccordion';
+import { waterFaqs } from '../data/faq';
+
+const faqSchema = {
+	"@type": "FAQPage",
+	"@id": `${Astro.url.href}#faq`,
+	"mainEntity": waterFaqs.map(faq => ({
+		"@type": "Question",
+		"name": faq.q,
+		"acceptedAnswer": {
+			"@type": "Answer",
+			"text": faq.a
+		}
+	}))
+};
 ---
 
 <Layout 
   title="Water Intake Calculator – Daily Hydration Goal for Health"
   description="Calculate your recommended daily water intake based on weight, activity level, and climate to stay properly hydrated."
-  canonical="https://quickbmicalculator.com/water-intake-calculator/"
+  extraSchema={[faqSchema]}
 >
   <Navbar client:load />
 
@@ -24,7 +39,7 @@ import { WaterIntakeCalculatorCard } from '../components/calculator/WaterIntakeC
       </div>
     </section>
 
-    <section class="relative z-20 px-4 sm:px-6 pt-4 sm:pt-8 lg:pt-10 mb-12 sm:mb-16 lg:mb-24 pb-16 sm:pb-24">
+    <section id="calculator" class="relative z-20 px-4 sm:px-6 pt-4 sm:pt-8 lg:pt-10 mb-12 sm:mb-16 lg:mb-24 pb-16 sm:pb-24">
       <WaterIntakeCalculatorCard client:load />
     </section>
 
@@ -37,6 +52,17 @@ import { WaterIntakeCalculatorCard } from '../components/calculator/WaterIntakeC
         <p class="text-body leading-relaxed font-medium opacity-80 text-base">
           Our calculator uses a base requirement of approximately 35ml of water per kilogram of body weight, adjusted for increased loss through sweat during exercise or in hot environments. Ensuring you hit your daily hydration goal can improve energy levels, skin health, and overall physical well-being.
         </p>
+      </div>
+    </section>
+
+    <section id="faq" class="py-16 sm:py-20 lg:py-28 px-6 bg-canvas relative z-10 border-b border-hairline">
+      <div class="max-w-4xl mx-auto">
+        <div class="text-center mb-12 lg:mb-14">
+          <h2 class="text-4xl sm:text-6xl font-black tracking-tighter mb-6 sm:mb-8 text-ink leading-none">Stay Hydrated.</h2>
+          <p class="text-lg sm:text-xl text-body max-w-2xl mx-auto tracking-tight font-medium opacity-60">Frequently asked questions about daily water intake and hydration health.</p>
+        </div>
+        
+        <FAQAccordion client:visible faqs={waterFaqs} />
       </div>
     </section>
 

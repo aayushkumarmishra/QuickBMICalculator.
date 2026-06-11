@@ -3,12 +3,27 @@ import Layout from '../layouts/Layout.astro';
 import { Navbar } from '../components/Navbar';
 import Footer from '../components/Footer';
 import { IdealWeightCalculatorCard } from '../components/calculator/IdealWeightCalculatorCard';
+import { FAQAccordion } from '../components/FAQAccordion';
+import { idealWeightFaqs } from '../data/faq';
+
+const faqSchema = {
+	"@type": "FAQPage",
+	"@id": `${Astro.url.href}#faq`,
+	"mainEntity": idealWeightFaqs.map(faq => ({
+		"@type": "Question",
+		"name": faq.q,
+		"acceptedAnswer": {
+			"@type": "Answer",
+			"text": faq.a
+		}
+	}))
+};
 ---
 
 <Layout 
   title="Ideal Weight Calculator – Healthy Weight Range by Height"
   description="Find your ideal weight and healthy weight range using your height, gender, and body measurements."
-  canonical="https://quickbmicalculator.com/ideal-weight-calculator/"
+  extraSchema={[faqSchema]}
 >
   <Navbar client:load />
 
@@ -24,7 +39,7 @@ import { IdealWeightCalculatorCard } from '../components/calculator/IdealWeightC
       </div>
     </section>
 
-    <section class="relative z-20 px-4 sm:px-6 pt-4 sm:pt-8 lg:pt-10 mb-12 sm:mb-16 lg:mb-24 pb-16 sm:pb-24">
+    <section id="calculator" class="relative z-20 px-4 sm:px-6 pt-4 sm:pt-8 lg:pt-10 mb-12 sm:mb-16 lg:mb-24 pb-16 sm:pb-24">
       <IdealWeightCalculatorCard client:load />
     </section>
 
@@ -37,6 +52,17 @@ import { IdealWeightCalculatorCard } from '../components/calculator/IdealWeightC
         <p class="text-body leading-relaxed font-medium opacity-80 text-base">
           It's important to remember that "ideal weight" is an estimate and doesn't account for body composition, such as muscle mass versus fat. Therefore, we also provide a <strong>Healthy Weight Range</strong> based on a standard BMI of 18.5 to 24.9, which offers a broader perspective on your health.
         </p>
+      </div>
+    </section>
+
+    <section id="faq" class="py-16 sm:py-20 lg:py-28 px-6 bg-canvas relative z-10 border-b border-hairline">
+      <div class="max-w-4xl mx-auto">
+        <div class="text-center mb-12 lg:mb-14">
+          <h2 class="text-4xl sm:text-6xl font-black tracking-tighter mb-6 sm:mb-8 text-ink leading-none">Your ideal weight.</h2>
+          <p class="text-lg sm:text-xl text-body max-w-2xl mx-auto tracking-tight font-medium opacity-60">Common questions about ideal weight formulas and healthy weight ranges.</p>
+        </div>
+        
+        <FAQAccordion client:visible faqs={idealWeightFaqs} />
       </div>
     </section>
 

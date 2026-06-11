@@ -3,11 +3,27 @@ import Layout from '../layouts/Layout.astro';
 import { Navbar } from '../components/Navbar';
 import Footer from '../components/Footer';
 import { BMRCalculatorCardV2 } from '../components/calculator/BMRCalculatorCardV2';
+import { FAQAccordion } from '../components/FAQAccordion';
+import { bmrFaqs } from '../data/faq';
+
+const faqSchema = {
+	"@type": "FAQPage",
+	"@id": `${Astro.url.href}#faq`,
+	"mainEntity": bmrFaqs.map(faq => ({
+		"@type": "Question",
+		"name": faq.q,
+		"acceptedAnswer": {
+			"@type": "Answer",
+			"text": faq.a
+		}
+	}))
+};
 ---
 
 <Layout 
   title="BMR Calculator - Calculate Basal Metabolic Rate | QuickBMI"
   description="Calculate your Basal Metabolic Rate (BMR) and Total Daily Energy Expenditure (TDEE) free online. Uses the Mifflin-St Jeor formula for accurate results."
+  extraSchema={[faqSchema]}
 >
   <Navbar client:load />
 
@@ -23,7 +39,7 @@ import { BMRCalculatorCardV2 } from '../components/calculator/BMRCalculatorCardV
       </div>
     </section>
 
-    <section class="relative z-20 px-4 sm:px-6 pt-4 sm:pt-8 lg:pt-10 mb-12 sm:mb-16 lg:mb-24 pb-16 sm:pb-24">
+    <section id="calculator" class="relative z-20 px-4 sm:px-6 pt-4 sm:pt-8 lg:pt-10 mb-12 sm:mb-16 lg:mb-24 pb-16 sm:pb-24">
       <BMRCalculatorCardV2 client:load />
     </section>
 
@@ -36,6 +52,17 @@ import { BMRCalculatorCardV2 } from '../components/calculator/BMRCalculatorCardV
         <p class="text-body leading-relaxed font-medium opacity-80 text-base">
           The <strong>Mifflin-St Jeor equation</strong> is the most accurate BMR formula available today, recommended by the American Dietetic Association. Combined with your activity level, it gives your Total Daily Energy Expenditure (TDEE) — the total calories you burn per day.
         </p>
+      </div>
+    </section>
+
+    <section id="faq" class="py-16 sm:py-20 lg:py-28 px-6 bg-canvas relative z-10 border-b border-hairline">
+      <div class="max-w-4xl mx-auto">
+        <div class="text-center mb-12 lg:mb-14">
+          <h2 class="text-4xl sm:text-6xl font-black tracking-tighter mb-6 sm:mb-8 text-ink leading-none">Questions about BMR.</h2>
+          <p class="text-lg sm:text-xl text-body max-w-2xl mx-auto tracking-tight font-medium opacity-60">Everything you need to know about Basal Metabolic Rate and energy expenditure.</p>
+        </div>
+        
+        <FAQAccordion client:visible faqs={bmrFaqs} />
       </div>
     </section>
 

@@ -3,12 +3,27 @@ import Layout from '../layouts/Layout.astro';
 import { Navbar } from '../components/Navbar';
 import Footer from '../components/Footer';
 import { CalorieCalculatorCard } from '../components/calculator/CalorieCalculatorCard';
+import { FAQAccordion } from '../components/FAQAccordion';
+import { calorieFaqs } from '../data/faq';
+
+const faqSchema = {
+	"@type": "FAQPage",
+	"@id": `${Astro.url.href}#faq`,
+	"mainEntity": calorieFaqs.map(faq => ({
+		"@type": "Question",
+		"name": faq.q,
+		"acceptedAnswer": {
+			"@type": "Answer",
+			"text": faq.a
+		}
+	}))
+};
 ---
 
 <Layout 
   title="Calorie Calculator – Daily Calories for Weight Loss & Maintenance"
   description="Calculate your daily calorie needs for fat loss, maintenance, or muscle gain using age, height, weight, and activity level."
-  canonical="https://quickbmicalculator.com/calorie-calculator/"
+  extraSchema={[faqSchema]}
 >
   <Navbar client:load />
 
@@ -24,7 +39,7 @@ import { CalorieCalculatorCard } from '../components/calculator/CalorieCalculato
       </div>
     </section>
 
-    <section class="relative z-20 px-4 sm:px-6 pt-4 sm:pt-8 lg:pt-10 mb-12 sm:mb-16 lg:mb-24 pb-16 sm:pb-24">
+    <section id="calculator" class="relative z-20 px-4 sm:px-6 pt-4 sm:pt-8 lg:pt-10 mb-12 sm:mb-16 lg:mb-24 pb-16 sm:pb-24">
       <CalorieCalculatorCard client:load />
     </section>
 
@@ -37,6 +52,17 @@ import { CalorieCalculatorCard } from '../components/calculator/CalorieCalculato
         <p class="text-body leading-relaxed font-medium opacity-80 text-base">
           To lose weight, you typically need to consume fewer calories than your TDEE (a calorie deficit). To gain weight, you consume more (a calorie surplus). Our calculator uses the scientifically validated <strong>Mifflin-St Jeor formula</strong> to provide the most accurate estimations for your fitness journey.
         </p>
+      </div>
+    </section>
+
+    <section id="faq" class="py-16 sm:py-20 lg:py-28 px-6 bg-canvas relative z-10 border-b border-hairline">
+      <div class="max-w-4xl mx-auto">
+        <div class="text-center mb-12 lg:mb-14">
+          <h2 class="text-4xl sm:text-6xl font-black tracking-tighter mb-6 sm:mb-8 text-ink leading-none">Your questions.</h2>
+          <p class="text-lg sm:text-xl text-body max-w-2xl mx-auto tracking-tight font-medium opacity-60">Common questions about calorie counting and weight management.</p>
+        </div>
+        
+        <FAQAccordion client:visible faqs={calorieFaqs} />
       </div>
     </section>
 
