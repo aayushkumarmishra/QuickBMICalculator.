@@ -1,3 +1,79 @@
+export const bmrFaqs = [
+  {
+    q: "What is BMR?",
+    a: "Basal Metabolic Rate (BMR) represents the minimum amount of energy (measured in calories) your body requires to maintain basic life-sustaining functions such as breathing, blood circulation, and cell production while at complete rest."
+  },
+  {
+    q: "What is the difference between BMR and TDEE?",
+    a: "BMR is your baseline calorie burn at rest, while TDEE (Total Daily Energy Expenditure) is the total number of calories you burn in 24 hours including all physical activity. TDEE is calculated by multiplying your BMR by an activity factor."
+  },
+  {
+    q: "How is BMR calculated?",
+    a: "We use the Mifflin-St Jeor equation, which is currently considered the most accurate formula for estimating BMR. It takes into account your weight, height, age, and biological sex to provide a precise baseline."
+  },
+  {
+    q: "Is BMR accurate?",
+    a: "While the Mifflin-St Jeor formula is highly accurate for most people, BMR can be influenced by factors like lean muscle mass, genetics, and hormonal health. It serves as an excellent estimation for planning your nutrition and fitness goals."
+  }
+];
+
+export const calorieFaqs = [
+  {
+    q: "How many calories should I eat per day?",
+    a: "Your daily calorie needs depend on your age, sex, weight, height, and activity level. Our calculator estimates your TDEE (Total Daily Energy Expenditure) to give you a personalized baseline for maintaining your current weight."
+  },
+  {
+    q: "How many calories do I need for weight loss?",
+    a: "To lose weight, you generally need to consume fewer calories than you burn. A safe and sustainable approach is a deficit of 250-500 calories per day from your maintenance level, which typically results in a loss of 0.5 to 1 pound per week."
+  },
+  {
+    q: "How many calories do I need to gain weight?",
+    a: "To gain weight, particularly lean muscle mass, you should consume more calories than your maintenance level. A surplus of 250-500 calories per day, combined with resistance training, is often recommended for healthy weight gain."
+  },
+  {
+    q: "Are calorie calculators accurate?",
+    a: "Calorie calculators provide a scientifically-backed estimate based on established formulas. However, individual metabolic rates can vary. It is best to use these results as a starting point and adjust based on your actual progress and energy levels."
+  }
+];
+
+export const waterFaqs = [
+  {
+    q: "How much water should I drink daily?",
+    a: "A common guideline is the '8x8 rule' (eight 8-ounce glasses), but actual needs vary. Our calculator uses your weight and activity level to provide a more personalized recommendation, as larger bodies and active individuals require more hydration."
+  },
+  {
+    q: "Does exercise affect water intake?",
+    a: "Yes, physical activity increases water loss through sweat. You should aim to drink an additional 12-20 ounces of water for every hour of moderate to intense exercise to maintain proper hydration and performance."
+  },
+  {
+    q: "Does hot weather increase water needs?",
+    a: "Absolutely. In hot or humid conditions, your body perspires more to regulate temperature. It is important to increase your water intake beyond the baseline recommendation when you are exposed to high temperatures for extended periods."
+  },
+  {
+    q: "Can drinking too much water be harmful?",
+    a: "While rare, excessive water intake can lead to hyponatremia, where sodium levels in the blood become dangerously low. This usually only happens during extreme endurance events or very rapid consumption. Drinking when thirsty is generally a safe guide."
+  }
+];
+
+export const idealWeightFaqs = [
+  {
+    q: "How is ideal weight calculated?",
+    a: "Ideal weight is typically estimated using formulas like the Devine, Miller, or Robinson equations. These formulas provide a target weight range based primarily on your height and sex, aiming for a balance associated with lower health risks."
+  },
+  {
+    q: "Is ideal weight accurate?",
+    a: "Ideal weight formulas are useful benchmarks but have limitations. They do not account for muscle mass, bone density, or body composition. A person with high muscle mass might be perfectly healthy while weighing more than their 'ideal' weight."
+  },
+  {
+    q: "Does age affect ideal weight?",
+    a: "Most standard ideal weight formulas do not strictly change with age for adults. However, some health experts suggest that for older adults, a slightly higher weight (within the healthy BMI range) can provide protection against bone density loss and illness."
+  },
+  {
+    q: "What is a healthy weight range?",
+    a: "A healthy weight is most commonly defined by a BMI (Body Mass Index) between 18.5 and 24.9. Our calculator provides both a specific 'ideal' point and a broader healthy range to give you a more flexible and realistic goal."
+  }
+];
+
 export const faqData = [
   {
     q: "Does the correct BMI change with age?",

@@ -2,14 +2,14 @@
 import Layout from '../layouts/Layout.astro';
 import { Navbar } from '../components/Navbar';
 import Footer from '../components/Footer';
-import { BMRCalculatorCardV2 } from '../components/calculator/BMRCalculatorCardV2';
+import { IdealWeightCalculatorCard } from '../components/calculator/IdealWeightCalculatorCard';
 import { FAQAccordion } from '../components/FAQAccordion';
-import { bmrFaqs } from '../data/faq';
+import { idealWeightFaqs } from '../data/faq';
 
 const faqSchema = {
 	"@type": "FAQPage",
 	"@id": `${Astro.url.href}#faq`,
-	"mainEntity": bmrFaqs.map(faq => ({
+	"mainEntity": idealWeightFaqs.map(faq => ({
 		"@type": "Question",
 		"name": faq.q,
 		"acceptedAnswer": {
@@ -21,8 +21,8 @@ const faqSchema = {
 ---
 
 <Layout 
-  title="BMR Calculator - Calculate Basal Metabolic Rate | QuickBMI"
-  description="Calculate your Basal Metabolic Rate (BMR) and Total Daily Energy Expenditure (TDEE) free online. Uses the Mifflin-St Jeor formula for accurate results."
+  title="Ideal Weight Calculator – Healthy Weight Range by Height"
+  description="Find your ideal weight and healthy weight range using your height, gender, and body measurements."
   extraSchema={[faqSchema]}
 >
   <Navbar client:load />
@@ -31,26 +31,26 @@ const faqSchema = {
     <section class="relative pt-16 pb-16 sm:pt-24 sm:pb-20 lg:pb-28 px-4 sm:px-6 flex flex-col items-center bg-canvas">
       <div class="max-w-4xl mx-auto text-center space-y-4 sm:space-y-6 relative z-10">
         <h1 class="text-4xl sm:text-6xl lg:text-7xl font-black tracking-[-0.06em] leading-[0.9] text-ink">
-          <span class="tracking-normal bg-linear-to-r from-status-healthy to-status-under bg-clip-text text-transparent dark:bg-none dark:text-ink">BMR</span> Calculator
+          <span class="tracking-normal bg-linear-to-r from-status-healthy to-status-under bg-clip-text text-transparent dark:bg-none dark:text-ink">Ideal</span> Weight
         </h1>
         <p class="text-base sm:text-xl text-body max-w-2xl mx-auto leading-tight font-medium opacity-70">
-          Find your Basal Metabolic Rate and daily calorie needs using the scientifically validated Mifflin-St Jeor formula.
+          Find your ideal weight and healthy weight range based on your unique profile and the scientifically validated Devine formula.
         </p>
       </div>
     </section>
 
     <section id="calculator" class="relative z-20 px-4 sm:px-6 pt-4 sm:pt-8 lg:pt-10 mb-12 sm:mb-16 lg:mb-24 pb-16 sm:pb-24">
-      <BMRCalculatorCardV2 client:load />
+      <IdealWeightCalculatorCard client:load />
     </section>
 
     <section class="py-12 sm:py-16 px-6 bg-canvas-soft border-y border-hairline">
       <div class="max-w-4xl mx-auto space-y-6">
-        <h2 class="text-3xl sm:text-4xl font-black tracking-tighter text-ink">What is BMR?</h2>
+        <h2 class="text-3xl sm:text-4xl font-black tracking-tighter text-ink">Understanding Ideal Weight</h2>
         <p class="text-body leading-relaxed font-medium opacity-80 text-base">
-          Your <strong>Basal Metabolic Rate (BMR)</strong> is the number of calories your body needs to maintain basic physiological functions — breathing, circulation, and cell production — while at complete rest. A BMR calculator helps you understand your baseline energy needs before any physical activity is considered.
+          Ideal weight is a benchmark used to assess what a healthy weight might be for an individual based on their height and gender. While there are several formulas used to calculate this, the <strong>Devine Formula</strong> is one of the most widely recognized in medical and clinical settings.
         </p>
         <p class="text-body leading-relaxed font-medium opacity-80 text-base">
-          The <strong>Mifflin-St Jeor equation</strong> is the most accurate BMR formula available today, recommended by the American Dietetic Association. Combined with your activity level, it gives your Total Daily Energy Expenditure (TDEE) — the total calories you burn per day.
+          It's important to remember that "ideal weight" is an estimate and doesn't account for body composition, such as muscle mass versus fat. Therefore, we also provide a <strong>Healthy Weight Range</strong> based on a standard BMI of 18.5 to 24.9, which offers a broader perspective on your health.
         </p>
       </div>
     </section>
@@ -58,19 +58,21 @@ const faqSchema = {
     <section id="faq" class="py-16 sm:py-20 lg:py-28 px-6 bg-canvas relative z-10 border-b border-hairline">
       <div class="max-w-4xl mx-auto">
         <div class="text-center mb-12 lg:mb-14">
-          <h2 class="text-4xl sm:text-6xl font-black tracking-tighter mb-6 sm:mb-8 text-ink leading-none">Questions about BMR.</h2>
-          <p class="text-lg sm:text-xl text-body max-w-2xl mx-auto tracking-tight font-medium opacity-60">Everything you need to know about Basal Metabolic Rate and energy expenditure.</p>
+          <h2 class="text-4xl sm:text-6xl font-black tracking-tighter mb-6 sm:mb-8 text-ink leading-none">Your ideal weight.</h2>
+          <p class="text-lg sm:text-xl text-body max-w-2xl mx-auto tracking-tight font-medium opacity-60">Common questions about ideal weight formulas and healthy weight ranges.</p>
         </div>
         
-        <FAQAccordion client:visible faqs={bmrFaqs} />
+        <FAQAccordion client:visible faqs={idealWeightFaqs} />
       </div>
     </section>
 
     <section class="py-12 px-6 bg-canvas border-b border-hairline">
       <div class="max-w-4xl mx-auto text-center">
         <p class="text-sm text-mute font-medium">
-          Looking for your Body Mass Index? Try our 
+          Need to check your BMI? Try our 
           <a href="/" class="text-ink font-bold underline underline-offset-2 hover:text-status-healthy transition-colors">BMI Calculator</a>
+          or calculate your 
+          <a href="/calorie-calculator" class="text-ink font-bold underline underline-offset-2 hover:text-status-healthy transition-colors">Daily Calories</a>.
         </p>
       </div>
     </section>

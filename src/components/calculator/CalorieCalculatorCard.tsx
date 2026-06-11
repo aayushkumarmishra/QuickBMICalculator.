@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { RotateCcw, Download, Check, Activity, ChevronDown, Target, Info, AlertCircle } from 'lucide-react';
+import { RotateCcw, Download, Check, Activity, ChevronDown, Target, AlertCircle } from 'lucide-react';
 import { InputGroup } from './InputGroup';
 import { BrandLogo } from '../BrandLogo';
 
@@ -19,28 +19,28 @@ const ACTIVITY_LEVELS = [
 const GOAL_DATA = {
   loss: {
     recommendations: [
-      'Aim for a 500 kcal daily deficit',
-      'Prioritize protein (1.8g - 2.2g/kg)',
-      'Focus on high-volume, low-calorie foods',
-      'Mix strength training with cardio'
+      'Mild calorie deficit (approx. 500 kcal)',
+      'Protein priority (1.8g - 2.2g/kg)',
+      'Avoid liquid calories and sugary drinks',
+      'Focus on high-volume, low-calorie foods'
     ],
     activity: { walking: '45–60 min/day', steps: '10,000–12,000', progress: 95 }
   },
   maintenance: {
     recommendations: [
-      'Eat at your TDEE calorie level',
-      'Maintain protein intake (1.6g/kg)',
-      'Balance your strength and cardio work',
-      'Monitor weight weekly for stability'
+      'Balanced intake matching your TDEE',
+      'Consistent daily physical activity',
+      'Maintain routine and monitor weight',
+      'Balance your strength and cardio work'
     ],
     activity: { walking: '30–45 min/day', steps: '8,000–10,000', progress: 75 }
   },
   gain: {
     recommendations: [
-      'Surplus of 250–500 kcal daily',
-      'Focus on progressive weight lifting',
-      'High carbohydrate intake for fuel',
-      'Limit intense cardio sessions'
+      'Calorie surplus (approx. 250-500 kcal)',
+      'Strength training focus for muscle growth',
+      'Protein focus (1.6g - 2.0g/kg)',
+      'High carbohydrate intake for fuel'
     ],
     activity: { walking: '15–25 min/day', steps: '5,000–7,000', progress: 45 }
   },
@@ -58,7 +58,7 @@ const GOAL_DATA = {
 const LBS_TO_KG = 0.45359237;
 const IN_TO_CM = 2.54;
 
-export const BMRCalculatorCardV2: React.FC = () => {
+export const CalorieCalculatorCard: React.FC = () => {
   const [system, setSystem] = useState<UnitSystem>('metric');
   const [heightUnitOther, setHeightUnitOther] = useState<'cm' | 'm' | 'ft+in' | 'in'>('cm');
   const [weightUnitOther, setWeightUnitOther] = useState<'kg' | 'lb'>('kg');
@@ -88,13 +88,13 @@ export const BMRCalculatorCardV2: React.FC = () => {
     setGoal(''); setActivity(''); setName(''); setNameError('');
   };
 
-  const { bmr, tdee, waterIntake, caloriesByGoal, bmrLevel, recommendations, suggestedActivity } = useMemo(() => {
+  const { bmr, tdee, waterIntake, caloriesByGoal, targetCalories, recommendations, suggestedActivity } = useMemo(() => {
     const defaultResult = { 
       bmr: 0, 
       tdee: 0, 
       waterIntake: 0, 
       caloriesByGoal: { loss: 0, maintenance: 0, gain: 0 },
-      bmrLevel: 'Normal',
+      targetCalories: 0,
       recommendations: GOAL_DATA.default.recommendations,
       suggestedActivity: GOAL_DATA.default.activity
     };
@@ -138,26 +138,22 @@ export const BMRCalculatorCardV2: React.FC = () => {
       gain: tdeeValue + 500
     };
 
-    let level = 'Normal';
-    if (bmrValue < 1500) level = 'Low';
-    else if (bmrValue > 3125) level = 'High';
-    else if (bmrValue > 2500) level = 'Active';
-
     const goalInfo = goal ? GOAL_DATA[goal as keyof typeof GOAL_DATA] : GOAL_DATA.default;
+    const target = goal ? cals[goal] : tdeeValue;
 
     return { 
       bmr: bmrValue, 
       tdee: tdeeValue, 
       waterIntake: water, 
       caloriesByGoal: cals,
-      bmrLevel: level,
+      targetCalories: target,
       recommendations: goalInfo.recommendations,
       suggestedActivity: goalInfo.activity
     };
   }, [system, weight, height, feet, inches, age, gender, activity, goal, heightUnitOther, weightUnitOther]);
 
   const handleExport = async () => {
-    if (bmr <= 0) return;
+    if (tdee <= 0) return;
     const trimmedName = name.trim();
     if (!trimmedName || trimmedName.length < 2) {
       setNameError('Min 2 characters required for export');
@@ -189,7 +185,7 @@ export const BMRCalculatorCardV2: React.FC = () => {
       pdf.text('QuickBMI', margin, 22);
       pdf.setFontSize(10);
       pdf.setFont('helvetica', 'normal');
-      pdf.text('Basal Metabolic Rate Analysis', margin, 28);
+      pdf.text('Calorie Analysis & Weight Goal Report', margin, 28);
       pdf.setFontSize(10);
       pdf.setFont('helvetica', 'bold');
       pdf.text(name.toUpperCase(), margin, 35);
@@ -217,6 +213,7 @@ export const BMRCalculatorCardV2: React.FC = () => {
       pdf.setFontSize(7); pdf.setTextColor(100, 100, 100); pdf.setFont('helvetica', 'normal');
       pdf.text('HEIGHT', margin + 8, y + 6);
       pdf.text('WEIGHT', margin + 8 + colW, y + 6);
+      pdf.text('GOAL', margin + 8 + (colW * 2), y + 6);
       let hStr = '';
       let wStr = '';
       if (system === 'us') { hStr = `${feet}ft ${inches}in`; wStr = `${weight} lb`; }
@@ -225,59 +222,91 @@ export const BMRCalculatorCardV2: React.FC = () => {
       pdf.setFontSize(9); pdf.setTextColor(23, 23, 23); pdf.setFont('helvetica', 'bold');
       pdf.text(hStr || '--', margin + 8, y + 14);
       pdf.text(wStr || '--', margin + 8 + colW, y + 14);
+      pdf.text((goal || 'maintenance').toUpperCase(), margin + 8 + (colW * 2), y + 14);
       y += 20;
 
-      // 3. BMR RESULT
-      y = drawHeader('BMR Analysis', y);
+      // 3. MAIN RESULT
+      y = drawHeader('Calorie Target', y);
       pdf.setDrawColor(235, 235, 235);
       pdf.setFillColor(255, 255, 255);
       pdf.roundedRect(margin, y, pageWidth - (margin * 2), 22, 2, 2, 'D');
       pdf.setTextColor(100, 100, 100); pdf.setFontSize(9); pdf.setFont('helvetica', 'normal');
-      pdf.text('BASAL METABOLIC RATE', margin + 8, y + 8);
-      pdf.text('TOTAL DAILY EXPENDITURE', margin + 90, y + 8);
+      pdf.text('TARGET DAILY CALORIES', margin + 8, y + 8);
+      pdf.text('SELECTED GOAL', margin + 90, y + 8);
       pdf.setTextColor(23, 23, 23); pdf.setFontSize(16); pdf.setFont('helvetica', 'bold');
-      pdf.text(`${Math.round(bmr).toLocaleString()} kcal`, margin + 8, y + 16);
+      pdf.text(`${Math.round(targetCalories).toLocaleString()} kcal`, margin + 8, y + 16);
       pdf.setFontSize(13);
-      pdf.text(`${Math.round(tdee).toLocaleString()} kcal`, margin + 90, y + 16);
+      pdf.text((goal || 'Maintenance').toUpperCase(), margin + 90, y + 16);
       y += 28;
 
-      // 4. BMR BAR
+      // 4. CALORIE VISUAL SPECTRUM (New Surgical Graph)
       const barHeight = 8;
       const barWidth = pageWidth - (margin * 2);
-      pdf.setFillColor(0, 112, 243); pdf.rect(margin, y, barWidth * 0.20, barHeight, 'F');
-      pdf.setFillColor(0, 223, 216); pdf.rect(margin + (barWidth * 0.20), y, barWidth * 0.40, barHeight, 'F');
-      pdf.setFillColor(245, 166, 35); pdf.rect(margin + (barWidth * 0.60), y, barWidth * 0.25, barHeight, 'F');
-      pdf.setFillColor(255, 0, 0); pdf.rect(margin + (barWidth * 0.85), y, barWidth * 0.15, barHeight, 'F');
-      const minBMR = 1000; const maxBMR = 3500;
-      const pct = Math.min(Math.max(((bmr - minBMR) / (maxBMR - minBMR)) * 100, 0), 100);
-      const markerX = margin + (barWidth * (pct / 100));
-      pdf.setDrawColor(23, 23, 23); pdf.setLineWidth(0.6);
+      
+      // Draw Goal Zones
+      // Loss (33%) - Blue-ish
+      pdf.setFillColor(0, 112, 243);
+      pdf.rect(margin, y, barWidth * 0.33, barHeight, 'F');
+      // Maintenance (33%) - Teal/Green
+      pdf.setFillColor(0, 223, 216);
+      pdf.rect(margin + (barWidth * 0.33), y, barWidth * 0.33, barHeight, 'F');
+      // Gain (34%) - Amber/Orange
+      pdf.setFillColor(245, 166, 35);
+      pdf.rect(margin + (barWidth * 0.66), y, barWidth * 0.34, barHeight, 'F');
+
+      // Calculate Marker Position based on goal
+      let markerPct = 0.5; // Default maintenance
+      if (goal === 'loss') markerPct = 0.165;
+      else if (goal === 'gain') markerPct = 0.835;
+      const markerX = margin + (barWidth * markerPct);
+
+      // Draw Marker
+      pdf.setDrawColor(23, 23, 23);
+      pdf.setLineWidth(0.6);
       pdf.line(markerX, y - 2, markerX, y + barHeight + 2);
-      pdf.setFillColor(23, 23, 23); pdf.circle(markerX, y - 3, 1.2, 'FD');
-      pdf.setFontSize(7); pdf.setTextColor(150, 150, 150);
-      pdf.text('Low', margin, y + barHeight + 5);
-      pdf.text('Normal', margin + (barWidth * 0.20), y + barHeight + 5);
-      pdf.text('Active', margin + (barWidth * 0.60), y + barHeight + 5);
-      pdf.text('High', margin + (barWidth * 0.85), y + barHeight + 5);
-      y += barHeight + 20;
+      pdf.setFillColor(23, 23, 23);
+      pdf.circle(markerX, y - 3, 1.2, 'FD');
+
+      // Labels
+      pdf.setFontSize(7);
+      pdf.setTextColor(150, 150, 150);
+      pdf.text('LOSS', margin, y + barHeight + 5);
+      pdf.text('MAINTENANCE', margin + (barWidth * 0.33), y + barHeight + 5);
+      pdf.text('GAIN', margin + (barWidth * 0.66), y + barHeight + 5);
+      
+      y += barHeight + 15;
+
+      // 5. SUPPORTING METRICS
+      y = drawHeader('Supporting Metrics', y);
+      pdf.setFillColor(248, 250, 252);
+      pdf.roundedRect(margin, y, pageWidth - (margin * 2), 20, 2, 2, 'F');
+      const supportCol = (pageWidth - (margin * 2)) / 2;
+      pdf.setFontSize(7); pdf.setTextColor(100, 100, 100);
+      pdf.text('BMR (BASAL METABOLIC RATE)', margin + 8, y + 6);
+      pdf.text('TDEE (TOTAL DAILY EXPENDITURE)', margin + 8 + supportCol, y + 6);
+      pdf.setFontSize(9); pdf.setTextColor(23, 23, 23); pdf.setFont('helvetica', 'bold');
+      pdf.text(`${Math.round(bmr).toLocaleString()} kcal`, margin + 8, y + 14);
+      pdf.text(`${Math.round(tdee).toLocaleString()} kcal`, margin + 8 + supportCol, y + 14);
+      y += 26;
 
       // 5. CALORIE PLAN
       y = drawHeader('Daily Calorie Goals', y);
-      pdf.setFillColor(248, 250, 252);
-      pdf.roundedRect(margin, y, pageWidth - (margin * 2), 20, 2, 2, 'F');
+      pdf.setDrawColor(240, 240, 240);
+      pdf.setFillColor(252, 252, 252);
+      pdf.roundedRect(margin, y, pageWidth - (margin * 2), 20, 2, 2, 'FD');
       const calCol = (pageWidth - (margin * 2)) / 3;
       pdf.setFontSize(7); pdf.setTextColor(100, 100, 100);
       pdf.text('FAT LOSS', margin + 8, y + 6);
       pdf.text('MAINTENANCE', margin + 8 + calCol, y + 6);
-      pdf.text('WEIGHT GAIN', margin + 8 + (colW * 2), y + 6);
+      pdf.text('WEIGHT GAIN', margin + 8 + (calCol * 2), y + 6);
       pdf.setFontSize(9); pdf.setTextColor(23, 23, 23); pdf.setFont('helvetica', 'bold');
       pdf.text(`${Math.round(caloriesByGoal.loss).toLocaleString()} kcal`, margin + 8, y + 14);
       pdf.text(`${Math.round(caloriesByGoal.maintenance).toLocaleString()} kcal`, margin + 8 + calCol, y + 14);
-      pdf.text(`${Math.round(caloriesByGoal.gain).toLocaleString()} kcal`, margin + 8 + (colW * 2), y + 14);
+      pdf.text(`${Math.round(caloriesByGoal.gain).toLocaleString()} kcal`, margin + 8 + (calCol * 2), y + 14);
       y += 30;
 
       // 6. GUIDANCE
-      y = drawHeader('Personalized Guidance', y);
+      y = drawHeader('Activity & Hydration', y);
       pdf.setDrawColor(240, 240, 240);
       pdf.setFillColor(252, 252, 252);
       pdf.roundedRect(margin, y, pageWidth - (margin * 2), 20, 2, 2, 'FD');
@@ -293,7 +322,7 @@ export const BMRCalculatorCardV2: React.FC = () => {
       y += 28;
 
       pdf.setFontSize(8); pdf.setFont('helvetica', 'bold'); pdf.setTextColor(150, 150, 150);
-      pdf.text('RECOMMENDATIONS', margin, y);
+      pdf.text('NUTRITION RECOMMENDATIONS', margin, y);
       y += 4;
       recommendations.forEach((rec, i) => {
         const recY = y + (i * 4.5);
@@ -305,31 +334,32 @@ export const BMRCalculatorCardV2: React.FC = () => {
         pdf.text(rec, margin + 5, recY + 3.5);
       });
 
-      // 6. FOOTER & DISCLAIMER (Surgical Overlap Fix)
+      // 7. FOOTER & DISCLAIMER (Surgical Overlap Fix — Calorie Specific)
       const pageHeight = pdf.internal.pageSize.getHeight();
       pdf.setFontSize(7);
       pdf.setTextColor(100, 100, 100);
-      const disclaimer = "DISCLAIMER: This BMR report is for informational purposes only. Results are estimates based on the Mifflin-St Jeor equation. Consult a healthcare professional for medical advice.";
+      const disclaimer = "DISCLAIMER: This Calorie report is for informational purposes only. Results are estimates based on the Mifflin-St Jeor equation. Consult a healthcare professional for medical advice.";
       const splitDisclaimer = pdf.splitTextToSize(disclaimer, pageWidth - (margin * 2));
-      const disclaimerHeight = (splitDisclaimer.length * 3.5);
-      const footerHeight = 10;
-      const totalNeeded = disclaimerHeight + footerHeight;
+      const disclaimerHeight = (splitDisclaimer.length * 4); // Increased line height slightly
+      const footerHeight = 12; // Increased footer reserved space
+      const totalNeeded = disclaimerHeight + footerHeight + 10; // Added safety buffer
 
       if (y + totalNeeded > pageHeight - 15) {
         pdf.addPage();
-        y = 20;
+        y = 25; // Fresh page start with generous top margin
       } else {
-        y = Math.max(y + 10, pageHeight - totalNeeded - 15);
+        // Force disclaimer to bottom but with enough padding from content
+        y = Math.max(y + 15, pageHeight - totalNeeded - 10);
       }
 
       pdf.text(splitDisclaimer, margin, y);
-      const footerY = y + disclaimerHeight + 2;
+      const footerY = y + disclaimerHeight + 4;
       pdf.setFont('helvetica', 'bold');
       pdf.text('quickbmicalculator.com', margin, footerY);
 
       const dateStr = new Date().toLocaleDateString('en-GB').split('/').join('-');
       const safeName = name.trim().replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-]/g, '');
-      pdf.save(`BMR-Report-${safeName}-${dateStr}.pdf`);
+      pdf.save(`Calorie-Report-${safeName}-${dateStr}.pdf`);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (error) {
@@ -341,8 +371,8 @@ export const BMRCalculatorCardV2: React.FC = () => {
     }
   };
 
-  const isFaded = bmr <= 0;
-  const statusColor = bmrLevel === 'Low' ? 'text-status-under' : bmrLevel === 'Normal' ? 'text-status-healthy' : bmrLevel === 'Active' ? 'text-status-over' : 'text-status-obese';
+  const isFaded = targetCalories <= 0;
+  const statusColor = goal === 'loss' ? 'text-red-500' : goal === 'gain' ? 'text-green-500' : 'text-status-healthy';
 
   const numericAge = parseInt(age || '0');
   const isPediatric = numericAge >= 18 && numericAge < 20;
@@ -362,10 +392,10 @@ export const BMRCalculatorCardV2: React.FC = () => {
               <div className="flex items-center gap-4">
                 <BrandLogo className="w-12 h-12" variant="ink" />
                 <div>
-                  <h2 className="text-2xl font-black tracking-tighter text-ink leading-none mb-2">BMR Engine</h2>
+                  <h2 className="text-2xl font-black tracking-tighter text-ink leading-none mb-2">Calorie Engine</h2>
                   <div className="flex items-center gap-2 text-[10px] font-mono font-bold text-mute uppercase tracking-widest">
                     <span className="w-2 h-2 rounded-full bg-status-healthy animate-pulse"></span>
-                    Mifflin-St Jeor Formula
+                    Goal-Based Precision
                   </div>
                 </div>
               </div>
@@ -392,11 +422,11 @@ export const BMRCalculatorCardV2: React.FC = () => {
 
               <div className="grid grid-cols-2 gap-6 lg:gap-8">
                 <div className="flex flex-col gap-1.5 col-span-2">
-                  <label className="text-[10px] font-mono font-bold text-mute uppercase tracking-widest">Name</label>
+                  <label className="text-[10px] font-mono font-bold text-mute uppercase tracking-widest">Name (PDF Export)</label>
                   <div className="relative">
                     <input
                       type="text"
-                      id="bmr-name"
+                      id="calorie-name"
                       value={name}
                       onChange={(e) => {
                         const val = e.target.value
@@ -415,7 +445,7 @@ export const BMRCalculatorCardV2: React.FC = () => {
                   {nameError && <p className="text-red-500 text-[10px] font-mono font-bold">{nameError}</p>}
                 </div>
 
-                <InputGroup id="bmr-age" label="Age" value={age} onChange={setAge} unit="YRS" placeholder="25" min={18} max={120} step="1" />
+                <InputGroup id="calorie-age" label="Age" value={age} onChange={setAge} unit="YRS" placeholder="25" min={18} max={120} step="1" />
                 <div className="flex flex-col gap-3">
                   <span className="text-[10px] font-mono font-bold text-mute uppercase tracking-[0.3em] ml-1">Gender</span>
                   <div className="flex p-1 bg-canvas-soft border border-hairline rounded-ui h-14 gap-1">
@@ -549,13 +579,13 @@ export const BMRCalculatorCardV2: React.FC = () => {
                   <Activity className="w-6 h-6" />
                 </div>
                 <div>
-                  <h2 className="text-2xl font-black tracking-tighter text-ink leading-none mb-2">Your Results</h2>
-                  <p className="text-[10px] font-mono font-bold text-mute uppercase tracking-widest">Real-time Feedback</p>
+                  <h2 className="text-2xl font-black tracking-tighter text-ink leading-none mb-2">Daily Intake</h2>
+                  <p className="text-[10px] font-mono font-bold text-mute uppercase tracking-widest">Selected Goal Calories</p>
                 </div>
               </div>
               <button
                 onClick={handleExport}
-                disabled={isExporting || bmr <= 0 || name.trim().length < 2}
+                disabled={isExporting || tdee <= 0 || name.trim().length < 2}
                 className="px-5 py-3 bg-canvas border border-hairline hover:bg-canvas-soft rounded-xl transition-all text-ink font-bold text-xs uppercase tracking-widest shadow-premium-md flex items-center gap-2 group active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                 title="Export Results to PDF"
               >
@@ -570,21 +600,21 @@ export const BMRCalculatorCardV2: React.FC = () => {
             </div>
 
             <div className="space-y-8 lg:space-y-10">
-              {/* BMR GAUGE */}
-              <div id="bmr-gauge-export" className="flex flex-col gap-8 py-8 px-6 sm:py-10 sm:px-8 bg-canvas border border-hairline rounded-marketing shadow-premium-lg relative overflow-hidden">
+              {/* HERO RESULT: TARGET CALORIES */}
+              <div id="calorie-hero-export" className="flex flex-col gap-8 py-8 px-6 sm:py-10 sm:px-8 bg-canvas border border-hairline rounded-marketing shadow-premium-lg relative overflow-hidden">
                 <div className={`absolute top-0 right-0 w-64 h-64 opacity-5 blur-[100px] rounded-full -mr-32 -mt-32 transition-colors duration-1000 ${!isFaded ? statusColor.replace('text-', 'bg-') : 'bg-mute'}`}></div>
                 
                 <div className="flex flex-col sm:flex-row justify-between items-center gap-6 sm:gap-8 relative z-10">
                   <div className="flex flex-col items-center sm:items-start text-center sm:text-left">
-                    <span className="text-[10px] sm:text-[11px] font-mono font-bold text-mute uppercase tracking-[0.3em] mb-2">Metabolic Rate</span>
+                    <span className="text-[10px] sm:text-[11px] font-mono font-bold text-mute uppercase tracking-[0.3em] mb-2">Target Daily Calories</span>
                     <div className="flex items-baseline gap-2 sm:gap-3">
                       <motion.span 
                         className="text-5xl xs:text-6xl sm:text-8xl font-black tracking-[-0.08em] text-ink"
                         initial={false}
-                        animate={{ scale: bmr > 0 ? [1, 1.02, 1] : 1 }}
+                        animate={{ scale: targetCalories > 0 ? [1, 1.02, 1] : 1 }}
                         transition={{ duration: 0.4 }}
                       >
-                        {bmr > 0 ? Math.round(bmr).toLocaleString() : '--'}
+                        {targetCalories > 0 ? Math.round(targetCalories).toLocaleString() : '--'}
                       </motion.span>
                       <span className="text-lg sm:text-xl font-bold text-mute/60 tracking-tighter">kcal</span>
                     </div>
@@ -593,11 +623,11 @@ export const BMRCalculatorCardV2: React.FC = () => {
                   <div className="h-16 w-px bg-hairline hidden sm:block"></div>
 
                   <div className="text-center sm:text-right">
-                    <span className="text-[10px] sm:text-[11px] font-mono font-bold text-mute uppercase tracking-[0.3em] mb-2 sm:mb-3 block">BMR Status</span>
+                    <span className="text-[10px] sm:text-[11px] font-mono font-bold text-mute uppercase tracking-[0.3em] mb-2 sm:mb-3 block">Goal Strategy</span>
                     <div className={`text-xl xs:text-2xl sm:text-3xl font-black tracking-tight ${statusColor}`}>
-                      {isFaded ? 'Awaiting Data' : bmrLevel}
+                      {isFaded ? 'Awaiting Data' : (goal || 'Maintenance').charAt(0).toUpperCase() + (goal || 'Maintenance').slice(1)}
                     </div>
-                    {bmr > 0 && (
+                    {targetCalories > 0 && (
                       <div className="mt-2 inline-flex items-center gap-2 px-3 py-1 rounded-full bg-canvas border border-hairline shadow-premium-sm">
                          <div className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full ${statusColor.replace('text-', 'bg-')} animate-pulse`}></div>
                          <span className="text-[9px] sm:text-[10px] font-mono font-bold uppercase text-ink">Live Calculation</span>
@@ -605,225 +635,153 @@ export const BMRCalculatorCardV2: React.FC = () => {
                     )}
                   </div>
                 </div>
+              </div>
 
-                <div className="relative pt-8 pb-4">
-                  <div className="flex h-3 sm:h-4 w-full rounded-full overflow-hidden bg-hairline p-1">
-                    <div className="bg-status-under h-full border-r-2 border-canvas rounded-sm opacity-80" style={{ width: '20%' }}></div>
-                    <div className="bg-status-healthy h-full border-r-2 border-canvas rounded-sm opacity-80" style={{ width: '40%' }}></div>
-                    <div className="bg-status-over h-full border-r-2 border-canvas rounded-sm opacity-80" style={{ width: '25%' }}></div>
-                    <div className="bg-status-obese h-full rounded-sm opacity-80" style={{ width: '15%' }}></div>
+              {/* SUPPORTING METRICS */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-5">
+                <div className="card glass border-hairline p-6 sm:p-8 flex flex-col justify-between min-h-[140px] sm:min-h-[160px] group hover:border-hairline-strong transition-all">
+                  <div className="flex justify-between items-start mb-4 sm:mb-6">
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-ink text-canvas flex items-center justify-center shadow-premium-md group-hover:scale-110 transition-transform">
+                      <Activity className="w-4 h-4 sm:w-5 sm:h-5" />
+                    </div>
+                    <div className="text-[9px] sm:text-[10px] font-mono font-bold text-mute uppercase tracking-[0.3em] bg-canvas-soft px-2 sm:px-3 py-1 sm:py-1.5 rounded-full border border-hairline">BMR</div>
                   </div>
-                  {!isFaded && (() => {
-                    const minBMR = 1000; const maxBMR = 3500;
-                    const pct = Math.min(Math.max(((bmr - minBMR) / (maxBMR - minBMR)) * 100, 0), 100);
-                    return (
-                      <motion.div 
-                        className="absolute top-0 bottom-0 flex flex-col items-center -ml-px pointer-events-none z-20"
-                        initial={{ left: '0%' }}
-                        animate={{ left: `${pct}%` }}
-                        transition={{ type: 'spring', stiffness: 80, damping: 15 }}
-                      >
-                        <div className="h-[calc(100%-8px)] flex flex-col items-center">
-                          <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-canvas border-2 border-ink shadow-premium-md flex items-center justify-center mb-1">
-                            <div className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full ${statusColor.replace('text-', 'bg-')} animate-pulse`}></div>
-                          </div>
-                          <div className="w-1 h-full bg-ink/20" />
-                        </div>
-                      </motion.div>
-                    );
-                  })()}
-                  <div className="grid grid-cols-4 mt-6 gap-1 sm:gap-2">
-                    {[
-                      { label: 'Low', range: '< 1500' },
-                      { label: 'Normal', range: '1500 - 2500' },
-                      { label: 'Active', range: '2500 - 3125' },
-                      { label: 'High', range: '> 3125' }
-                    ].map((zone, i) => (
-                      <div key={i} className="flex flex-col items-center sm:items-start text-center sm:text-left overflow-hidden">
-                        <span className="text-[7px] sm:text-[9px] font-mono font-bold text-ink uppercase tracking-widest mb-1 leading-tight">{zone.label}</span>
-                        <span className="text-[6px] sm:text-[8px] font-mono font-bold text-body leading-tight">{zone.range}</span>
-                      </div>
-                    ))}
+                  <div>
+                    <div className="flex items-baseline gap-1.5 sm:gap-2 mb-1">
+                      <span className="text-xl sm:text-2xl font-black tracking-tight text-ink">
+                        {isFaded ? '--' : Math.round(bmr).toLocaleString()}
+                      </span>
+                      <span className="text-[10px] sm:text-xs font-bold text-mute uppercase font-mono tracking-widest">{isFaded ? '' : 'kcal'}</span>
+                    </div>
+                    <p className="text-body text-[9px] sm:text-[10px] font-bold uppercase tracking-wider opacity-60">Basal Metabolic Rate</p>
+                  </div>
+                </div>
+
+                <div className="card glass border-hairline p-6 sm:p-8 flex flex-col justify-between min-h-[140px] sm:min-h-[160px] group hover:border-hairline-strong transition-all">
+                  <div className="flex justify-between items-start mb-4 sm:mb-6">
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-primary/5 text-status-healthy flex items-center justify-center border border-status-healthy/20 group-hover:scale-110 transition-transform">
+                      <Target className="w-4 h-4 sm:w-5 sm:h-5" />
+                    </div>
+                    <div className="text-[9px] sm:text-[10px] font-mono font-bold text-mute uppercase tracking-[0.3em] bg-canvas-soft px-2 sm:px-3 py-1 sm:py-1.5 rounded-full border border-hairline">TDEE</div>
+                  </div>
+                  <div>
+                    <div className="flex items-baseline gap-1.5 sm:gap-2 mb-1">
+                      <span className="text-xl sm:text-2xl font-black tracking-tight text-ink">
+                        {isFaded ? '--' : Math.round(tdee).toLocaleString()}
+                      </span>
+                      <span className="text-[10px] sm:text-xs font-bold text-mute uppercase font-mono tracking-widest">{isFaded ? '' : 'kcal'}</span>
+                    </div>
+                    <p className="text-body text-[9px] sm:text-[10px] font-bold uppercase tracking-wider opacity-60">Total Daily Energy Expenditure</p>
                   </div>
                 </div>
               </div>
 
-              {/* BMR INSIGHTS */}
-              <div className="space-y-6 lg:space-y-8 transition-all duration-700">
-                <AnimatePresence>
-                  {isPediatric && (
-                    <motion.div 
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: 'auto' }}
-                      exit={{ opacity: 0, height: 0 }}
-                      className="overflow-hidden"
-                    >
-                      <div className="card glass border-status-over/20 bg-status-over/5 p-4 sm:p-5 flex gap-4 items-center mb-2">
-                        <AlertCircle className="w-5 h-5 text-status-over shrink-0" />
-                        <div className="text-[11px] sm:text-xs font-medium text-ink/80 leading-relaxed">
-                          <span className="font-bold block mb-0.5 text-ink">BMR for adolescents (under 20) may vary.</span>
-                          Metabolic rates during growth phases are higher. This calculator uses the adult Mifflin-St Jeor formula for estimation.
-                        </div>
+              {/* DAILY CALORIE GOALS */}
+              <div className="card bg-[#1a1a1a] text-white p-6 sm:p-8 relative overflow-hidden shadow-premium-xl border border-white/10 dark:border-white/10">
+                <div className="relative z-10 flex flex-col gap-5 sm:gap-6">
+                  <div className="text-left">
+                    <div className="text-[9px] sm:text-[10px] font-mono font-bold text-white/60 uppercase tracking-[0.4em] mb-4">Daily Calorie Strategy</div>
+                    <div className="grid grid-cols-3 gap-2 sm:gap-4 -mx-2">
+                      <div className={`flex flex-col gap-1 p-2 rounded-ui transition-all duration-300 ${goal === 'maintenance' || !goal ? 'bg-white/10 ring-1 ring-white/20' : 'opacity-60'}`}>
+                        <div className="text-[8px] sm:text-[9px] font-mono font-bold text-white/50 uppercase tracking-widest">Maintain</div>
+                        <div className="text-lg sm:text-2xl font-black tracking-tight text-white">{isFaded ? '--' : Math.round(caloriesByGoal.maintenance).toLocaleString()}</div>
+                        <div className="text-[8px] font-mono text-white/40 uppercase tracking-widest">kcal</div>
                       </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-5">
-                  <div className="card glass border-hairline p-6 sm:p-8 flex flex-col justify-between min-h-[140px] sm:min-h-[160px] group hover:border-hairline-strong transition-all">
-                    <div className="flex justify-between items-start mb-4 sm:mb-6">
-                      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-ink text-canvas flex items-center justify-center shadow-premium-md group-hover:scale-110 transition-transform">
-                        <Activity className="w-4 h-4 sm:w-5 sm:h-5" />
+                      <div className={`flex flex-col gap-1 p-2 rounded-ui transition-all duration-300 ${goal === 'loss' ? 'bg-white/10 ring-1 ring-white/20' : 'opacity-60'}`}>
+                        <div className="text-[8px] sm:text-[9px] font-mono font-bold text-white/50 uppercase tracking-widest">Fat Loss</div>
+                        <div className="text-lg sm:text-2xl font-black tracking-tight text-red-400">{isFaded ? '--' : Math.round(caloriesByGoal.loss).toLocaleString()}</div>
+                        <div className="text-[8px] font-mono text-white/40 uppercase tracking-widest">kcal</div>
                       </div>
-                      <div className="text-[9px] sm:text-[10px] font-mono font-bold text-mute uppercase tracking-[0.3em] bg-canvas-soft px-2 sm:px-3 py-1 sm:py-1.5 rounded-full border border-hairline">Status</div>
-                    </div>
-                    <div>
-                      <h3 className="text-xl sm:text-2xl font-black tracking-tight mb-1 sm:mb-2 text-ink truncate">{isFaded ? 'Awaiting Data' : bmrLevel + ' Metabolism'}</h3>
-                      <p className="text-body text-[10px] sm:text-xs leading-relaxed line-clamp-2 font-medium">
-                        {isFaded ? 'Enter your details to see your personalized metabolic report.' : `Your Basal Metabolic Rate of ${Math.round(bmr).toLocaleString()} kcal is the energy required for basic rest.`}
-                      </p>
+                      <div className={`flex flex-col gap-1 p-2 rounded-ui transition-all duration-300 ${goal === 'gain' ? 'bg-white/10 ring-1 ring-white/20' : 'opacity-60'}`}>
+                        <div className="text-[8px] sm:text-[9px] font-mono font-bold text-white/50 uppercase tracking-widest">Weight Gain</div>
+                        <div className="text-lg sm:text-2xl font-black tracking-tight text-green-400">{isFaded ? '--' : Math.round(caloriesByGoal.gain).toLocaleString()}</div>
+                        <div className="text-[8px] font-mono text-white/40 uppercase tracking-widest">kcal</div>
+                      </div>
                     </div>
                   </div>
+                </div>
+              </div>
 
-                  <div className="card glass border-hairline p-6 sm:p-8 flex flex-col justify-between min-h-[140px] sm:min-h-[160px] group hover:border-hairline-strong transition-all">
-                    <div className="flex justify-between items-start mb-4 sm:mb-6">
-                      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-primary/5 text-status-healthy flex items-center justify-center border border-status-healthy/20 group-hover:scale-110 transition-transform">
-                        <Target className="w-4 h-4 sm:w-5 sm:h-5" />
+              {/* NUTRITION RECOMMENDATIONS */}
+              <AnimatePresence>
+                {!isFaded && (
+                  <motion.div 
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="space-y-6 lg:space-y-8"
+                  >
+                    <div className="card glass border border-status-healthy/30 p-6 sm:p-8">
+                      <div className="flex items-center justify-between mb-4 sm:mb-5">
+                        <div className="text-[9px] sm:text-[10px] font-mono font-bold text-mute uppercase tracking-[0.4em]">
+                          Nutrition Tips
+                        </div>
+                        <span className="text-xs font-black text-status-healthy">✓</span>
                       </div>
-                      <div className="text-[9px] sm:text-[10px] font-mono font-bold text-mute uppercase tracking-[0.3em] bg-canvas-soft px-2 sm:px-3 py-1 sm:py-1.5 rounded-full border border-hairline">TDEE</div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
+                        {recommendations.map((tip, i) => (
+                          <div key={i} className="flex items-start gap-2">
+                            <span className="text-[10px] font-black mt-0.5 shrink-0 text-status-healthy">—</span>
+                            <p className="text-[11px] sm:text-xs font-medium text-ink/80 leading-relaxed">{tip}</p>
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                    <div>
-                      <div className="flex items-baseline gap-1.5 sm:gap-2 mb-1">
-                        <span className="text-xl sm:text-2xl font-black tracking-tight text-ink">
-                          {isFaded ? '--' : Math.round(tdee).toLocaleString()}
+
+                    <div className="card glass border-hairline p-6 sm:p-8">
+                      <div className="text-[9px] sm:text-[10px] font-mono font-bold text-mute uppercase tracking-[0.4em] mb-4 sm:mb-5">
+                        Suggested Activity
+                      </div>
+                      <div className="grid grid-cols-2 gap-4 sm:gap-6 mb-4 sm:mb-5">
+                        <div>
+                          <div className="text-[8px] sm:text-[9px] font-mono font-bold text-mute uppercase tracking-widest mb-1">Walking</div>
+                          <div className="text-base sm:text-lg font-black tracking-tight text-ink">{suggestedActivity.walking}</div>
+                        </div>
+                        <div>
+                          <div className="text-[8px] sm:text-[9px] font-mono font-bold text-mute uppercase tracking-widest mb-1">Steps / Day</div>
+                          <div className="text-base sm:text-lg font-black tracking-tight text-ink">{suggestedActivity.steps}</div>
+                        </div>
+                      </div>
+                      <div className="h-1.5 w-full bg-hairline rounded-full overflow-hidden">
+                        <div 
+                          className="h-full bg-status-healthy rounded-full transition-all duration-1000" 
+                          style={{ width: `${suggestedActivity.progress}%` }} 
+                        />
+                      </div>
+                    </div>
+
+                    <div className="card glass border-hairline p-6 sm:p-8">
+                      <div className="flex items-center justify-between mb-4 sm:mb-5">
+                        <div className="text-[9px] sm:text-[10px] font-mono font-bold text-mute uppercase tracking-[0.4em]">
+                          Daily Water Intake
+                        </div>
+                        <div className="text-[9px] font-mono font-bold text-mute uppercase tracking-widest bg-canvas-soft px-2 py-1 rounded-full border border-hairline">
+                          Weight x 35ml
+                        </div>
+                      </div>
+                      <div className="flex items-baseline gap-2 mb-4 sm:mb-5">
+                        <span className="text-3xl sm:text-4xl font-black tracking-tight text-ink">
+                          {waterIntake.toFixed(1)}
                         </span>
-                        <span className="text-[10px] sm:text-xs font-bold text-mute uppercase font-mono tracking-widest">{isFaded ? '' : 'kcal/day'}</span>
+                        <span className="text-[10px] sm:text-xs font-bold text-mute uppercase font-mono tracking-widest">
+                          L / DAY
+                        </span>
                       </div>
-                      <p className="text-body text-[9px] sm:text-[10px] font-bold uppercase tracking-wider opacity-60">Total Daily Energy Expenditure</p>
-                    </div>
-                  </div>
-                </div>
-
-                {!isFaded && (
-                  <div className="card glass border border-status-healthy/30 p-6 sm:p-8">
-                    <div className="flex items-center justify-between mb-4 sm:mb-5">
-                      <div className="text-[9px] sm:text-[10px] font-mono font-bold text-mute uppercase tracking-[0.4em]">
-                        Recommendations
+                      <div className="h-1.5 w-full bg-hairline rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-status-under rounded-full transition-all duration-1000"
+                          style={{ width: Math.min((waterIntake / 4) * 100, 100) + '%' }}
+                        />
                       </div>
-                      <span className="text-xs font-black text-status-healthy">✓</span>
                     </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
-                      {recommendations.map((tip, i) => (
-                        <div key={i} className="flex items-start gap-2">
-                          <span className="text-[10px] font-black mt-0.5 shrink-0 text-status-healthy">—</span>
-                          <p className="text-[11px] sm:text-xs font-medium text-ink/80 leading-relaxed">{tip}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
+                  </motion.div>
                 )}
+              </AnimatePresence>
 
-                {!isFaded && (
-                  <div className="card glass border-hairline p-6 sm:p-8">
-                    <div className="text-[9px] sm:text-[10px] font-mono font-bold text-mute uppercase tracking-[0.4em] mb-4 sm:mb-5">
-                      Suggested Activity
-                    </div>
-                    <div className="grid grid-cols-2 gap-4 sm:gap-6 mb-4 sm:mb-5">
-                      <div>
-                        <div className="text-[8px] sm:text-[9px] font-mono font-bold text-mute uppercase tracking-widest mb-1">Walking</div>
-                        <div className="text-base sm:text-lg font-black tracking-tight text-ink">{suggestedActivity.walking}</div>
-                      </div>
-                      <div>
-                        <div className="text-[8px] sm:text-[9px] font-mono font-bold text-mute uppercase tracking-widest mb-1">Steps / Day</div>
-                        <div className="text-base sm:text-lg font-black tracking-tight text-ink">{suggestedActivity.steps}</div>
-                      </div>
-                    </div>
-                    <div className="h-1.5 w-full bg-hairline rounded-full overflow-hidden">
-                      <div 
-                        className="h-full bg-status-healthy rounded-full transition-all duration-1000" 
-                        style={{ width: `${suggestedActivity.progress}%` }} 
-                      />
-                    </div>
-                  </div>
-                )}
-
-                {!isFaded && (
-                  <div className="card glass border-hairline p-6 sm:p-8">
-                    <div className="flex items-center justify-between mb-4 sm:mb-5">
-                      <div className="text-[9px] sm:text-[10px] font-mono font-bold text-mute uppercase tracking-[0.4em]">
-                        Daily Water Intake
-                      </div>
-                      <div className="text-[9px] font-mono font-bold text-mute uppercase tracking-widest bg-canvas-soft px-2 py-1 rounded-full border border-hairline">
-                        Weight x 35ml
-                      </div>
-                    </div>
-                    <div className="flex items-baseline gap-2 mb-4 sm:mb-5">
-                      <span className="text-3xl sm:text-4xl font-black tracking-tight text-ink">
-                        {waterIntake.toFixed(1)}
-                      </span>
-                      <span className="text-[10px] sm:text-xs font-bold text-mute uppercase font-mono tracking-widest">
-                        L / DAY
-                      </span>
-                    </div>
-                    <div className="h-1.5 w-full bg-hairline rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-status-under rounded-full transition-all duration-1000"
-                        style={{ width: Math.min((waterIntake / 4) * 100, 100) + '%' }}
-                      />
-                    </div>
-                    <div className="flex justify-between mt-1.5">
-                      <span className="text-[8px] font-mono text-mute">0L</span>
-                      <span className="text-[8px] font-mono text-mute">4L max</span>
-                    </div>
-                  </div>
-                )}
-
-                <motion.div 
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="card bg-[#1a1a1a] text-white p-6 sm:p-8 relative overflow-hidden shadow-premium-xl border border-white/10 dark:border-white/10"
-                >
-                  <div className="relative z-10 flex flex-col gap-5 sm:gap-6">
-                    <div className="text-left">
-                      <div className="text-[9px] sm:text-[10px] font-mono font-bold text-white/60 uppercase tracking-[0.4em] mb-4">Daily Calorie Goals</div>
-                      <div className="grid grid-cols-3 gap-2 sm:gap-4 -mx-2">
-                        <div className={`flex flex-col gap-1 p-2 rounded-ui transition-all duration-300 ${goal === 'maintenance' ? 'bg-white/10 ring-1 ring-white/20' : 'opacity-60'}`}>
-                          <div className="text-[8px] sm:text-[9px] font-mono font-bold text-white/50 uppercase tracking-widest">Maintain</div>
-                          <div className="text-lg sm:text-2xl font-black tracking-tight text-white">{isFaded ? '--' : Math.round(caloriesByGoal.maintenance).toLocaleString()}</div>
-                          <div className="text-[8px] font-mono text-white/40 uppercase tracking-widest">kcal</div>
-                        </div>
-                        <div className={`flex flex-col gap-1 p-2 rounded-ui transition-all duration-300 ${goal === 'loss' ? 'bg-white/10 ring-1 ring-white/20' : 'opacity-60'}`}>
-                          <div className="text-[8px] sm:text-[9px] font-mono font-bold text-white/50 uppercase tracking-widest">Fat Loss</div>
-                          <div className="text-lg sm:text-2xl font-black tracking-tight text-red-400">{isFaded ? '--' : Math.round(caloriesByGoal.loss).toLocaleString()}</div>
-                          <div className="text-[8px] font-mono text-white/40 uppercase tracking-widest">kcal</div>
-                        </div>
-                        <div className={`flex flex-col gap-1 p-2 rounded-ui transition-all duration-300 ${goal === 'gain' ? 'bg-white/10 ring-1 ring-white/20' : 'opacity-60'}`}>
-                          <div className="text-[8px] sm:text-[9px] font-mono font-bold text-white/50 uppercase tracking-widest">Weight Gain</div>
-                          <div className="text-lg sm:text-2xl font-black tracking-tight text-green-400">{isFaded ? '--' : Math.round(caloriesByGoal.gain).toLocaleString()}</div>
-                          <div className="text-[8px] font-mono text-white/40 uppercase tracking-widest">kcal</div>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex justify-center sm:justify-start gap-6 sm:gap-8 pt-5 sm:pt-6 border-t border-white/20">
-                      <div>
-                        <div className="text-[8px] sm:text-[9px] font-mono font-bold text-white/50 uppercase tracking-widest mb-0.5 sm:mb-1">Metabolism</div>
-                        <div className="text-base sm:text-lg font-black tracking-tighter">{isFaded ? '--' : bmrLevel}</div>
-                      </div>
-                      <div className="h-8 sm:h-10 w-px bg-white/20"></div>
-                      <div>
-                        <div className="text-[8px] sm:text-[9px] font-mono font-bold text-white/50 uppercase tracking-widest mb-0.5 sm:mb-1">Water Intake</div>
-                        <div className="text-base sm:text-lg font-black tracking-tighter">{isFaded ? '--' : waterIntake.toFixed(1) + ' L/day'}</div>
-                      </div>
-                    </div>
-                  </div>
-                </motion.div>
-
-                <div className="pt-6 sm:pt-8 border-t border-hairline/50">
-                  <p className="text-[10px] leading-relaxed text-mute font-medium text-center sm:text-left">
-                    <span className="font-bold text-ink/70 uppercase tracking-widest text-[9px] mr-1.5">Medical Disclaimer:</span> 
-                    The BMR results provided by this calculator are estimates based on the Mifflin-St Jeor equation for informational purposes only. Please consult a healthcare professional for medical advice.
-                  </p>
-                </div>
+              <div className="pt-6 sm:pt-8 border-t border-hairline/50">
+                <p className="text-[10px] leading-relaxed text-mute font-medium text-center sm:text-left">
+                  <span className="font-bold text-ink/70 uppercase tracking-widest text-[9px] mr-1.5">Medical Disclaimer:</span> 
+                  The Calorie results provided by this calculator are estimates based on the Mifflin-St Jeor equation for informational purposes only. Please consult a healthcare professional for medical advice.
+                </p>
               </div>
             </div>
           </div>

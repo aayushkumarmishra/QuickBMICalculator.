@@ -28,7 +28,12 @@ const Footer: React.FC = () => {
   ];
 
   const quickLinks = [
+    { name: 'Home', href: '/' },
     { name: 'BMI Calculator', href: '/#calculator' },
+    { name: 'BMR Calculator', href: '/bmr-calculator/' },
+    { name: 'Calorie Calculator', href: '/calorie-calculator/' },
+    { name: 'Water Intake Calculator', href: '/water-intake-calculator/' },
+    { name: 'Ideal Weight Calculator', href: '/ideal-weight-calculator/' },
     { name: 'How it Works', href: '/#how-it-works' },
     { name: 'BMI Categories', href: '/#bmi-categories' },
     { name: 'FAQ', href: '/#faq' },
@@ -81,9 +86,9 @@ const Footer: React.FC = () => {
           </div>
 
           {/* CENTER: Quick Links */}
-          <div className="lg:col-span-3 space-y-6 min-w-0">
+          <div className="lg:col-span-4 space-y-6 min-w-0">
             <h4 className="text-[10px] font-mono font-bold text-mute uppercase tracking-[0.3em]">Quick Links</h4>
-            <ul className="space-y-4">
+            <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4">
               {quickLinks.map((link) => (
                 <li key={link.name}>
                   <a 
@@ -98,7 +103,7 @@ const Footer: React.FC = () => {
           </div>
 
           {/* RIGHT SIDE: Scientific / Legal */}
-          <div className="lg:col-span-4 space-y-6 min-w-0">
+          <div className="lg:col-span-3 space-y-6 min-w-0">
             <h4 className="text-[10px] font-mono font-bold text-mute uppercase tracking-[0.3em]">Scientific & Legal</h4>
             <ul className="space-y-4">
               {legalLinks.map((link) => (

@@ -509,23 +509,31 @@ export const CalculatorCard: React.FC = () => {
 
       y += (tableRows.length * 4.5) + 8; // End of table + gap
 
-      // 7. FOOTER & DISCLAIMER
-      // Ensure we stay on the same page but at the bottom safely
-      y = Math.max(y, 270); 
-      
+      // 7. FOOTER & DISCLAIMER (Surgical Overlap Fix)
+      const pageHeight = pdf.internal.pageSize.getHeight();
       pdf.setFontSize(7);
       pdf.setTextColor(100, 100, 100);
       const disclaimer = "DISCLAIMER: This report is for informational purposes only and does not constitute medical advice. BMI has limitations and does not account for muscle mass, bone density, or fat distribution. Always consult with a qualified healthcare professional before making health or diet changes.";
       const splitDisclaimer = pdf.splitTextToSize(disclaimer, pageWidth - (margin * 2));
+      const disclaimerHeight = (splitDisclaimer.length * 3.5);
+      const footerHeight = 10;
+      const totalNeeded = disclaimerHeight + footerHeight;
+
+      if (y + totalNeeded > pageHeight - 15) {
+        pdf.addPage();
+        y = 20;
+      } else {
+        y = Math.max(y + 10, pageHeight - totalNeeded - 15);
+      }
+
       pdf.text(splitDisclaimer, margin, y);
-      
-      const disclaimerHeight = (splitDisclaimer.length * 3);
       const footerY = y + disclaimerHeight + 2;
-      
       pdf.setFont('helvetica', 'bold');
       pdf.text('quickbmicalculator.com', margin, footerY);
 
-      pdf.save(`QuickBMICalculator-Report-${bmi.toFixed(1)}.pdf`);
+      const dateStr = new Date().toLocaleDateString('en-GB').split('/').join('-');
+      const safeName = name.trim().replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-]/g, '');
+      pdf.save(`BMI-Report-${safeName}-${dateStr}.pdf`);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (error) {
