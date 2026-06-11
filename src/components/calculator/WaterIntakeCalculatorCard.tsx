@@ -186,7 +186,48 @@ export const WaterIntakeCalculatorCard: React.FC = () => {
       pdf.text(hydrationStatus.toUpperCase(), margin + 90, y + 16);
       y += 28;
 
-      // 4. TIMING
+      // 4. HYDRATION VISUAL BAR (Enhanced Visibility Fix)
+      const barHeight = 8;
+      const barWidth = pageWidth - (margin * 2);
+      
+      // Reset Draw State
+      pdf.setGState(new (pdf as any).GState({ opacity: 1 }));
+      pdf.setLineWidth(0.1);
+      
+      // Low (30%) - #0070f3
+      pdf.setFillColor(0, 112, 243);
+      pdf.setDrawColor(0, 112, 243);
+      pdf.rect(margin, y, barWidth * 0.30, barHeight, 'FD');
+      
+      // Normal (40%) - #00dfd8
+      pdf.setFillColor(0, 223, 216);
+      pdf.setDrawColor(0, 223, 216);
+      pdf.rect(margin + (barWidth * 0.30), y, barWidth * 0.40, barHeight, 'FD');
+      
+      // High (30%) - #f5a623
+      pdf.setFillColor(245, 166, 35);
+      pdf.setDrawColor(245, 166, 35);
+      pdf.rect(margin + (barWidth * 0.70), y, barWidth * 0.30, barHeight, 'FD');
+
+      // Marker Position (Scale 1L to 5L)
+      const minW = 1;
+      const maxW = 5;
+      const pct = Math.min(Math.max(((waterGoal - minW) / (maxW - minW)) * 100, 0), 100);
+      const markerX = margin + (barWidth * (pct / 100));
+
+      pdf.setDrawColor(23, 23, 23); 
+      pdf.setFillColor(23, 23, 23);
+      pdf.setLineWidth(0.8);
+      pdf.line(markerX, y - 2, markerX, y + barHeight + 2);
+      pdf.circle(markerX, y - 3, 1.2, 'FD');
+
+      pdf.setFontSize(7); pdf.setTextColor(100, 100, 100); pdf.setFont('helvetica', 'bold');
+      pdf.text('LOW', margin, y + barHeight + 5);
+      pdf.text('NORMAL', margin + (barWidth * 0.30), y + barHeight + 5);
+      pdf.text('HIGH', margin + (barWidth * 0.70), y + barHeight + 5);
+      y += barHeight + 15;
+
+      // 5. TIMING
       y = drawHeader('Suggested Intake Timing', y);
       pdf.setFillColor(248, 250, 252);
       pdf.roundedRect(margin, y, pageWidth - (margin * 2), 20, 2, 2, 'F');
@@ -217,15 +258,31 @@ export const WaterIntakeCalculatorCard: React.FC = () => {
         pdf.text(rec, margin + 5, recY + 3.5);
       });
 
-      // 6. FOOTER
-      const footerY = 280;
-      pdf.setDrawColor(240, 240, 240);
-      pdf.line(margin, footerY - 5, pageWidth - margin, footerY - 5);
-      pdf.setFontSize(7); pdf.setTextColor(150, 150, 150);
-      pdf.text('© 2026 QUICKBMI CALCULATOR. FOR INFORMATIONAL PURPOSES ONLY.', margin, footerY);
-      pdf.text('QUICKBMICALCULATOR.COM', pageWidth - margin - 35, footerY);
+      // 6. FOOTER & DISCLAIMER (Surgical Overlap Fix)
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      pdf.setFontSize(7);
+      pdf.setTextColor(100, 100, 100);
+      const disclaimer = "DISCLAIMER: This report is for informational purposes only. Water intake results are estimates based on body weight, activity level, and environmental conditions. Consult a healthcare professional for personalized hydration advice.";
+      const splitDisclaimer = pdf.splitTextToSize(disclaimer, pageWidth - (margin * 2));
+      const disclaimerHeight = (splitDisclaimer.length * 3.5);
+      const footerHeight = 10;
+      const totalNeeded = disclaimerHeight + footerHeight;
 
-      pdf.save(`Water_Intake_Report_${name.replace(/\s+/g, '_')}.pdf`);
+      if (y + totalNeeded > pageHeight - 15) {
+        pdf.addPage();
+        y = 20;
+      } else {
+        y = Math.max(y + 10, pageHeight - totalNeeded - 15);
+      }
+
+      pdf.text(splitDisclaimer, margin, y);
+      const footerY = y + disclaimerHeight + 2;
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('quickbmicalculator.com', margin, footerY);
+
+      const dateStr = new Date().toLocaleDateString('en-GB').split('/').join('-');
+      const safeName = name.trim().replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-]/g, '');
+      pdf.save(`Water-Intake-Report-${safeName}-${dateStr}.pdf`);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (error) {

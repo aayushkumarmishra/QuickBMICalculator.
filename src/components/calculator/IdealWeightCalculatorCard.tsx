@@ -1,64 +1,15 @@
 import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { RotateCcw, Download, Check, Activity, ChevronDown, Target, AlertCircle } from 'lucide-react';
+import { RotateCcw, Download, Check, Activity, ChevronDown, Target, AlertCircle, Info } from 'lucide-react';
 import { InputGroup } from './InputGroup';
 import { BrandLogo } from '../BrandLogo';
 
 type UnitSystem = 'metric' | 'us' | 'other';
-type Goal = 'maintenance' | 'loss' | 'gain' | '';
-
-const ACTIVITY_LEVELS = [
-  { label: 'Select Activity Level', value: '', desc: 'Required' },
-  { label: 'Sedentary', value: '1.2', desc: 'Minimal movement, office job' },
-  { label: 'Lightly Active', value: '1.375', desc: '1-3 days of exercise/week' },
-  { label: 'Moderately Active', value: '1.55', desc: '3-5 days of exercise/week' },
-  { label: 'Very Active', value: '1.725', desc: '6-7 days of intense exercise/week' },
-  { label: 'Extra Active', value: '1.9', desc: 'Intense training (2x/day)' },
-];
-
-const GOAL_DATA = {
-  loss: {
-    recommendations: [
-      'Mild calorie deficit (approx. 500 kcal)',
-      'Protein priority (1.8g - 2.2g/kg)',
-      'Avoid liquid calories and sugary drinks',
-      'Focus on high-volume, low-calorie foods'
-    ],
-    activity: { walking: '45–60 min/day', steps: '10,000–12,000', progress: 95 }
-  },
-  maintenance: {
-    recommendations: [
-      'Balanced intake matching your TDEE',
-      'Consistent daily physical activity',
-      'Maintain routine and monitor weight',
-      'Balance your strength and cardio work'
-    ],
-    activity: { walking: '30–45 min/day', steps: '8,000–10,000', progress: 75 }
-  },
-  gain: {
-    recommendations: [
-      'Calorie surplus (approx. 250-500 kcal)',
-      'Strength training focus for muscle growth',
-      'Protein focus (1.6g - 2.0g/kg)',
-      'High carbohydrate intake for fuel'
-    ],
-    activity: { walking: '15–25 min/day', steps: '5,000–7,000', progress: 45 }
-  },
-  default: {
-    recommendations: [
-      'Maintain protein intake (1.6g/kg)',
-      'Track calories daily for goals',
-      'Stay consistent with activity',
-      'Monitor metabolism monthly'
-    ],
-    activity: { walking: '30–45 min/day', steps: '8,000–10,000', progress: 85 }
-  }
-};
 
 const LBS_TO_KG = 0.45359237;
 const IN_TO_CM = 2.54;
 
-export const CalorieCalculatorCard: React.FC = () => {
+export const IdealWeightCalculatorCard: React.FC = () => {
   const [system, setSystem] = useState<UnitSystem>('metric');
   const [heightUnitOther, setHeightUnitOther] = useState<'cm' | 'm' | 'ft+in' | 'in'>('cm');
   const [weightUnitOther, setWeightUnitOther] = useState<'kg' | 'lb'>('kg');
@@ -69,8 +20,6 @@ export const CalorieCalculatorCard: React.FC = () => {
   const [name, setName] = useState<string>('');
   const [age, setAge] = useState<string>('');
   const [gender, setGender] = useState<'male' | 'female' | ''>('');
-  const [goal, setGoal] = useState<Goal>('');
-  const [activity, setActivity] = useState<string>('');
   const [copied, setCopied] = useState(false);
   const [nameError, setNameError] = useState<string>('');
   const [isExporting, setIsExporting] = useState(false);
@@ -85,22 +34,27 @@ export const CalorieCalculatorCard: React.FC = () => {
 
   const handleReset = () => {
     setWeight(''); setHeight(''); setFeet(''); setInches(''); setAge(''); setGender('');
-    setGoal(''); setActivity(''); setName(''); setNameError('');
+    setName(''); setNameError('');
   };
 
-  const { bmr, tdee, waterIntake, caloriesByGoal, targetCalories, recommendations, suggestedActivity } = useMemo(() => {
+  const { 
+    idealWeight, 
+    healthyRange, 
+    comparison, 
+    waterIntake, 
+    recommendations,
+    statusColor
+  } = useMemo(() => {
     const defaultResult = { 
-      bmr: 0, 
-      tdee: 0, 
+      idealWeight: 0, 
+      healthyRange: { low: 0, high: 0 }, 
+      comparison: { text: '', diff: 0, status: 'healthy' as 'under' | 'healthy' | 'over' },
       waterIntake: 0, 
-      caloriesByGoal: { loss: 0, maintenance: 0, gain: 0 },
-      targetCalories: 0,
-      recommendations: GOAL_DATA.default.recommendations,
-      suggestedActivity: GOAL_DATA.default.activity
+      recommendations: [] as string[],
+      statusColor: 'text-status-healthy'
     };
 
-    const a = parseInt(age);
-    if (!weight || (!height && !feet && !inches) || !age || isNaN(a) || a < 18 || a > 120 || !gender) return defaultResult;
+    if (!weight || (!height && !feet && !inches) || !gender) return defaultResult;
 
     let wKg = 0;
     let hCm = 0;
@@ -122,38 +76,61 @@ export const CalorieCalculatorCard: React.FC = () => {
 
     if (wKg <= 0 || hCm <= 0) return defaultResult;
 
-    // Mifflin-St Jeor Equation
-    const bmrValue = gender === 'male' 
-      ? 10 * wKg + 6.25 * hCm - 5 * a + 5 
-      : 10 * wKg + 6.25 * hCm - 5 * a - 161;
+    // Devine Formula
+    // Male: 50 + 2.3 kg per inch over 5 feet
+    // Female: 45.5 + 2.3 kg per inch over 5 feet
+    const hInches = hCm / IN_TO_CM;
+    const inchesOver5ft = Math.max(0, hInches - 60);
+    const baseWeight = gender === 'male' ? 50 : 45.5;
+    const iwValue = baseWeight + (2.3 * inchesOver5ft);
 
-    const actMultiplier = parseFloat(activity) || 1.2;
-    const tdeeValue = bmrValue * actMultiplier;
+    // Healthy Range based on BMI 18.5 - 24.9
+    const hMeters = hCm / 100;
+    const rangeLow = 18.5 * (hMeters * hMeters);
+    const rangeHigh = 24.9 * (hMeters * hMeters);
 
     const water = (wKg * 35) / 1000;
 
-    const cals = {
-      loss: tdeeValue - 500,
-      maintenance: tdeeValue,
-      gain: tdeeValue + 500
-    };
+    let comp = { text: 'Your weight is within a healthy range', diff: 0, status: 'healthy' as 'under' | 'healthy' | 'over' };
+    let sColor = 'text-status-healthy';
+    let recs = [
+      'Maintain your current healthy routine',
+      'Focus on a balanced diet',
+      'Stay consistent with daily activity'
+    ];
 
-    const goalInfo = goal ? GOAL_DATA[goal as keyof typeof GOAL_DATA] : GOAL_DATA.default;
-    const target = goal ? cals[goal] : tdeeValue;
+    if (wKg > rangeHigh) {
+      const diff = wKg - rangeHigh;
+      comp = { text: `You are ~${diff.toFixed(1)} kg above your healthy range`, diff, status: 'over' };
+      sColor = 'text-red-500';
+      recs = [
+        'Focus on gradual fat loss',
+        'Maintain balanced nutrition',
+        'Incorporate daily physical activity'
+      ];
+    } else if (wKg < rangeLow) {
+      const diff = rangeLow - wKg;
+      comp = { text: `You are ~${diff.toFixed(1)} kg below your healthy range`, diff, status: 'under' };
+      sColor = 'text-blue-500';
+      recs = [
+        'Aim for a healthy calorie surplus',
+        'Focus on protein-rich foods',
+        'Include strength training in your routine'
+      ];
+    }
 
     return { 
-      bmr: bmrValue, 
-      tdee: tdeeValue, 
+      idealWeight: iwValue, 
+      healthyRange: { low: rangeLow, high: rangeHigh }, 
+      comparison: comp,
       waterIntake: water, 
-      caloriesByGoal: cals,
-      targetCalories: target,
-      recommendations: goalInfo.recommendations,
-      suggestedActivity: goalInfo.activity
+      recommendations: recs,
+      statusColor: sColor
     };
-  }, [system, weight, height, feet, inches, age, gender, activity, goal, heightUnitOther, weightUnitOther]);
+  }, [system, weight, height, feet, inches, gender, heightUnitOther, weightUnitOther]);
 
   const handleExport = async () => {
-    if (tdee <= 0) return;
+    if (idealWeight <= 0) return;
     const trimmedName = name.trim();
     if (!trimmedName || trimmedName.length < 2) {
       setNameError('Min 2 characters required for export');
@@ -185,7 +162,7 @@ export const CalorieCalculatorCard: React.FC = () => {
       pdf.text('QuickBMI', margin, 22);
       pdf.setFontSize(10);
       pdf.setFont('helvetica', 'normal');
-      pdf.text('Calorie Analysis & Weight Goal Report', margin, 28);
+      pdf.text('Ideal Weight & Healthy Range Analysis', margin, 28);
       pdf.setFontSize(10);
       pdf.setFont('helvetica', 'bold');
       pdf.text(name.toUpperCase(), margin, 35);
@@ -198,131 +175,122 @@ export const CalorieCalculatorCard: React.FC = () => {
       y = drawHeader('Your Profile', y);
       pdf.setDrawColor(240, 240, 240);
       pdf.setFillColor(252, 252, 252);
-      pdf.roundedRect(margin, y, pageWidth - (margin * 2), 30, 2, 2, 'FD');
+      pdf.roundedRect(margin, y, pageWidth - (margin * 2), 20, 2, 2, 'FD');
       const colW = (pageWidth - (margin * 2)) / 3;
       pdf.setFontSize(7); pdf.setTextColor(100, 100, 100); pdf.setFont('helvetica', 'normal');
       pdf.text('AGE', margin + 8, y + 6);
       pdf.text('GENDER', margin + 8 + colW, y + 6);
-      pdf.text('ACTIVITY', margin + 8 + (colW * 2), y + 6);
+      pdf.text('CURRENT WEIGHT', margin + 8 + (colW * 2), y + 6);
       pdf.setFontSize(9); pdf.setTextColor(23, 23, 23); pdf.setFont('helvetica', 'bold');
       pdf.text(age || '--', margin + 8, y + 14);
       pdf.text((gender || '--').toUpperCase(), margin + 8 + colW, y + 14);
-      const actLabel = ACTIVITY_LEVELS.find(a => a.value === activity)?.label || '--';
-      pdf.text(actLabel, margin + 8 + (colW * 2), y + 14);
-      y += 18;
-      pdf.setFontSize(7); pdf.setTextColor(100, 100, 100); pdf.setFont('helvetica', 'normal');
-      pdf.text('HEIGHT', margin + 8, y + 6);
-      pdf.text('WEIGHT', margin + 8 + colW, y + 6);
-      pdf.text('GOAL', margin + 8 + (colW * 2), y + 6);
-      let hStr = '';
-      let wStr = '';
-      if (system === 'us') { hStr = `${feet}ft ${inches}in`; wStr = `${weight} lb`; }
-      else if (system === 'metric') { hStr = `${height}cm`; wStr = `${weight} kg`; }
-      else { hStr = heightUnitOther === 'ft+in' ? `${feet}ft ${inches}in` : `${height} ${heightUnitOther}`; wStr = `${weight} ${weightUnitOther}`; }
-      pdf.setFontSize(9); pdf.setTextColor(23, 23, 23); pdf.setFont('helvetica', 'bold');
-      pdf.text(hStr || '--', margin + 8, y + 14);
-      pdf.text(wStr || '--', margin + 8 + colW, y + 14);
-      pdf.text((goal || 'maintenance').toUpperCase(), margin + 8 + (colW * 2), y + 14);
-      y += 20;
+      pdf.text(`${weight} ${system === 'us' ? 'lb' : weightUnitOther}`, margin + 8 + (colW * 2), y + 14);
+      y += 28;
 
       // 3. MAIN RESULT
-      y = drawHeader('Calorie Target', y);
+      y = drawHeader('Ideal Weight Estimate', y);
       pdf.setDrawColor(235, 235, 235);
       pdf.setFillColor(255, 255, 255);
       pdf.roundedRect(margin, y, pageWidth - (margin * 2), 22, 2, 2, 'D');
       pdf.setTextColor(100, 100, 100); pdf.setFontSize(9); pdf.setFont('helvetica', 'normal');
-      pdf.text('TARGET DAILY CALORIES', margin + 8, y + 8);
-      pdf.text('SELECTED GOAL', margin + 90, y + 8);
+      pdf.text('CALCULATED IDEAL WEIGHT (DEVINE FORMULA)', margin + 8, y + 8);
       pdf.setTextColor(23, 23, 23); pdf.setFontSize(16); pdf.setFont('helvetica', 'bold');
-      pdf.text(`${Math.round(targetCalories).toLocaleString()} kcal`, margin + 8, y + 16);
-      pdf.setFontSize(13);
-      pdf.text((goal || 'Maintenance').toUpperCase(), margin + 90, y + 16);
+      pdf.text(`${idealWeight.toFixed(1)} kg / ${(idealWeight / LBS_TO_KG).toFixed(1)} lb`, margin + 8, y + 16);
       y += 28;
 
-      // 4. CALORIE VISUAL SPECTRUM (New Surgical Graph)
+      // 4. HEALTHY RANGE
+      y = drawHeader('Healthy Weight Range', y);
+      pdf.setFillColor(248, 250, 252);
+      pdf.roundedRect(margin, y, pageWidth - (margin * 2), 20, 2, 2, 'F');
+      pdf.setFontSize(7); pdf.setTextColor(100, 100, 100);
+      pdf.text('BMI 18.5 – 24.9 RANGE', margin + 8, y + 6);
+      pdf.setFontSize(9); pdf.setTextColor(23, 23, 23); pdf.setFont('helvetica', 'bold');
+      pdf.text(`${healthyRange.low.toFixed(1)} kg – ${healthyRange.high.toFixed(1)} kg`, margin + 8, y + 14);
+      y += 26;
+
+      // 4.5 WEIGHT SPECTRUM GRAPH (Enhanced Visibility Fix)
       const barHeight = 8;
       const barWidth = pageWidth - (margin * 2);
       
-      // Draw Goal Zones
-      // Loss (33%) - Blue-ish
-      pdf.setFillColor(0, 112, 243);
-      pdf.rect(margin, y, barWidth * 0.33, barHeight, 'F');
-      // Maintenance (33%) - Teal/Green
-      pdf.setFillColor(0, 223, 216);
-      pdf.rect(margin + (barWidth * 0.33), y, barWidth * 0.33, barHeight, 'F');
-      // Gain (34%) - Amber/Orange
-      pdf.setFillColor(245, 166, 35);
-      pdf.rect(margin + (barWidth * 0.66), y, barWidth * 0.34, barHeight, 'F');
-
-      // Calculate Marker Position based on goal
-      let markerPct = 0.5; // Default maintenance
-      if (goal === 'loss') markerPct = 0.165;
-      else if (goal === 'gain') markerPct = 0.835;
-      const markerX = margin + (barWidth * markerPct);
-
-      // Draw Marker
-      pdf.setDrawColor(23, 23, 23);
-      pdf.setLineWidth(0.6);
-      pdf.line(markerX, y - 2, markerX, y + barHeight + 2);
-      pdf.setFillColor(23, 23, 23);
-      pdf.circle(markerX, y - 3, 1.2, 'FD');
-
-      // Labels
-      pdf.setFontSize(7);
-      pdf.setTextColor(150, 150, 150);
-      pdf.text('LOSS', margin, y + barHeight + 5);
-      pdf.text('MAINTENANCE', margin + (barWidth * 0.33), y + barHeight + 5);
-      pdf.text('GAIN', margin + (barWidth * 0.66), y + barHeight + 5);
+      // Reset Draw State
+      pdf.setGState(new (pdf as any).GState({ opacity: 1 }));
+      pdf.setLineWidth(0.1);
       
+      // Draw Zones (BMI scale mapped to width)
+      // Underweight (15%) - #0070f3
+      pdf.setFillColor(0, 112, 243); pdf.setDrawColor(0, 112, 243);
+      pdf.rect(margin, y, barWidth * 0.15, barHeight, 'FD');
+      // Healthy (25%) - #00dfd8
+      pdf.setFillColor(0, 223, 216); pdf.setDrawColor(0, 223, 216);
+      pdf.rect(margin + (barWidth * 0.15), y, barWidth * 0.25, barHeight, 'FD');
+      // Overweight (20%) - #f5a623
+      pdf.setFillColor(245, 166, 35); pdf.setDrawColor(245, 166, 35);
+      pdf.rect(margin + (barWidth * 0.40), y, barWidth * 0.20, barHeight, 'FD');
+      // Obese (40%) - #ff0000
+      pdf.setFillColor(255, 0, 0); pdf.setDrawColor(255, 0, 0);
+      pdf.rect(margin + (barWidth * 0.60), y, barWidth * 0.40, barHeight, 'FD');
+
+      // Helper to get X position for a weight (via BMI)
+      const getXForWeight = (w: number) => {
+        const hM = (system === 'metric' ? (parseFloat(height) || 0) : system === 'us' ? (((parseFloat(feet) || 0) * 12 + (parseFloat(inches) || 0)) * IN_TO_CM) : (heightUnitOther === 'cm' ? (parseFloat(height) || 0) : heightUnitOther === 'm' ? (parseFloat(height) || 0) * 100 : ((parseFloat(feet) || 0) * 12 + (parseFloat(inches) || 0)) * IN_TO_CM)) / 100;
+        if (hM <= 0) return margin;
+        const b = w / (hM * hM);
+        const minB = 15; const maxB = 40;
+        const p = Math.min(Math.max(((b - minB) / (maxB - minB)) * 100, 0), 100);
+        return margin + (barWidth * (p / 100));
+      };
+
+      const wKg = system === 'us' ? parseFloat(weight) * LBS_TO_KG : (system === 'other' && weightUnitOther === 'lb' ? parseFloat(weight) * LBS_TO_KG : parseFloat(weight));
+      const currentX = getXForWeight(wKg);
+      const idealX = getXForWeight(idealWeight);
+
+      // Current Weight Marker (Strong Contrast)
+      pdf.setDrawColor(23, 23, 23); 
+      pdf.setFillColor(23, 23, 23);
+      pdf.setLineWidth(0.8);
+      pdf.line(currentX, y - 2, currentX, y + barHeight + 2);
+      pdf.circle(currentX, y - 3, 1.2, 'FD');
+      pdf.setFontSize(6); pdf.setTextColor(23, 23, 23); pdf.setFont('helvetica', 'bold');
+      pdf.text('CURRENT', currentX, y - 5, { align: 'center' });
+
+      // Ideal Weight Marker (Strong Contrast Fix)
+      pdf.setDrawColor(23, 23, 23); 
+      pdf.setLineWidth(0.8);
+      pdf.line(idealX, y - 2, idealX, y + barHeight + 2);
+      pdf.setFontSize(6); pdf.setTextColor(23, 23, 23); pdf.setFont('helvetica', 'bold');
+      pdf.text('IDEAL', idealX, y + barHeight + 9, { align: 'center' });
+
+      pdf.setFontSize(7); pdf.setTextColor(150, 150, 150); pdf.setFont('helvetica', 'normal');
+      pdf.text('UNDERWEIGHT', margin, y + barHeight + 5);
+      pdf.text('HEALTHY', margin + (barWidth * 0.15), y + barHeight + 5);
+      pdf.text('OVERWEIGHT', margin + (barWidth * 0.40), y + barHeight + 5);
+      pdf.text('OBESE', margin + (barWidth * 0.60), y + barHeight + 5);
       y += barHeight + 15;
 
-      // 5. SUPPORTING METRICS
-      y = drawHeader('Supporting Metrics', y);
-      pdf.setFillColor(248, 250, 252);
-      pdf.roundedRect(margin, y, pageWidth - (margin * 2), 20, 2, 2, 'F');
-      const supportCol = (pageWidth - (margin * 2)) / 2;
+      // 5. INSIGHTS
+      y = drawHeader('Weight Comparison', y);
+      pdf.setDrawColor(240, 240, 240);
+      pdf.setFillColor(252, 252, 252);
+      pdf.roundedRect(margin, y, pageWidth - (margin * 2), 20, 2, 2, 'FD');
       pdf.setFontSize(7); pdf.setTextColor(100, 100, 100);
-      pdf.text('BMR (BASAL METABOLIC RATE)', margin + 8, y + 6);
-      pdf.text('TDEE (TOTAL DAILY EXPENDITURE)', margin + 8 + supportCol, y + 6);
+      pdf.text('ANALYSIS', margin + 8, y + 6);
       pdf.setFontSize(9); pdf.setTextColor(23, 23, 23); pdf.setFont('helvetica', 'bold');
-      pdf.text(`${Math.round(bmr).toLocaleString()} kcal`, margin + 8, y + 14);
-      pdf.text(`${Math.round(tdee).toLocaleString()} kcal`, margin + 8 + supportCol, y + 14);
+      pdf.text(comparison.text, margin + 8, y + 14);
       y += 26;
 
-      // 5. CALORIE PLAN
-      y = drawHeader('Daily Calorie Goals', y);
-      pdf.setDrawColor(240, 240, 240);
-      pdf.setFillColor(252, 252, 252);
-      pdf.roundedRect(margin, y, pageWidth - (margin * 2), 20, 2, 2, 'FD');
-      const calCol = (pageWidth - (margin * 2)) / 3;
-      pdf.setFontSize(7); pdf.setTextColor(100, 100, 100);
-      pdf.text('FAT LOSS', margin + 8, y + 6);
-      pdf.text('MAINTENANCE', margin + 8 + calCol, y + 6);
-      pdf.text('WEIGHT GAIN', margin + 8 + (calCol * 2), y + 6);
-      pdf.setFontSize(9); pdf.setTextColor(23, 23, 23); pdf.setFont('helvetica', 'bold');
-      pdf.text(`${Math.round(caloriesByGoal.loss).toLocaleString()} kcal`, margin + 8, y + 14);
-      pdf.text(`${Math.round(caloriesByGoal.maintenance).toLocaleString()} kcal`, margin + 8 + calCol, y + 14);
-      pdf.text(`${Math.round(caloriesByGoal.gain).toLocaleString()} kcal`, margin + 8 + (calCol * 2), y + 14);
-      y += 30;
-
       // 6. GUIDANCE
-      y = drawHeader('Activity & Hydration', y);
+      y = drawHeader('Hydration Recommendation', y);
       pdf.setDrawColor(240, 240, 240);
       pdf.setFillColor(252, 252, 252);
       pdf.roundedRect(margin, y, pageWidth - (margin * 2), 20, 2, 2, 'FD');
-      const ahCol = (pageWidth - (margin * 2)) / 3;
-      pdf.setFontSize(7); pdf.setTextColor(100, 100, 100); pdf.setFont('helvetica', 'normal');
-      pdf.text('WALKING', margin + 8, y + 6);
-      pdf.text('STEPS / DAY', margin + 8 + ahCol, y + 6);
-      pdf.text('WATER INTAKE', margin + 8 + (ahCol * 2), y + 6);
+      pdf.setFontSize(7); pdf.setTextColor(100, 100, 100);
+      pdf.text('DAILY WATER INTAKE', margin + 8, y + 6);
       pdf.setFontSize(9); pdf.setTextColor(23, 23, 23); pdf.setFont('helvetica', 'bold');
-      pdf.text(suggestedActivity.walking, margin + 8, y + 14);
-      pdf.text(suggestedActivity.steps, margin + 8 + ahCol, y + 14);
-      pdf.text(`${waterIntake.toFixed(1)} L / day`, margin + 8 + (ahCol * 2), y + 14);
+      pdf.text(`${waterIntake.toFixed(1)} L / day`, margin + 8, y + 14);
       y += 28;
 
       pdf.setFontSize(8); pdf.setFont('helvetica', 'bold'); pdf.setTextColor(150, 150, 150);
-      pdf.text('NUTRITION RECOMMENDATIONS', margin, y);
+      pdf.text('RECOMMENDATIONS', margin, y);
       y += 4;
       recommendations.forEach((rec, i) => {
         const recY = y + (i * 4.5);
@@ -334,32 +302,31 @@ export const CalorieCalculatorCard: React.FC = () => {
         pdf.text(rec, margin + 5, recY + 3.5);
       });
 
-      // 7. FOOTER & DISCLAIMER (Surgical Overlap Fix — Calorie Specific)
+      // 7. FOOTER & DISCLAIMER (Surgical Overlap Fix)
       const pageHeight = pdf.internal.pageSize.getHeight();
       pdf.setFontSize(7);
       pdf.setTextColor(100, 100, 100);
-      const disclaimer = "DISCLAIMER: This Calorie report is for informational purposes only. Results are estimates based on the Mifflin-St Jeor equation. Consult a healthcare professional for medical advice.";
+      const disclaimer = "DISCLAIMER: This report is for informational purposes only. Results are estimates based on the Devine formula and standard BMI ranges. Consult a healthcare professional for medical advice.";
       const splitDisclaimer = pdf.splitTextToSize(disclaimer, pageWidth - (margin * 2));
-      const disclaimerHeight = (splitDisclaimer.length * 4); // Increased line height slightly
-      const footerHeight = 12; // Increased footer reserved space
-      const totalNeeded = disclaimerHeight + footerHeight + 10; // Added safety buffer
+      const disclaimerHeight = (splitDisclaimer.length * 3.5);
+      const footerHeight = 10;
+      const totalNeeded = disclaimerHeight + footerHeight;
 
       if (y + totalNeeded > pageHeight - 15) {
         pdf.addPage();
-        y = 25; // Fresh page start with generous top margin
+        y = 20;
       } else {
-        // Force disclaimer to bottom but with enough padding from content
-        y = Math.max(y + 15, pageHeight - totalNeeded - 10);
+        y = Math.max(y + 10, pageHeight - totalNeeded - 15);
       }
 
       pdf.text(splitDisclaimer, margin, y);
-      const footerY = y + disclaimerHeight + 4;
+      const footerY = y + disclaimerHeight + 2;
       pdf.setFont('helvetica', 'bold');
       pdf.text('quickbmicalculator.com', margin, footerY);
 
       const dateStr = new Date().toLocaleDateString('en-GB').split('/').join('-');
       const safeName = name.trim().replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-]/g, '');
-      pdf.save(`Calorie-Report-${safeName}-${dateStr}.pdf`);
+      pdf.save(`Ideal-Weight-Report-${safeName}-${dateStr}.pdf`);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (error) {
@@ -371,11 +338,7 @@ export const CalorieCalculatorCard: React.FC = () => {
     }
   };
 
-  const isFaded = targetCalories <= 0;
-  const statusColor = goal === 'loss' ? 'text-red-500' : goal === 'gain' ? 'text-green-500' : 'text-status-healthy';
-
-  const numericAge = parseInt(age || '0');
-  const isPediatric = numericAge >= 18 && numericAge < 20;
+  const isFaded = idealWeight <= 0;
 
   return (
     <motion.div 
@@ -392,10 +355,10 @@ export const CalorieCalculatorCard: React.FC = () => {
               <div className="flex items-center gap-4">
                 <BrandLogo className="w-12 h-12" variant="ink" />
                 <div>
-                  <h2 className="text-2xl font-black tracking-tighter text-ink leading-none mb-2">Calorie Engine</h2>
+                  <h2 className="text-2xl font-black tracking-tighter text-ink leading-none mb-2">Ideal Weight</h2>
                   <div className="flex items-center gap-2 text-[10px] font-mono font-bold text-mute uppercase tracking-widest">
                     <span className="w-2 h-2 rounded-full bg-status-healthy animate-pulse"></span>
-                    Goal-Based Precision
+                    Height-to-Weight Logic
                   </div>
                 </div>
               </div>
@@ -426,7 +389,7 @@ export const CalorieCalculatorCard: React.FC = () => {
                   <div className="relative">
                     <input
                       type="text"
-                      id="calorie-name"
+                      id="ideal-weight-name"
                       value={name}
                       onChange={(e) => {
                         const val = e.target.value
@@ -445,7 +408,7 @@ export const CalorieCalculatorCard: React.FC = () => {
                   {nameError && <p className="text-red-500 text-[10px] font-mono font-bold">{nameError}</p>}
                 </div>
 
-                <InputGroup id="calorie-age" label="Age" value={age} onChange={setAge} unit="YRS" placeholder="25" min={18} max={120} step="1" />
+                <InputGroup id="ideal-weight-age" label="Age" value={age} onChange={setAge} unit="YRS" placeholder="25" min={18} max={120} step="1" />
                 <div className="flex flex-col gap-3">
                   <span className="text-[10px] font-mono font-bold text-mute uppercase tracking-[0.3em] ml-1">Gender</span>
                   <div className="flex p-1 bg-canvas-soft border border-hairline rounded-ui h-14 gap-1">
@@ -531,41 +494,6 @@ export const CalorieCalculatorCard: React.FC = () => {
                   </div>
                 )}
               </div>
-
-              <div className="space-y-6 lg:space-y-8 pt-6 border-t border-hairline/50">
-                <div className="space-y-4">
-                  <span className="text-[10px] font-mono font-bold text-mute uppercase tracking-[0.3em] ml-1">Physical Activity</span>
-                  <div className="relative group">
-                    <select 
-                      value={activity}
-                      onChange={(e) => setActivity(e.target.value)}
-                      className="w-full bg-canvas-soft border border-hairline rounded-ui h-14 px-5 pr-10 text-[11px] font-black uppercase tracking-widest text-ink focus:outline-none appearance-none cursor-pointer hover:border-hairline-strong transition-all shadow-inset focus:ring-4 focus:ring-primary/5 focus:border-ink"
-                    >
-                      {ACTIVITY_LEVELS.map((level) => (
-                        <option key={level.value} value={level.value} className="bg-canvas text-ink font-sans text-sm font-medium">
-                          {level.label.toUpperCase()} — {level.desc}
-                        </option>
-                      ))}
-                    </select>
-                    <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-mute pointer-events-none group-hover:text-ink transition-colors" />
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  <span className="text-[10px] font-mono font-bold text-mute uppercase tracking-[0.3em] ml-1">Body Goal</span>
-                  <div className="flex p-1 bg-canvas-soft border border-hairline rounded-ui gap-1">
-                    {['loss', 'maintenance', 'gain'].map((g) => (
-                      <button 
-                        key={g} 
-                        onClick={() => setGoal(g as Goal)}
-                        className={`flex-1 py-2.5 text-[10px] font-black uppercase tracking-[0.15em] transition-all duration-300 rounded-[4px] ${goal === g ? 'bg-ink text-canvas shadow-premium-md' : 'text-mute hover:text-ink hover:bg-canvas/50'}`}
-                      >
-                        {g}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
             </div>
           </div>
         </div>
@@ -579,13 +507,13 @@ export const CalorieCalculatorCard: React.FC = () => {
                   <Activity className="w-6 h-6" />
                 </div>
                 <div>
-                  <h2 className="text-2xl font-black tracking-tighter text-ink leading-none mb-2">Daily Intake</h2>
-                  <p className="text-[10px] font-mono font-bold text-mute uppercase tracking-widest">Selected Goal Calories</p>
+                  <h2 className="text-2xl font-black tracking-tighter text-ink leading-none mb-2">Ideal Weight</h2>
+                  <p className="text-[10px] font-mono font-bold text-mute uppercase tracking-widest">Calculated Estimates</p>
                 </div>
               </div>
               <button
                 onClick={handleExport}
-                disabled={isExporting || tdee <= 0 || name.trim().length < 2}
+                disabled={isExporting || idealWeight <= 0 || name.trim().length < 2}
                 className="px-5 py-3 bg-canvas border border-hairline hover:bg-canvas-soft rounded-xl transition-all text-ink font-bold text-xs uppercase tracking-widest shadow-premium-md flex items-center gap-2 group active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                 title="Export Results to PDF"
               >
@@ -600,34 +528,39 @@ export const CalorieCalculatorCard: React.FC = () => {
             </div>
 
             <div className="space-y-8 lg:space-y-10">
-              {/* HERO RESULT: TARGET CALORIES */}
-              <div id="calorie-hero-export" className="flex flex-col gap-8 py-8 px-6 sm:py-10 sm:px-8 bg-canvas border border-hairline rounded-marketing shadow-premium-lg relative overflow-hidden">
+              {/* HERO RESULT: IDEAL WEIGHT */}
+              <div id="ideal-weight-hero-export" className="flex flex-col gap-8 py-8 px-6 sm:py-10 sm:px-8 bg-canvas border border-hairline rounded-marketing shadow-premium-lg relative overflow-hidden">
                 <div className={`absolute top-0 right-0 w-64 h-64 opacity-5 blur-[100px] rounded-full -mr-32 -mt-32 transition-colors duration-1000 ${!isFaded ? statusColor.replace('text-', 'bg-') : 'bg-mute'}`}></div>
                 
                 <div className="flex flex-col sm:flex-row justify-between items-center gap-6 sm:gap-8 relative z-10">
                   <div className="flex flex-col items-center sm:items-start text-center sm:text-left">
-                    <span className="text-[10px] sm:text-[11px] font-mono font-bold text-mute uppercase tracking-[0.3em] mb-2">Target Daily Calories</span>
+                    <span className="text-[10px] sm:text-[11px] font-mono font-bold text-mute uppercase tracking-[0.3em] mb-2">Ideal Weight Estimate</span>
                     <div className="flex items-baseline gap-2 sm:gap-3">
                       <motion.span 
                         className="text-5xl xs:text-6xl sm:text-8xl font-black tracking-[-0.08em] text-ink"
                         initial={false}
-                        animate={{ scale: targetCalories > 0 ? [1, 1.02, 1] : 1 }}
+                        animate={{ scale: idealWeight > 0 ? [1, 1.02, 1] : 1 }}
                         transition={{ duration: 0.4 }}
                       >
-                        {targetCalories > 0 ? Math.round(targetCalories).toLocaleString() : '--'}
+                        {idealWeight > 0 ? idealWeight.toFixed(1) : '--'}
                       </motion.span>
-                      <span className="text-lg sm:text-xl font-bold text-mute/60 tracking-tighter">kcal</span>
+                      <span className="text-lg sm:text-xl font-bold text-mute/60 tracking-tighter">kg</span>
                     </div>
+                    {idealWeight > 0 && (
+                      <span className="text-sm sm:text-base font-bold text-mute/60 tracking-tighter mt-1">
+                        ~ {(idealWeight / LBS_TO_KG).toFixed(1)} lb
+                      </span>
+                    )}
                   </div>
 
                   <div className="h-16 w-px bg-hairline hidden sm:block"></div>
 
                   <div className="text-center sm:text-right">
-                    <span className="text-[10px] sm:text-[11px] font-mono font-bold text-mute uppercase tracking-[0.3em] mb-2 sm:mb-3 block">Goal Strategy</span>
+                    <span className="text-[10px] sm:text-[11px] font-mono font-bold text-mute uppercase tracking-[0.3em] mb-2 sm:mb-3 block">Analysis</span>
                     <div className={`text-xl xs:text-2xl sm:text-3xl font-black tracking-tight ${statusColor}`}>
-                      {isFaded ? 'Awaiting Data' : (goal || 'Maintenance').charAt(0).toUpperCase() + (goal || 'Maintenance').slice(1)}
+                      {isFaded ? 'Awaiting Data' : (comparison.status === 'healthy' ? 'Healthy' : comparison.status === 'over' ? 'Above Range' : 'Below Range')}
                     </div>
-                    {targetCalories > 0 && (
+                    {idealWeight > 0 && (
                       <div className="mt-2 inline-flex items-center gap-2 px-3 py-1 rounded-full bg-canvas border border-hairline shadow-premium-sm">
                          <div className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full ${statusColor.replace('text-', 'bg-')} animate-pulse`}></div>
                          <span className="text-[9px] sm:text-[10px] font-mono font-bold uppercase text-ink">Live Calculation</span>
@@ -642,67 +575,38 @@ export const CalorieCalculatorCard: React.FC = () => {
                 <div className="card glass border-hairline p-6 sm:p-8 flex flex-col justify-between min-h-[140px] sm:min-h-[160px] group hover:border-hairline-strong transition-all">
                   <div className="flex justify-between items-start mb-4 sm:mb-6">
                     <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-ink text-canvas flex items-center justify-center shadow-premium-md group-hover:scale-110 transition-transform">
-                      <Activity className="w-4 h-4 sm:w-5 sm:h-5" />
+                      <Target className="w-4 h-4 sm:w-5 sm:h-5" />
                     </div>
-                    <div className="text-[9px] sm:text-[10px] font-mono font-bold text-mute uppercase tracking-[0.3em] bg-canvas-soft px-2 sm:px-3 py-1 sm:py-1.5 rounded-full border border-hairline">BMR</div>
+                    <div className="text-[9px] sm:text-[10px] font-mono font-bold text-mute uppercase tracking-[0.3em] bg-canvas-soft px-2 sm:px-3 py-1 sm:py-1.5 rounded-full border border-hairline">Healthy Range</div>
                   </div>
                   <div>
                     <div className="flex items-baseline gap-1.5 sm:gap-2 mb-1">
                       <span className="text-xl sm:text-2xl font-black tracking-tight text-ink">
-                        {isFaded ? '--' : Math.round(bmr).toLocaleString()}
+                        {isFaded ? '--' : `${healthyRange.low.toFixed(1)} – ${healthyRange.high.toFixed(1)}`}
                       </span>
-                      <span className="text-[10px] sm:text-xs font-bold text-mute uppercase font-mono tracking-widest">{isFaded ? '' : 'kcal'}</span>
+                      <span className="text-[10px] sm:text-xs font-bold text-mute uppercase font-mono tracking-widest">{isFaded ? '' : 'kg'}</span>
                     </div>
-                    <p className="text-body text-[9px] sm:text-[10px] font-bold uppercase tracking-wider opacity-60">Basal Metabolic Rate</p>
+                    <p className="text-body text-[9px] sm:text-[10px] font-bold uppercase tracking-wider opacity-60">BMI 18.5 – 24.9 Range</p>
                   </div>
                 </div>
 
                 <div className="card glass border-hairline p-6 sm:p-8 flex flex-col justify-between min-h-[140px] sm:min-h-[160px] group hover:border-hairline-strong transition-all">
                   <div className="flex justify-between items-start mb-4 sm:mb-6">
                     <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-primary/5 text-status-healthy flex items-center justify-center border border-status-healthy/20 group-hover:scale-110 transition-transform">
-                      <Target className="w-4 h-4 sm:w-5 sm:h-5" />
+                      <Info className="w-4 h-4 sm:w-5 sm:h-5" />
                     </div>
-                    <div className="text-[9px] sm:text-[10px] font-mono font-bold text-mute uppercase tracking-[0.3em] bg-canvas-soft px-2 sm:px-3 py-1 sm:py-1.5 rounded-full border border-hairline">TDEE</div>
+                    <div className="text-[9px] sm:text-[10px] font-mono font-bold text-mute uppercase tracking-[0.3em] bg-canvas-soft px-2 sm:px-3 py-1 sm:py-1.5 rounded-full border border-hairline">Comparison</div>
                   </div>
                   <div>
-                    <div className="flex items-baseline gap-1.5 sm:gap-2 mb-1">
-                      <span className="text-xl sm:text-2xl font-black tracking-tight text-ink">
-                        {isFaded ? '--' : Math.round(tdee).toLocaleString()}
-                      </span>
-                      <span className="text-[10px] sm:text-xs font-bold text-mute uppercase font-mono tracking-widest">{isFaded ? '' : 'kcal'}</span>
+                    <div className="text-base sm:text-lg font-black tracking-tight text-ink leading-tight mb-1">
+                      {isFaded ? '--' : comparison.text}
                     </div>
-                    <p className="text-body text-[9px] sm:text-[10px] font-bold uppercase tracking-wider opacity-60">Total Daily Energy Expenditure</p>
+                    <p className="text-body text-[9px] sm:text-[10px] font-bold uppercase tracking-wider opacity-60">Vs. Healthy Range</p>
                   </div>
                 </div>
               </div>
 
-              {/* DAILY CALORIE GOALS */}
-              <div className="card bg-[#1a1a1a] text-white p-6 sm:p-8 relative overflow-hidden shadow-premium-xl border border-white/10 dark:border-white/10">
-                <div className="relative z-10 flex flex-col gap-5 sm:gap-6">
-                  <div className="text-left">
-                    <div className="text-[9px] sm:text-[10px] font-mono font-bold text-white/60 uppercase tracking-[0.4em] mb-4">Daily Calorie Strategy</div>
-                    <div className="grid grid-cols-3 gap-2 sm:gap-4 -mx-2">
-                      <div className={`flex flex-col gap-1 p-2 rounded-ui transition-all duration-300 ${goal === 'maintenance' || !goal ? 'bg-white/10 ring-1 ring-white/20' : 'opacity-60'}`}>
-                        <div className="text-[8px] sm:text-[9px] font-mono font-bold text-white/50 uppercase tracking-widest">Maintain</div>
-                        <div className="text-lg sm:text-2xl font-black tracking-tight text-white">{isFaded ? '--' : Math.round(caloriesByGoal.maintenance).toLocaleString()}</div>
-                        <div className="text-[8px] font-mono text-white/40 uppercase tracking-widest">kcal</div>
-                      </div>
-                      <div className={`flex flex-col gap-1 p-2 rounded-ui transition-all duration-300 ${goal === 'loss' ? 'bg-white/10 ring-1 ring-white/20' : 'opacity-60'}`}>
-                        <div className="text-[8px] sm:text-[9px] font-mono font-bold text-white/50 uppercase tracking-widest">Fat Loss</div>
-                        <div className="text-lg sm:text-2xl font-black tracking-tight text-red-400">{isFaded ? '--' : Math.round(caloriesByGoal.loss).toLocaleString()}</div>
-                        <div className="text-[8px] font-mono text-white/40 uppercase tracking-widest">kcal</div>
-                      </div>
-                      <div className={`flex flex-col gap-1 p-2 rounded-ui transition-all duration-300 ${goal === 'gain' ? 'bg-white/10 ring-1 ring-white/20' : 'opacity-60'}`}>
-                        <div className="text-[8px] sm:text-[9px] font-mono font-bold text-white/50 uppercase tracking-widest">Weight Gain</div>
-                        <div className="text-lg sm:text-2xl font-black tracking-tight text-green-400">{isFaded ? '--' : Math.round(caloriesByGoal.gain).toLocaleString()}</div>
-                        <div className="text-[8px] font-mono text-white/40 uppercase tracking-widest">kcal</div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* NUTRITION RECOMMENDATIONS */}
+              {/* RECOMMENDATIONS */}
               <AnimatePresence>
                 {!isFaded && (
                   <motion.div 
@@ -713,7 +617,7 @@ export const CalorieCalculatorCard: React.FC = () => {
                     <div className="card glass border border-status-healthy/30 p-6 sm:p-8">
                       <div className="flex items-center justify-between mb-4 sm:mb-5">
                         <div className="text-[9px] sm:text-[10px] font-mono font-bold text-mute uppercase tracking-[0.4em]">
-                          Nutrition Tips
+                          Next Steps
                         </div>
                         <span className="text-xs font-black text-status-healthy">✓</span>
                       </div>
@@ -724,28 +628,6 @@ export const CalorieCalculatorCard: React.FC = () => {
                             <p className="text-[11px] sm:text-xs font-medium text-ink/80 leading-relaxed">{tip}</p>
                           </div>
                         ))}
-                      </div>
-                    </div>
-
-                    <div className="card glass border-hairline p-6 sm:p-8">
-                      <div className="text-[9px] sm:text-[10px] font-mono font-bold text-mute uppercase tracking-[0.4em] mb-4 sm:mb-5">
-                        Suggested Activity
-                      </div>
-                      <div className="grid grid-cols-2 gap-4 sm:gap-6 mb-4 sm:mb-5">
-                        <div>
-                          <div className="text-[8px] sm:text-[9px] font-mono font-bold text-mute uppercase tracking-widest mb-1">Walking</div>
-                          <div className="text-base sm:text-lg font-black tracking-tight text-ink">{suggestedActivity.walking}</div>
-                        </div>
-                        <div>
-                          <div className="text-[8px] sm:text-[9px] font-mono font-bold text-mute uppercase tracking-widest mb-1">Steps / Day</div>
-                          <div className="text-base sm:text-lg font-black tracking-tight text-ink">{suggestedActivity.steps}</div>
-                        </div>
-                      </div>
-                      <div className="h-1.5 w-full bg-hairline rounded-full overflow-hidden">
-                        <div 
-                          className="h-full bg-status-healthy rounded-full transition-all duration-1000" 
-                          style={{ width: `${suggestedActivity.progress}%` }} 
-                        />
                       </div>
                     </div>
 
@@ -780,7 +662,7 @@ export const CalorieCalculatorCard: React.FC = () => {
               <div className="pt-6 sm:pt-8 border-t border-hairline/50">
                 <p className="text-[10px] leading-relaxed text-mute font-medium text-center sm:text-left">
                   <span className="font-bold text-ink/70 uppercase tracking-widest text-[9px] mr-1.5">Medical Disclaimer:</span> 
-                  The Calorie results provided by this calculator are estimates based on the Mifflin-St Jeor equation for informational purposes only. Please consult a healthcare professional for medical advice.
+                  The Ideal Weight results provided by this calculator are estimates based on the Devine equation and standard BMI healthy ranges. Please consult a healthcare professional for medical advice.
                 </p>
               </div>
             </div>

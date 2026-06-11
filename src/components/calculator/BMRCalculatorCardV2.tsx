@@ -305,17 +305,31 @@ export const BMRCalculatorCardV2: React.FC = () => {
         pdf.text(rec, margin + 5, recY + 3.5);
       });
 
-      // 6. FOOTER
-      y = Math.max(y, 275);
-      pdf.setFontSize(7); pdf.setTextColor(100, 100, 100);
+      // 6. FOOTER & DISCLAIMER (Surgical Overlap Fix)
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      pdf.setFontSize(7);
+      pdf.setTextColor(100, 100, 100);
       const disclaimer = "DISCLAIMER: This BMR report is for informational purposes only. Results are estimates based on the Mifflin-St Jeor equation. Consult a healthcare professional for medical advice.";
       const splitDisclaimer = pdf.splitTextToSize(disclaimer, pageWidth - (margin * 2));
+      const disclaimerHeight = (splitDisclaimer.length * 3.5);
+      const footerHeight = 10;
+      const totalNeeded = disclaimerHeight + footerHeight;
+
+      if (y + totalNeeded > pageHeight - 15) {
+        pdf.addPage();
+        y = 20;
+      } else {
+        y = Math.max(y + 10, pageHeight - totalNeeded - 15);
+      }
+
       pdf.text(splitDisclaimer, margin, y);
-      const footerY = y + (splitDisclaimer.length * 3) + 2;
+      const footerY = y + disclaimerHeight + 2;
       pdf.setFont('helvetica', 'bold');
       pdf.text('quickbmicalculator.com', margin, footerY);
 
-      pdf.save(`QuickBMI-BMR-Report-${Math.round(bmr)}.pdf`);
+      const dateStr = new Date().toLocaleDateString('en-GB').split('/').join('-');
+      const safeName = name.trim().replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-]/g, '');
+      pdf.save(`BMR-Report-${safeName}-${dateStr}.pdf`);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (error) {
