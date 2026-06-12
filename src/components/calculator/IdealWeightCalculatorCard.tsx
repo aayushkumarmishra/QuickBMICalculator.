@@ -37,44 +37,48 @@ export const IdealWeightCalculatorCard: React.FC = () => {
     setName(''); setNameError('');
   };
 
-  const { 
-    idealWeight, 
-    healthyRange, 
-    comparison, 
-    waterIntake, 
-    recommendations,
-    statusColor
-  } = useMemo(() => {
+  const { idealWeight, healthyRange, comparison, waterIntake, recommendations, statusColor, isInvalidInput } = useMemo(() => {
     const defaultResult = { 
       idealWeight: 0, 
       healthyRange: { low: 0, high: 0 }, 
       comparison: { text: '', diff: 0, status: 'healthy' as 'under' | 'healthy' | 'over' },
       waterIntake: 0, 
       recommendations: [] as string[],
-      statusColor: 'text-status-healthy'
+      statusColor: 'text-status-healthy',
+      isInvalidInput: false
     };
 
-    if (!weight || (!height && !feet && !inches) || !gender) return defaultResult;
-
-    let wKg = 0;
-    let hCm = 0;
-
     const wVal = parseFloat(weight) || 0;
+    let hCm = 0;
     if (system === 'metric') {
-      wKg = wVal;
       hCm = parseFloat(height) || 0;
+      if (weight.trim() !== '' && (wVal < 17 || wVal > 635)) return { ...defaultResult, isInvalidInput: true };
+      if (height.trim() !== '' && (hCm < 54 || hCm > 272)) return { ...defaultResult, isInvalidInput: true };
     } else if (system === 'us') {
-      wKg = wVal * LBS_TO_KG;
       hCm = ((parseFloat(feet) || 0) * 12 + (parseFloat(inches) || 0)) * IN_TO_CM;
+      if (weight.trim() !== '' && (wVal < 37 || wVal > 1400)) return { ...defaultResult, isInvalidInput: true };
+      if ((feet.trim() !== '' || inches.trim() !== '') && (hCm < 21 * IN_TO_CM || hCm > 107 * IN_TO_CM)) return { ...defaultResult, isInvalidInput: true };
     } else {
-      wKg = weightUnitOther === 'kg' ? wVal : wVal * LBS_TO_KG;
+      if (weight.trim() !== '') {
+        if (weightUnitOther === 'kg' && (wVal < 17 || wVal > 635)) return { ...defaultResult, isInvalidInput: true };
+        if (weightUnitOther === 'lb' && (wVal < 37 || wVal > 1400)) return { ...defaultResult, isInvalidInput: true };
+      }
       if (heightUnitOther === 'cm') hCm = parseFloat(height) || 0;
       else if (heightUnitOther === 'm') hCm = (parseFloat(height) || 0) * 100;
       else if (heightUnitOther === 'in') hCm = (parseFloat(height) || 0) * IN_TO_CM;
       else if (heightUnitOther === 'ft+in') hCm = ((parseFloat(feet) || 0) * 12 + (parseFloat(inches) || 0)) * IN_TO_CM;
+
+      if ((height.trim() !== '' || feet.trim() !== '' || inches.trim() !== '') && (hCm < 21 * IN_TO_CM || hCm > 272)) return { ...defaultResult, isInvalidInput: true };
     }
 
+    if (!weight || (!height && !feet && !inches) || !gender) {
+      return { ...defaultResult, isInvalidInput: false };
+    }
+
+    let wKg = system === 'metric' ? wVal : system === 'us' ? wVal * LBS_TO_KG : (weightUnitOther === 'kg' ? wVal : wVal * LBS_TO_KG);
+
     if (wKg <= 0 || hCm <= 0) return defaultResult;
+
 
     // Devine Formula
     // Male: 50 + 2.3 kg per inch over 5 feet
@@ -338,7 +342,19 @@ export const IdealWeightCalculatorCard: React.FC = () => {
     }
   };
 
-  const isFaded = idealWeight <= 0;
+  const isWeightFilled = weight.trim() !== '';
+  const isHeightFilled = system === 'metric' ? height.trim() !== '' : system === 'us' ? (feet.trim() !== '' || inches.trim() !== '') : (['cm', 'm', 'in'].includes(heightUnitOther) ? height.trim() !== '' : (feet.trim() !== '' || inches.trim() !== ''));
+  const isGenderFilled = gender !== '';
+
+  const hasStarted = isWeightFilled || isHeightFilled || isGenderFilled;
+  const hasAllRequired = isWeightFilled && isHeightFilled && isGenderFilled;
+
+  const isFresh = !hasStarted;
+  const isInvalid = isInvalidInput;
+  const isIncomplete = hasStarted && !hasAllRequired && !isInvalid;
+  const isValid = hasAllRequired && !isInvalid;
+
+  const isFaded = !isValid;
 
   return (
     <motion.div 
@@ -383,7 +399,7 @@ export const IdealWeightCalculatorCard: React.FC = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-6 lg:gap-8">
+              <div className="grid grid-cols-2 gap-3 sm:gap-6 lg:gap-8">
                 <div className="flex flex-col gap-1.5 col-span-2">
                   <label className="text-[10px] font-mono font-bold text-mute uppercase tracking-widest">Name (PDF Export)</label>
                   <div className="relative">
@@ -427,13 +443,13 @@ export const IdealWeightCalculatorCard: React.FC = () => {
 
               <div className="space-y-6 lg:space-y-8">
                 {system === 'metric' ? (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 lg:gap-8">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-6 lg:gap-8">
                     <InputGroup key="h-cm" id="height" label="Height" value={height} onChange={setHeight} unit="CM" placeholder="180" min={54} max={272} />
                     <InputGroup key="w-kg" id="weight" label="Weight" value={weight} onChange={setWeight} unit="KG" placeholder="80" min={17} max={635} />
                   </div>
                 ) : system === 'us' ? (
                   <div className="space-y-6 lg:space-y-8">
-                    <div className="grid grid-cols-2 gap-4 lg:gap-6">
+                    <div className="grid grid-cols-2 gap-2 sm:gap-4 lg:gap-6">
                       <InputGroup key="h-ft" id="feet" label="Feet" value={feet} onChange={setFeet} unit="FT" placeholder="5" min={1} max={8} step="1" />
                       <InputGroup key="h-in" id="inches" label="Inches" value={inches} onChange={setInches} unit="IN" placeholder="11" min={0} max={11} step="1" />
                     </div>
@@ -443,7 +459,7 @@ export const IdealWeightCalculatorCard: React.FC = () => {
                   <div className="space-y-6 lg:space-y-8">
                     {heightUnitOther === 'ft+in' ? (
                       <div className="space-y-6">
-                        <div className="grid grid-cols-2 gap-4 lg:gap-6">
+                        <div className="grid grid-cols-2 gap-2 sm:gap-4 lg:gap-6">
                           <InputGroup key="h-ft-other" id="feet-other" label="Height" value={feet} onChange={setFeet} unit="FT" placeholder="5" min={1} max={8} step="1" />
                           <InputGroup key="h-in-other" id="inches-other" label="Inches" value={inches} onChange={setInches} unit="IN" placeholder="8" min={0} max={11} step="1" />
                         </div>
@@ -528,6 +544,20 @@ export const IdealWeightCalculatorCard: React.FC = () => {
             </div>
 
             <div className="space-y-8 lg:space-y-10">
+              {isFresh ? (
+                <div className="flex items-center justify-center py-20">
+                  <p className="text-mute font-mono font-bold text-[10px] uppercase tracking-widest text-center">Enter your details to see results</p>
+                </div>
+              ) : isInvalid ? (
+                <div className="flex items-center justify-center py-20">
+                  <p className="text-amber-500 font-mono font-bold text-[10px] uppercase tracking-widest text-center">Fix invalid inputs to see results</p>
+                </div>
+              ) : isIncomplete ? (
+                <div className="flex items-center justify-center py-20">
+                  <p className="text-amber-500/80 font-mono font-bold text-[10px] uppercase tracking-widest text-center">Please fill all details</p>
+                </div>
+              ) : (
+                <>
               {/* HERO RESULT: IDEAL WEIGHT */}
               <div id="ideal-weight-hero-export" className="flex flex-col gap-8 py-8 px-6 sm:py-10 sm:px-8 bg-canvas border border-hairline rounded-marketing shadow-premium-lg relative overflow-hidden">
                 <div className={`absolute top-0 right-0 w-64 h-64 opacity-5 blur-[100px] rounded-full -mr-32 -mt-32 transition-colors duration-1000 ${!isFaded ? statusColor.replace('text-', 'bg-') : 'bg-mute'}`}></div>
@@ -665,6 +695,8 @@ export const IdealWeightCalculatorCard: React.FC = () => {
                   The Ideal Weight results provided by this calculator are estimates based on the Devine equation and standard BMI healthy ranges. Please consult a healthcare professional for medical advice.
                 </p>
               </div>
+                </>
+              )}
             </div>
           </div>
         </div>

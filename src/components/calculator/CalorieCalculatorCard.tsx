@@ -88,7 +88,7 @@ export const CalorieCalculatorCard: React.FC = () => {
     setGoal(''); setActivity(''); setName(''); setNameError('');
   };
 
-  const { bmr, tdee, waterIntake, caloriesByGoal, targetCalories, recommendations, suggestedActivity } = useMemo(() => {
+  const { bmr, tdee, waterIntake, caloriesByGoal, targetCalories, recommendations, suggestedActivity, isInvalidInput } = useMemo(() => {
     const defaultResult = { 
       bmr: 0, 
       tdee: 0, 
@@ -96,29 +96,44 @@ export const CalorieCalculatorCard: React.FC = () => {
       caloriesByGoal: { loss: 0, maintenance: 0, gain: 0 },
       targetCalories: 0,
       recommendations: GOAL_DATA.default.recommendations,
-      suggestedActivity: GOAL_DATA.default.activity
+      suggestedActivity: GOAL_DATA.default.activity,
+      isInvalidInput: false
     };
 
-    const a = parseInt(age);
-    if (!weight || (!height && !feet && !inches) || !age || isNaN(a) || a < 18 || a > 120 || !gender) return defaultResult;
-
-    let wKg = 0;
-    let hCm = 0;
+    if (age.trim() !== '') {
+      const a = parseInt(age);
+      if (isNaN(a) || a < 18 || a > 120) return { ...defaultResult, isInvalidInput: true };
+    }
 
     const wVal = parseFloat(weight) || 0;
+    let hCm = 0;
     if (system === 'metric') {
-      wKg = wVal;
       hCm = parseFloat(height) || 0;
+      if (weight.trim() !== '' && (wVal < 17 || wVal > 635)) return { ...defaultResult, isInvalidInput: true };
+      if (height.trim() !== '' && (hCm < 54 || hCm > 272)) return { ...defaultResult, isInvalidInput: true };
     } else if (system === 'us') {
-      wKg = wVal * LBS_TO_KG;
       hCm = ((parseFloat(feet) || 0) * 12 + (parseFloat(inches) || 0)) * IN_TO_CM;
+      if (weight.trim() !== '' && (wVal < 37 || wVal > 1400)) return { ...defaultResult, isInvalidInput: true };
+      if ((feet.trim() !== '' || inches.trim() !== '') && (hCm < 21 * IN_TO_CM || hCm > 107 * IN_TO_CM)) return { ...defaultResult, isInvalidInput: true };
     } else {
-      wKg = weightUnitOther === 'kg' ? wVal : wVal * LBS_TO_KG;
+      if (weight.trim() !== '') {
+        if (weightUnitOther === 'kg' && (wVal < 17 || wVal > 635)) return { ...defaultResult, isInvalidInput: true };
+        if (weightUnitOther === 'lb' && (wVal < 37 || wVal > 1400)) return { ...defaultResult, isInvalidInput: true };
+      }
       if (heightUnitOther === 'cm') hCm = parseFloat(height) || 0;
       else if (heightUnitOther === 'm') hCm = (parseFloat(height) || 0) * 100;
       else if (heightUnitOther === 'in') hCm = (parseFloat(height) || 0) * IN_TO_CM;
       else if (heightUnitOther === 'ft+in') hCm = ((parseFloat(feet) || 0) * 12 + (parseFloat(inches) || 0)) * IN_TO_CM;
+
+      if ((height.trim() !== '' || feet.trim() !== '' || inches.trim() !== '') && (hCm < 21 * IN_TO_CM || hCm > 272)) return { ...defaultResult, isInvalidInput: true };
     }
+
+    if (!weight || (!height && !feet && !inches) || !age || !gender || !activity) {
+       return { ...defaultResult, isInvalidInput: false };
+    }
+
+    const a = parseInt(age);
+    let wKg = system === 'metric' ? wVal : system === 'us' ? wVal * LBS_TO_KG : (weightUnitOther === 'kg' ? wVal : wVal * LBS_TO_KG);
 
     if (wKg <= 0 || hCm <= 0) return defaultResult;
 
@@ -148,7 +163,8 @@ export const CalorieCalculatorCard: React.FC = () => {
       caloriesByGoal: cals,
       targetCalories: target,
       recommendations: goalInfo.recommendations,
-      suggestedActivity: goalInfo.activity
+      suggestedActivity: goalInfo.activity,
+      isInvalidInput: false
     };
   }, [system, weight, height, feet, inches, age, gender, activity, goal, heightUnitOther, weightUnitOther]);
 
@@ -371,7 +387,21 @@ export const CalorieCalculatorCard: React.FC = () => {
     }
   };
 
-  const isFaded = targetCalories <= 0;
+  const isWeightFilled = weight.trim() !== '';
+  const isHeightFilled = system === 'metric' ? height.trim() !== '' : system === 'us' ? (feet.trim() !== '' || inches.trim() !== '') : (['cm', 'm', 'in'].includes(heightUnitOther) ? height.trim() !== '' : (feet.trim() !== '' || inches.trim() !== ''));
+  const isAgeFilled = age.trim() !== '';
+  const isGenderFilled = gender !== '';
+  const isActivityFilled = activity !== '';
+
+  const hasStarted = isWeightFilled || isHeightFilled || isAgeFilled || isGenderFilled || isActivityFilled;
+  const hasAllRequired = isWeightFilled && isHeightFilled && isAgeFilled && isGenderFilled && isActivityFilled;
+
+  const isFresh = !hasStarted;
+  const isInvalid = isInvalidInput;
+  const isIncomplete = hasStarted && !hasAllRequired && !isInvalid;
+  const isValid = hasAllRequired && !isInvalid;
+
+  const isFaded = !isValid;
   const statusColor = goal === 'loss' ? 'text-red-500' : goal === 'gain' ? 'text-green-500' : 'text-status-healthy';
 
   const numericAge = parseInt(age || '0');
@@ -420,7 +450,7 @@ export const CalorieCalculatorCard: React.FC = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-6 lg:gap-8">
+              <div className="grid grid-cols-2 gap-3 sm:gap-6 lg:gap-8">
                 <div className="flex flex-col gap-1.5 col-span-2">
                   <label className="text-[10px] font-mono font-bold text-mute uppercase tracking-widest">Name (PDF Export)</label>
                   <div className="relative">
@@ -464,13 +494,13 @@ export const CalorieCalculatorCard: React.FC = () => {
 
               <div className="space-y-6 lg:space-y-8">
                 {system === 'metric' ? (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 lg:gap-8">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-6 lg:gap-8">
                     <InputGroup key="h-cm" id="height" label="Height" value={height} onChange={setHeight} unit="CM" placeholder="180" min={54} max={272} />
                     <InputGroup key="w-kg" id="weight" label="Weight" value={weight} onChange={setWeight} unit="KG" placeholder="80" min={17} max={635} />
                   </div>
                 ) : system === 'us' ? (
                   <div className="space-y-6 lg:space-y-8">
-                    <div className="grid grid-cols-2 gap-4 lg:gap-6">
+                    <div className="grid grid-cols-2 gap-2 sm:gap-4 lg:gap-6">
                       <InputGroup key="h-ft" id="feet" label="Feet" value={feet} onChange={setFeet} unit="FT" placeholder="5" min={1} max={8} step="1" />
                       <InputGroup key="h-in" id="inches" label="Inches" value={inches} onChange={setInches} unit="IN" placeholder="11" min={0} max={11} step="1" />
                     </div>
@@ -480,7 +510,7 @@ export const CalorieCalculatorCard: React.FC = () => {
                   <div className="space-y-6 lg:space-y-8">
                     {heightUnitOther === 'ft+in' ? (
                       <div className="space-y-6">
-                        <div className="grid grid-cols-2 gap-4 lg:gap-6">
+                        <div className="grid grid-cols-2 gap-2 sm:gap-4 lg:gap-6">
                           <InputGroup key="h-ft-other" id="feet-other" label="Height" value={feet} onChange={setFeet} unit="FT" placeholder="5" min={1} max={8} step="1" />
                           <InputGroup key="h-in-other" id="inches-other" label="Inches" value={inches} onChange={setInches} unit="IN" placeholder="8" min={0} max={11} step="1" />
                         </div>
@@ -600,6 +630,20 @@ export const CalorieCalculatorCard: React.FC = () => {
             </div>
 
             <div className="space-y-8 lg:space-y-10">
+              {isFresh ? (
+                <div className="flex items-center justify-center py-20">
+                  <p className="text-mute font-mono font-bold text-[10px] uppercase tracking-widest text-center">Enter your details to see results</p>
+                </div>
+              ) : isInvalid ? (
+                <div className="flex items-center justify-center py-20">
+                  <p className="text-amber-500 font-mono font-bold text-[10px] uppercase tracking-widest text-center">Fix invalid inputs to see results</p>
+                </div>
+              ) : isIncomplete ? (
+                <div className="flex items-center justify-center py-20">
+                  <p className="text-amber-500/80 font-mono font-bold text-[10px] uppercase tracking-widest text-center">Please fill all details</p>
+                </div>
+              ) : (
+                <>
               {/* HERO RESULT: TARGET CALORIES */}
               <div id="calorie-hero-export" className="flex flex-col gap-8 py-8 px-6 sm:py-10 sm:px-8 bg-canvas border border-hairline rounded-marketing shadow-premium-lg relative overflow-hidden">
                 <div className={`absolute top-0 right-0 w-64 h-64 opacity-5 blur-[100px] rounded-full -mr-32 -mt-32 transition-colors duration-1000 ${!isFaded ? statusColor.replace('text-', 'bg-') : 'bg-mute'}`}></div>
@@ -783,7 +827,9 @@ export const CalorieCalculatorCard: React.FC = () => {
                   The Calorie results provided by this calculator are estimates based on the Mifflin-St Jeor equation for informational purposes only. Please consult a healthcare professional for medical advice.
                 </p>
               </div>
-            </div>
+              </>
+              )}
+              </div>
           </div>
         </div>
       </div>

@@ -50,7 +50,7 @@ export const WaterIntakeCalculatorCard: React.FC = () => {
     setActivity(''); setClimate(''); setName(''); setNameError('');
   };
 
-  const { waterGoal, hydrationStatus, timings, recommendations } = useMemo(() => {
+  const { waterGoal, hydrationStatus, timings, recommendations, statusColor, isInvalidInput } = useMemo(() => {
     const defaultResult = {
       waterGoal: 0,
       hydrationStatus: 'Awaiting Data',
@@ -61,13 +61,37 @@ export const WaterIntakeCalculatorCard: React.FC = () => {
         'Carry a reusable water bottle everywhere.',
         'Set reminders to drink every 2 hours.',
         'Eat water-rich fruits like watermelon.'
-      ]
+      ],
+      isInvalidInput: false
     };
 
-    if (!weight || !activity || !climate) return defaultResult;
+    if (age.trim() !== '') {
+      const a = parseInt(age);
+      if (isNaN(a) || a < 1 || a > 120) return { ...defaultResult, isInvalidInput: true };
+    }
+
+    if (weight.trim() !== '') {
+       let weightKg = parseFloat(weight);
+       if (isNaN(weightKg)) return { ...defaultResult, isInvalidInput: true };
+       
+       if (system === 'metric') {
+          if (weightKg < 17 || weightKg > 635) return { ...defaultResult, isInvalidInput: true };
+       } else if (system === 'us') {
+          if (weightKg < 37 || weightKg > 1400) return { ...defaultResult, isInvalidInput: true };
+       } else {
+          if (weightUnitOther === 'kg') {
+             if (weightKg < 17 || weightKg > 635) return { ...defaultResult, isInvalidInput: true };
+          } else {
+             if (weightKg < 37 || weightKg > 1400) return { ...defaultResult, isInvalidInput: true };
+          }
+       }
+    }
+
+    if (!weight || !activity || !climate) {
+       return { ...defaultResult, isInvalidInput: false };
+    }
 
     let weightKg = parseFloat(weight);
-    if (isNaN(weightKg)) return defaultResult;
 
     if (system === 'us') weightKg = weightKg * LBS_TO_KG;
     else if (system === 'other' && weightUnitOther === 'lb') weightKg = weightKg * LBS_TO_KG;
@@ -108,7 +132,7 @@ export const WaterIntakeCalculatorCard: React.FC = () => {
         'Monitor urine color - it should be pale yellow.'
       ]
     };
-  }, [system, weight, weightUnitOther, activity, climate]);
+  }, [system, weight, weightUnitOther, activity, climate, age]);
 
   const handleExport = async () => {
     if (waterGoal <= 0) return;
@@ -294,7 +318,19 @@ export const WaterIntakeCalculatorCard: React.FC = () => {
     }
   };
 
-  const isFaded = waterGoal === 0;
+  const isWeightFilled = weight.trim() !== '';
+  const isActivityFilled = activity !== '';
+  const isClimateFilled = climate !== '';
+
+  const hasStarted = isWeightFilled || isActivityFilled || isClimateFilled;
+  const hasAllRequired = isWeightFilled && isActivityFilled && isClimateFilled;
+
+  const isFresh = !hasStarted;
+  const isInvalid = isInvalidInput;
+  const isIncomplete = hasStarted && !hasAllRequired && !isInvalid;
+  const isValid = hasAllRequired && !isInvalid;
+
+  const isFaded = !isValid;
 
   return (
     <motion.div 
@@ -339,7 +375,7 @@ export const WaterIntakeCalculatorCard: React.FC = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-6 lg:gap-8">
+              <div className="grid grid-cols-2 gap-3 sm:gap-6 lg:gap-8">
                 <div className="flex flex-col gap-1.5 col-span-2">
                   <label className="text-[10px] font-mono font-bold text-mute uppercase tracking-widest">Name (PDF Export)</label>
                   <div className="relative">
@@ -474,6 +510,20 @@ export const WaterIntakeCalculatorCard: React.FC = () => {
             </div>
 
             <div className="space-y-8 lg:space-y-10">
+              {isFresh ? (
+                <div className="flex items-center justify-center py-20">
+                  <p className="text-mute font-mono font-bold text-[10px] uppercase tracking-widest text-center">Enter your details to see results</p>
+                </div>
+              ) : isInvalid ? (
+                <div className="flex items-center justify-center py-20">
+                  <p className="text-amber-500 font-mono font-bold text-[10px] uppercase tracking-widest text-center">Fix invalid inputs to see results</p>
+                </div>
+              ) : isIncomplete ? (
+                <div className="flex items-center justify-center py-20">
+                  <p className="text-amber-500/80 font-mono font-bold text-[10px] uppercase tracking-widest text-center">Please fill all details</p>
+                </div>
+              ) : (
+                <>
               <div id="water-hero-export" className="flex flex-col gap-8 py-8 px-6 sm:py-10 sm:px-8 bg-canvas border border-hairline rounded-marketing shadow-premium-lg relative overflow-hidden">
                 <div className={`absolute top-0 right-0 w-64 h-64 opacity-5 blur-[100px] rounded-full -mr-32 -mt-32 transition-colors duration-1000 ${!isFaded ? waterGoal < 2.0 ? 'bg-status-under' : waterGoal > 3.5 ? 'bg-status-over' : 'bg-status-healthy' : 'bg-mute'}`}></div>
                 
@@ -618,10 +668,12 @@ export const WaterIntakeCalculatorCard: React.FC = () => {
               <div className="pt-6 sm:pt-8 border-t border-hairline/50">
                 <p className="text-[10px] leading-relaxed text-mute font-medium text-center sm:text-left">
                   <span className="font-bold text-ink/70 uppercase tracking-widest text-[9px] mr-1.5">Medical Disclaimer:</span> 
-                  The Hydration results provided by this calculator are estimates for informational purposes only. Please consult a healthcare professional for medical advice.
+                  The Water Intake results provided by this calculator are estimates for informational purposes only. Please consult a healthcare professional for medical advice.
                 </p>
               </div>
-            </div>
+              </>
+              )}
+              </div>
           </div>
         </div>
       </div>
