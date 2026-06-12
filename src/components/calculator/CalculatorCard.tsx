@@ -387,7 +387,7 @@ export const CalculatorCard: React.FC = () => {
       pdf.setFont('helvetica', 'bold');
       pdf.setTextColor(0, 112, 243);
       const unit = (system === 'us' || (system === 'other' && weightUnitOther === 'lb')) ? 'lb' : 'kg';
-      pdf.text(`${idealWeightRange.min.toFixed(1)} – ${idealWeightRange.max.toFixed(1)} ${unit}`, margin + 8, y + 10);
+      pdf.text(`${idealWeightRange.min.toFixed(1)} - ${idealWeightRange.max.toFixed(1)} ${unit}`, margin + 8, y + 10);
       pdf.setFontSize(8);
       pdf.setTextColor(100, 100, 100);
       const insightBase = category === 'Normal Weight' ? 'You are currently within the healthy range.' : `Target healthy range for your height.`;
@@ -496,8 +496,8 @@ export const CalculatorCard: React.FC = () => {
       y += 4;
       const tableRows = [
         ['Underweight', '< 18.5'],
-        ['Normal Weight', '18.5 – 24.9'],
-        ['Overweight', '25.0 – 29.9'],
+        ['Normal Weight', '18.5 - 24.9'],
+        ['Overweight', '25.0 - 29.9'],
         ['Obesity', '30.0+']
       ];
       
@@ -753,7 +753,7 @@ export const CalculatorCard: React.FC = () => {
                     >
                       {ACTIVITY_LEVELS.map((level) => (
                         <option key={level.value} value={level.value} className="bg-canvas text-ink font-sans text-sm font-medium">
-                          {level.label.toUpperCase()} — {level.desc}
+                          {level.label.toUpperCase()} - {level.desc}
                         </option>
                       ))}
                     </select>
@@ -798,13 +798,13 @@ export const CalculatorCard: React.FC = () => {
               {isHeightTooLowFtIn ? (
                 <div className="flex items-center justify-center py-8">
                   <p className="text-red-500 font-mono font-bold text-sm text-center">
-                    Height too low — minimum is 1 ft 9 in (world record)
+                    Height too low - minimum is 1 ft 9 in (world record)
                   </p>
                 </div>
               ) : bmi > 0 && (bmi < 5 || bmi > 120) ? (
                 <div className="flex items-center justify-center py-8">
                   <p className="text-red-500 font-mono font-bold text-sm text-center">
-                    Please check your inputs — values seem unrealistic
+                    Please check your inputs - values seem unrealistic
                   </p>
                 </div>
               ) : isFresh ? (

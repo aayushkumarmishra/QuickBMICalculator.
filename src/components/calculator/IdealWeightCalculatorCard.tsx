@@ -207,9 +207,9 @@ export const IdealWeightCalculatorCard: React.FC = () => {
       pdf.setFillColor(248, 250, 252);
       pdf.roundedRect(margin, y, pageWidth - (margin * 2), 20, 2, 2, 'F');
       pdf.setFontSize(7); pdf.setTextColor(100, 100, 100);
-      pdf.text('BMI 18.5 – 24.9 RANGE', margin + 8, y + 6);
+      pdf.text('BMI 18.5 - 24.9 RANGE', margin + 8, y + 6);
       pdf.setFontSize(9); pdf.setTextColor(23, 23, 23); pdf.setFont('helvetica', 'bold');
-      pdf.text(`${healthyRange.low.toFixed(1)} kg – ${healthyRange.high.toFixed(1)} kg`, margin + 8, y + 14);
+      pdf.text(`${healthyRange.low.toFixed(1)} kg - ${healthyRange.high.toFixed(1)} kg`, margin + 8, y + 14);
       y += 26;
 
       // 4.5 WEIGHT SPECTRUM GRAPH (Enhanced Visibility Fix)
@@ -612,11 +612,11 @@ export const IdealWeightCalculatorCard: React.FC = () => {
                   <div>
                     <div className="flex items-baseline gap-1.5 sm:gap-2 mb-1">
                       <span className="text-xl sm:text-2xl font-black tracking-tight text-ink">
-                        {isFaded ? '--' : `${healthyRange.low.toFixed(1)} – ${healthyRange.high.toFixed(1)}`}
+                        {isFaded ? '--' : `${healthyRange.low.toFixed(1)} - ${healthyRange.high.toFixed(1)}`}
                       </span>
                       <span className="text-[10px] sm:text-xs font-bold text-mute uppercase font-mono tracking-widest">{isFaded ? '' : 'kg'}</span>
                     </div>
-                    <p className="text-body text-[9px] sm:text-[10px] font-bold uppercase tracking-wider opacity-60">BMI 18.5 – 24.9 Range</p>
+                    <p className="text-body text-[9px] sm:text-[10px] font-bold uppercase tracking-wider opacity-60">BMI 18.5 - 24.9 Range</p>
                   </div>
                 </div>
 
@@ -649,12 +649,12 @@ export const IdealWeightCalculatorCard: React.FC = () => {
                         <div className="text-[9px] sm:text-[10px] font-mono font-bold text-mute uppercase tracking-[0.4em]">
                           Next Steps
                         </div>
-                        <span className="text-xs font-black text-status-healthy">✓</span>
+                        <span className="text-xs font-black text-status-healthy">v</span>
                       </div>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
                         {recommendations.map((tip, i) => (
                           <div key={i} className="flex items-start gap-2">
-                            <span className="text-[10px] font-black mt-0.5 shrink-0 text-status-healthy">—</span>
+                            <span className="text-[10px] font-black mt-0.5 shrink-0 text-status-healthy"> - </span>
                             <p className="text-[11px] sm:text-xs font-medium text-ink/80 leading-relaxed">{tip}</p>
                           </div>
                         ))}

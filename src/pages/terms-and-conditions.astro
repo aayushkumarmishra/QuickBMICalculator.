@@ -1,7 +1,7 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import { Navbar } from '../components/Navbar';
-import Footer from '../components/Footer';
+import Footer from '../components/Footer.astro';
 
 const title = "Terms & Conditions - QuickBMI";
 const description = "Review the terms of use for QuickBMI. Understand our medical disclaimers and how to use our BMI platform safely.";
@@ -63,5 +63,5 @@ const description = "Review the terms of use for QuickBMI. Understand our medica
 		</article>
 	</main>
 
-	<Footer client:visible />
+	<Footer />
 </Layout>

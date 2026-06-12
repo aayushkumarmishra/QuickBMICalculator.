@@ -1,7 +1,7 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import { Navbar } from '../components/Navbar';
-import Footer from '../components/Footer';
+import Footer from '../components/Footer.astro';
 ---
 
 <Layout title="403: Access Forbidden | QuickBMI" description="You do not have permission to access this page. Return to QuickBMI to calculate your Body Mass Index (BMI) easily." robots="noindex, nofollow">
@@ -46,5 +46,5 @@ import Footer from '../components/Footer';
 		</div>
 	</main>
 
-	<Footer client:visible />
+	<Footer />
 </Layout>

@@ -24,7 +24,7 @@ const GOAL_DATA = {
       'Avoid liquid calories and sugary drinks',
       'Focus on high-volume, low-calorie foods'
     ],
-    activity: { walking: '45–60 min/day', steps: '10,000–12,000', progress: 95 }
+    activity: { walking: '45-60 min/day', steps: '10,000-12,000', progress: 95 }
   },
   maintenance: {
     recommendations: [
@@ -33,7 +33,7 @@ const GOAL_DATA = {
       'Maintain routine and monitor weight',
       'Balance your strength and cardio work'
     ],
-    activity: { walking: '30–45 min/day', steps: '8,000–10,000', progress: 75 }
+    activity: { walking: '30-45 min/day', steps: '8,000-10,000', progress: 75 }
   },
   gain: {
     recommendations: [
@@ -42,7 +42,7 @@ const GOAL_DATA = {
       'Protein focus (1.6g - 2.0g/kg)',
       'High carbohydrate intake for fuel'
     ],
-    activity: { walking: '15–25 min/day', steps: '5,000–7,000', progress: 45 }
+    activity: { walking: '15-25 min/day', steps: '5,000-7,000', progress: 45 }
   },
   default: {
     recommendations: [
@@ -51,7 +51,7 @@ const GOAL_DATA = {
       'Stay consistent with activity',
       'Monitor metabolism monthly'
     ],
-    activity: { walking: '30–45 min/day', steps: '8,000–10,000', progress: 85 }
+    activity: { walking: '30-45 min/day', steps: '8,000-10,000', progress: 85 }
   }
 };
 
@@ -350,7 +350,7 @@ export const CalorieCalculatorCard: React.FC = () => {
         pdf.text(rec, margin + 5, recY + 3.5);
       });
 
-      // 7. FOOTER & DISCLAIMER (Surgical Overlap Fix — Calorie Specific)
+      // 7. FOOTER & DISCLAIMER (Surgical Overlap Fix  -  Calorie Specific)
       const pageHeight = pdf.internal.pageSize.getHeight();
       pdf.setFontSize(7);
       pdf.setTextColor(100, 100, 100);
@@ -573,7 +573,7 @@ export const CalorieCalculatorCard: React.FC = () => {
                     >
                       {ACTIVITY_LEVELS.map((level) => (
                         <option key={level.value} value={level.value} className="bg-canvas text-ink font-sans text-sm font-medium">
-                          {level.label.toUpperCase()} — {level.desc}
+                          {level.label.toUpperCase()}  -  {level.desc}
                         </option>
                       ))}
                     </select>
@@ -759,12 +759,12 @@ export const CalorieCalculatorCard: React.FC = () => {
                         <div className="text-[9px] sm:text-[10px] font-mono font-bold text-mute uppercase tracking-[0.4em]">
                           Nutrition Tips
                         </div>
-                        <span className="text-xs font-black text-status-healthy">✓</span>
+                        <span className="text-xs font-black text-status-healthy">v</span>
                       </div>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
                         {recommendations.map((tip, i) => (
                           <div key={i} className="flex items-start gap-2">
-                            <span className="text-[10px] font-black mt-0.5 shrink-0 text-status-healthy">—</span>
+                            <span className="text-[10px] font-black mt-0.5 shrink-0 text-status-healthy"> - </span>
                             <p className="text-[11px] sm:text-xs font-medium text-ink/80 leading-relaxed">{tip}</p>
                           </div>
                         ))}

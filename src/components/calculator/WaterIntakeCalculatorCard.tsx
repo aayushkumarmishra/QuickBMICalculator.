@@ -450,7 +450,7 @@ export const WaterIntakeCalculatorCard: React.FC = () => {
                     >
                       {ACTIVITY_LEVELS.map((level) => (
                         <option key={level.value} value={level.value} className="bg-canvas text-ink font-sans text-sm font-medium">
-                          {level.label.toUpperCase()} — {level.desc}
+                          {level.label.toUpperCase()}  -  {level.desc}
                         </option>
                       ))}
                     </select>
@@ -468,7 +468,7 @@ export const WaterIntakeCalculatorCard: React.FC = () => {
                     >
                       {CLIMATE_TYPES.map((c) => (
                         <option key={c.value} value={c.value} className="bg-canvas text-ink font-sans text-sm font-medium">
-                          {c.label.toUpperCase()} — {c.desc}
+                          {c.label.toUpperCase()}  -  {c.desc}
                         </option>
                       ))}
                     </select>

@@ -24,7 +24,7 @@ const GOAL_DATA = {
       'Focus on high-volume, low-calorie foods',
       'Mix strength training with cardio'
     ],
-    activity: { walking: '45–60 min/day', steps: '10,000–12,000', progress: 95 }
+    activity: { walking: '45-60 min/day', steps: '10,000-12,000', progress: 95 }
   },
   maintenance: {
     recommendations: [
@@ -33,16 +33,16 @@ const GOAL_DATA = {
       'Balance your strength and cardio work',
       'Monitor weight weekly for stability'
     ],
-    activity: { walking: '30–45 min/day', steps: '8,000–10,000', progress: 75 }
+    activity: { walking: '30-45 min/day', steps: '8,000-10,000', progress: 75 }
   },
   gain: {
     recommendations: [
-      'Surplus of 250–500 kcal daily',
+      'Surplus of 250-500 kcal daily',
       'Focus on progressive weight lifting',
       'High carbohydrate intake for fuel',
       'Limit intense cardio sessions'
     ],
-    activity: { walking: '15–25 min/day', steps: '5,000–7,000', progress: 45 }
+    activity: { walking: '15-25 min/day', steps: '5,000-7,000', progress: 45 }
   },
   default: {
     recommendations: [
@@ -51,7 +51,7 @@ const GOAL_DATA = {
       'Stay consistent with activity',
       'Monitor metabolism monthly'
     ],
-    activity: { walking: '30–45 min/day', steps: '8,000–10,000', progress: 85 }
+    activity: { walking: '30-45 min/day', steps: '8,000-10,000', progress: 85 }
   }
 };
 
@@ -543,7 +543,7 @@ export const BMRCalculatorCardV2: React.FC = () => {
                     >
                       {ACTIVITY_LEVELS.map((level) => (
                         <option key={level.value} value={level.value} className="bg-canvas text-ink font-sans text-sm font-medium">
-                          {level.label.toUpperCase()} — {level.desc}
+                          {level.label.toUpperCase()} - {level.desc}
                         </option>
                       ))}
                     </select>
@@ -754,12 +754,12 @@ export const BMRCalculatorCardV2: React.FC = () => {
                       <div className="text-[9px] sm:text-[10px] font-mono font-bold text-mute uppercase tracking-[0.4em]">
                         Recommendations
                       </div>
-                      <span className="text-xs font-black text-status-healthy">✓</span>
+                      <span className="text-xs font-black text-status-healthy">v</span>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
                       {recommendations.map((tip, i) => (
                         <div key={i} className="flex items-start gap-2">
-                          <span className="text-[10px] font-black mt-0.5 shrink-0 text-status-healthy">—</span>
+                          <span className="text-[10px] font-black mt-0.5 shrink-0 text-status-healthy">-</span>
                           <p className="text-[11px] sm:text-xs font-medium text-ink/80 leading-relaxed">{tip}</p>
                         </div>
                       ))}

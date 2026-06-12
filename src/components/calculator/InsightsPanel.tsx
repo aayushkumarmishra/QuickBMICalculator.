@@ -44,22 +44,22 @@ export const InsightsPanel: React.FC<InsightsPanelProps> = ({
 
   // Shared Source of Truth for Recommendations & Suggested Activity
   const activityData: Record<string, { walking: string; steps: string; stepsNum: number }> = {
-    'Underweight':     { walking: '20–30 min/day', steps: '5,000–7,000 steps/day', stepsNum: 6000 },
-    'Normal Weight':   { walking: '30 min/day',    steps: '7,000–8,000 steps/day', stepsNum: 7500 },
-    'Overweight':      { walking: '30–45 min/day', steps: '7,000–9,000 steps/day', stepsNum: 8000 },
-    'Obesity Class I': { walking: '30–45 min/day', steps: '9,000+ steps/day',      stepsNum: 9000 },
-    'Obesity Class II':  { walking: '30–45 min/day', steps: '9,000+ steps/day',    stepsNum: 9000 },
-    'Obesity Class III': { walking: '30–45 min/day', steps: '9,000+ steps/day',    stepsNum: 9000 },
+    'Underweight':     { walking: '20-30 min/day', steps: '5,000-7,000 steps/day', stepsNum: 6000 },
+    'Normal Weight':   { walking: '30 min/day',    steps: '7,000-8,000 steps/day', stepsNum: 7500 },
+    'Overweight':      { walking: '30-45 min/day', steps: '7,000-9,000 steps/day', stepsNum: 8000 },
+    'Obesity Class I': { walking: '30-45 min/day', steps: '9,000+ steps/day',      stepsNum: 9000 },
+    'Obesity Class II':  { walking: '30-45 min/day', steps: '9,000+ steps/day',    stepsNum: 9000 },
+    'Obesity Class III': { walking: '30-45 min/day', steps: '9,000+ steps/day',    stepsNum: 9000 },
   };
   const activeRec = { ...(activityData[category] || activityData['Normal Weight']) };
 
   if (!isFaded && goal === 'loss') {
-    activeRec.walking = activity === '1.2' ? '30–45 min/day' : '45 min/day';
-    activeRec.steps = '9,000–10,000 steps/day';
+    activeRec.walking = activity === '1.2' ? '30-45 min/day' : '45 min/day';
+    activeRec.steps = '9,000-10,000 steps/day';
     activeRec.stepsNum = 9500;
   } else if (!isFaded && goal === 'gain') {
     activeRec.walking = '20 min/day';
-    activeRec.steps = '5,000–6,000 steps/day';
+    activeRec.steps = '5,000-6,000 steps/day';
     activeRec.stepsNum = 5500;
   }
 
@@ -130,7 +130,7 @@ export const InsightsPanel: React.FC<InsightsPanelProps> = ({
           <div>
             <div className="flex items-baseline gap-1.5 sm:gap-2 mb-1">
               <span className="text-xl sm:text-2xl font-black tracking-tight text-ink">
-                {displayMin} – {displayMax}
+                {displayMin} - {displayMax}
               </span>
               <span className="text-[10px] sm:text-xs font-bold text-mute uppercase font-mono tracking-widest">{idealWeightRange.min === 0 ? '' : unit}</span>
             </div>
@@ -145,10 +145,10 @@ export const InsightsPanel: React.FC<InsightsPanelProps> = ({
           'Underweight': {
             icon: '↑',
             tips: ['Focus on protein-rich foods', 'Add strength training 3x/week', 
-                   'Increase daily calorie intake', 'Eat 5–6 smaller meals/day']
+                   'Increase daily calorie intake', 'Eat 5-6 smaller meals/day']
           },
           'Normal Weight': {
-            icon: '✓',
+            icon: 'v',
             tips: ['Maintain balanced nutrition', `Stay active ${activeRec.walking}`, 
                    'Keep consistent sleep schedule', 'Track progress monthly']
           },
@@ -200,7 +200,7 @@ export const InsightsPanel: React.FC<InsightsPanelProps> = ({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
               {current.tips.map((tip, i) => (
                 <div key={i} className="flex items-start gap-2">
-                  <span className={`text-[10px] font-black mt-0.5 shrink-0 ${iconColor}`}>—</span>
+                  <span className={`text-[10px] font-black mt-0.5 shrink-0 ${iconColor}`}> - </span>
                   <p className="text-[11px] sm:text-xs font-medium text-ink/80 leading-relaxed">{tip}</p>
                 </div>
               ))}

@@ -1,7 +1,7 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import { Navbar } from '../components/Navbar';
-import Footer from '../components/Footer';
+import Footer from '../components/Footer.astro';
 import { BrandLogo } from '../components/BrandLogo';
 
 const title = "About Us - QuickBMI";
@@ -67,5 +67,5 @@ const description = "Discover the story behind QuickBMI. A modern BMI intelligen
 		</article>
 	</main>
 
-	<Footer client:visible />
+	<Footer />
 </Layout>

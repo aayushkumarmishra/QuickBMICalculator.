@@ -47,7 +47,7 @@ export const ResultGauge: React.FC<ResultGaugeProps> = ({ bmi }) => {
             >
               {bmi > 0 ? bmi.toFixed(1) : '--'}
             </motion.span>
-            <span className="text-lg sm:text-xl font-bold text-mute/60 tracking-tighter">kg/m²</span>
+            <span className="text-lg sm:text-xl font-bold text-mute/60 tracking-tighter">kg/m<sup>2</sup></span>
           </div>
         </div>
 

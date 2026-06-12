@@ -1,7 +1,7 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import { Navbar } from '../components/Navbar';
-import Footer from '../components/Footer';
+import Footer from '../components/Footer.astro';
 import { Mail, MessageCircle, Clock } from 'lucide-react';
 
 const title = "Contact Us - QuickBMI";
@@ -69,5 +69,5 @@ const description = "Have questions or feedback about QuickBMI? Get in touch wit
 		</article>
 	</main>
 
-	<Footer client:visible />
+	<Footer />
 </Layout>
