@@ -53,20 +53,67 @@ export const CalculatorCard: React.FC = () => {
     setGoal(''); setActivity(''); setName(''); setNameError('');
   };
 
-  const { bmi, category, idealWeightRange, ponderalIndex, bmr, tdee } = useMemo(() => {
-    const defaultResult = { bmi: 0, category: '', idealWeightRange: { min: 0, max: 0 }, ponderalIndex: 0, bmr: 0, tdee: 0 };
+  const { bmi, category, idealWeightRange, ponderalIndex, bmr, tdee, isInvalidInput } = useMemo(() => {
+    const defaultResult = { bmi: 0, category: '', idealWeightRange: { min: 0, max: 0 }, ponderalIndex: 0, bmr: 0, tdee: 0, isInvalidInput: false };
 
-    const a = parseInt(age);
-    if (!weight || (!height && !feet && !inches)) return defaultResult;
-    const hasFullInputs = !!(age && !isNaN(a) && a >= 18 && a <= 120 && gender && activity);
+    if (age.trim() !== '') {
+      const a = parseInt(age);
+      if (isNaN(a) || a < 18 || a > 120) return { ...defaultResult, isInvalidInput: true };
+    }
 
-    let bmiValue = 0; let piValue = 0; let bmrValue = 0; let tdeeValue = 0;
-    let w = parseFloat(weight) || 0; let h = 0;
+    let w = parseFloat(weight) || 0; 
+    let h = 0;
 
     if (system === 'metric') {
       h = parseFloat(height) || 0;
-      if (w < 17 || w > 635 || h < 54 || h > 272) return defaultResult;
+      if (weight.trim() !== '' && (w < 17 || w > 635)) return { ...defaultResult, isInvalidInput: true };
+      if (height.trim() !== '' && (h < 54 || h > 272)) return { ...defaultResult, isInvalidInput: true };
+    } else if (system === 'us') {
+      const f = parseFloat(feet) || 0;
+      const i = parseFloat(inches) || 0;
+      h = f * 12 + i;
+      if (weight.trim() !== '' && (w < 37 || w > 1400)) return { ...defaultResult, isInvalidInput: true };
+      if ((feet.trim() !== '' || inches.trim() !== '') && (h < 21 || h > 107)) return { ...defaultResult, isInvalidInput: true };
+    } else {
+      const wVal = parseFloat(weight) || 0;
+      if (weight.trim() !== '') {
+        if (weightUnitOther === 'kg' && (wVal < 17 || wVal > 635)) return { ...defaultResult, isInvalidInput: true };
+        if (weightUnitOther === 'lb' && (wVal < 37 || wVal > 1400)) return { ...defaultResult, isInvalidInput: true };
+      }
       
+      let hM = 0;
+      if (heightUnitOther === 'cm') {
+        const hVal = parseFloat(height) || 0;
+        if (height.trim() !== '' && (hVal < 54 || hVal > 272)) return { ...defaultResult, isInvalidInput: true };
+        hM = hVal / 100;
+      } else if (heightUnitOther === 'm') {
+        const hVal = parseFloat(height) || 0;
+        if (height.trim() !== '' && (hVal < 0.54 || hVal > 2.72)) return { ...defaultResult, isInvalidInput: true };
+        hM = hVal;
+      } else if (heightUnitOther === 'in') {
+        const hVal = parseFloat(height) || 0;
+        if (height.trim() !== '' && (hVal < 21 || hVal > 107)) return { ...defaultResult, isInvalidInput: true };
+        hM = hVal * IN_TO_CM / 100;
+      } else if (heightUnitOther === 'ft+in') {
+        const f = parseFloat(feet) || 0;
+        const i = parseFloat(inches) || 0;
+        const hTotalIn = f * 12 + i;
+        if ((feet.trim() !== '' || inches.trim() !== '') && (hTotalIn < 21 || hTotalIn > 107)) return { ...defaultResult, isInvalidInput: true };
+        hM = hTotalIn * IN_TO_CM / 100;
+      }
+      h = hM; // 'other' mode base
+    }
+
+    if (!weight || (!height && !feet && !inches) || !age) {
+      return { ...defaultResult, isInvalidInput: false };
+    }
+    
+    const a = parseInt(age);
+    const hasFullInputs = !!gender && !!activity;
+
+    let bmiValue = 0; let piValue = 0; let bmrValue = 0; let tdeeValue = 0;
+
+    if (system === 'metric') {
       const hM = h / 100;
       bmiValue = w / Math.pow(hM, 2);
       piValue = w / Math.pow(hM, 3);
@@ -78,11 +125,6 @@ export const CalculatorCard: React.FC = () => {
       }
 
     } else if (system === 'us') {
-      const f = parseFloat(feet) || 0;
-      const i = parseFloat(inches) || 0;
-      h = f * 12 + i;
-      if (w < 37 || w > 1400 || h < 21 || h > 107) return defaultResult;
-
       bmiValue = (w * BMI_IMPERIAL_CONSTANT) / Math.pow(h, 2);
       const wKg = w * LBS_TO_KG; 
       const hCm = h * IN_TO_CM; 
@@ -96,40 +138,8 @@ export const CalculatorCard: React.FC = () => {
       }
 
     } else {
-        // OTHER mode
-        let wKg = 0;
-        let hM = 0;
-
-        const wVal = parseFloat(weight) || 0;
-        if (weightUnitOther === 'kg') {
-          if (wVal < 17 || wVal > 635) return defaultResult;
-          wKg = wVal;
-        } else {
-          if (wVal < 37 || wVal > 1400) return defaultResult;
-          wKg = wVal * LBS_TO_KG;
-        }
-
-        if (heightUnitOther === 'cm') {
-          const hVal = parseFloat(height) || 0;
-          if (hVal < 54 || hVal > 272) return defaultResult;
-          hM = hVal / 100;
-        } else if (heightUnitOther === 'm') {
-          const hVal = parseFloat(height) || 0;
-          if (hVal < 0.54 || hVal > 2.72) return defaultResult;
-          hM = hVal;
-        } else if (heightUnitOther === 'in') {
-          const hVal = parseFloat(height) || 0;
-          if (hVal < 21 || hVal > 107) return defaultResult;
-          hM = hVal * IN_TO_CM / 100;
-        } else if (heightUnitOther === 'ft+in') {
-          const f = parseFloat(feet) || 0;
-          const i = parseFloat(inches) || 0;
-          const hTotalIn = f * 12 + i;
-          if (hTotalIn < 21 || hTotalIn > 107) return defaultResult;
-          hM = hTotalIn * IN_TO_CM / 100;
-        }
-
-        h = hM; // Use meters as base for 'other'
+        let wKg = weightUnitOther === 'kg' ? w : w * LBS_TO_KG;
+        const hM = h;
         bmiValue = wKg / Math.pow(hM, 2);
         piValue = wKg / Math.pow(hM, 3);
         const hCm = hM * 100;
@@ -159,10 +169,25 @@ export const CalculatorCard: React.FC = () => {
       maxW = 24.9 * Math.pow(hMValue, 2) * factor;
     }
 
-    return { bmi: bmiValue, category: cat, idealWeightRange: { min: minW, max: maxW }, ponderalIndex: piValue, bmr: bmrValue, tdee: tdeeValue };
-  }, [name, system, weight, height, feet, inches, age, gender, activity, heightUnitOther, weightUnitOther, goal]);
+    return { bmi: bmiValue, category: cat, idealWeightRange: { min: minW, max: maxW }, ponderalIndex: piValue, bmr: bmrValue, tdee: tdeeValue, isInvalidInput: false };
+  }, [system, weight, height, feet, inches, age, gender, activity, heightUnitOther, weightUnitOther, goal]);
 
-  const isFaded = !bmi || bmi === 0 || isNaN(bmi);
+  const isWeightFilled = weight.trim() !== '';
+  const isHeightFilled = system === 'metric' ? height.trim() !== '' : system === 'us' ? (feet.trim() !== '' || inches.trim() !== '') : (['cm', 'm', 'in'].includes(heightUnitOther) ? height.trim() !== '' : (feet.trim() !== '' || inches.trim() !== ''));
+  const isAgeFilled = age.trim() !== '';
+  const isGenderFilled = gender !== '';
+  const isActivityFilled = activity !== '';
+
+  const hasStarted = isWeightFilled || isHeightFilled || isAgeFilled || isGenderFilled || isActivityFilled;
+  const hasAllRequired = isWeightFilled && isHeightFilled && isAgeFilled && isGenderFilled && isActivityFilled;
+
+  const isFresh = !hasStarted;
+  const isInvalid = isInvalidInput;
+  const isIncomplete = hasStarted && !hasAllRequired && !isInvalid;
+  const isValid = hasAllRequired && !isInvalid;
+
+  const isFaded = !isValid;
+
   const totalInchesUS = (parseFloat(feet) || 0) * 12 + (parseFloat(inches) || 0);
   const isHeightTooLowFtIn = (system === 'us' || (system === 'other' && heightUnitOther === 'ft+in'))
     && (parseFloat(feet) > 0 || parseFloat(inches) > 0)
@@ -362,7 +387,7 @@ export const CalculatorCard: React.FC = () => {
       pdf.setFont('helvetica', 'bold');
       pdf.setTextColor(0, 112, 243);
       const unit = (system === 'us' || (system === 'other' && weightUnitOther === 'lb')) ? 'lb' : 'kg';
-      pdf.text(`${idealWeightRange.min.toFixed(1)} – ${idealWeightRange.max.toFixed(1)} ${unit}`, margin + 8, y + 10);
+      pdf.text(`${idealWeightRange.min.toFixed(1)} - ${idealWeightRange.max.toFixed(1)} ${unit}`, margin + 8, y + 10);
       pdf.setFontSize(8);
       pdf.setTextColor(100, 100, 100);
       const insightBase = category === 'Normal Weight' ? 'You are currently within the healthy range.' : `Target healthy range for your height.`;
@@ -471,8 +496,8 @@ export const CalculatorCard: React.FC = () => {
       y += 4;
       const tableRows = [
         ['Underweight', '< 18.5'],
-        ['Normal Weight', '18.5 – 24.9'],
-        ['Overweight', '25.0 – 29.9'],
+        ['Normal Weight', '18.5 - 24.9'],
+        ['Overweight', '25.0 - 29.9'],
         ['Obesity', '30.0+']
       ];
       
@@ -590,7 +615,7 @@ export const CalculatorCard: React.FC = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-6 lg:gap-8">
+              <div className="grid grid-cols-2 gap-3 sm:gap-6 lg:gap-8">
                 <div className="flex flex-col gap-1.5 col-span-2">
                   <label className="text-[10px] font-mono font-bold text-mute uppercase tracking-widest">Name</label>
                   <div className="relative">
@@ -634,13 +659,13 @@ export const CalculatorCard: React.FC = () => {
 
               <div className="space-y-6 lg:space-y-8">
                 {system === 'metric' ? (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 lg:gap-8">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-6 lg:gap-8">
                     <InputGroup key="h-cm" id="height" label="Height" value={height} onChange={setHeight} unit="CM" placeholder="180" min={54} max={272} />
                     <InputGroup key="w-kg" id="weight" label="Weight" value={weight} onChange={setWeight} unit="KG" placeholder="80" min={17} max={635} />
                   </div>
                 ) : system === 'us' ? (
                   <div className="space-y-6 lg:space-y-8">
-                    <div className="grid grid-cols-2 gap-4 lg:gap-6">
+                    <div className="grid grid-cols-2 gap-2 sm:gap-4 lg:gap-6">
                       <InputGroup key="h-ft" id="feet" label="Feet" value={feet} onChange={setFeet} unit="FT" placeholder="5" min={1} max={8} step="1" />
                       <InputGroup key="h-in" id="inches" label="Inches" value={inches} onChange={setInches} unit="IN" placeholder="11" min={0} max={11} step="1" />
                     </div>
@@ -650,7 +675,7 @@ export const CalculatorCard: React.FC = () => {
                   <div className="space-y-6 lg:space-y-8">
                     {heightUnitOther === 'ft+in' ? (
                       <div className="space-y-6">
-                        <div className="grid grid-cols-2 gap-4 lg:gap-6">
+                        <div className="grid grid-cols-2 gap-2 sm:gap-4 lg:gap-6">
                           <InputGroup key="h-ft-other" id="feet-other" label="Height" value={feet} onChange={setFeet} unit="FT" placeholder="5" min={1} max={8} step="1" />
                           <InputGroup key="h-in-other" id="inches-other" label="Inches" value={inches} onChange={setInches} unit="IN" placeholder="8" min={0} max={11} step="1" />
                         </div>
@@ -728,7 +753,7 @@ export const CalculatorCard: React.FC = () => {
                     >
                       {ACTIVITY_LEVELS.map((level) => (
                         <option key={level.value} value={level.value} className="bg-canvas text-ink font-sans text-sm font-medium">
-                          {level.label.toUpperCase()} — {level.desc}
+                          {level.label.toUpperCase()} - {level.desc}
                         </option>
                       ))}
                     </select>
@@ -773,20 +798,32 @@ export const CalculatorCard: React.FC = () => {
               {isHeightTooLowFtIn ? (
                 <div className="flex items-center justify-center py-8">
                   <p className="text-red-500 font-mono font-bold text-sm text-center">
-                    Height too low — minimum is 1 ft 9 in (world record)
+                    Height too low - minimum is 1 ft 9 in (world record)
                   </p>
                 </div>
               ) : bmi > 0 && (bmi < 5 || bmi > 120) ? (
                 <div className="flex items-center justify-center py-8">
                   <p className="text-red-500 font-mono font-bold text-sm text-center">
-                    Please check your inputs — values seem unrealistic
+                    Please check your inputs - values seem unrealistic
                   </p>
+                </div>
+              ) : isFresh ? (
+                <div className="flex items-center justify-center py-20">
+                  <p className="text-mute font-mono font-bold text-[10px] uppercase tracking-widest text-center">Enter your details to see results</p>
+                </div>
+              ) : isInvalid ? (
+                <div className="flex items-center justify-center py-20">
+                  <p className="text-amber-500 font-mono font-bold text-[10px] uppercase tracking-widest text-center">Fix invalid inputs to see results</p>
+                </div>
+              ) : isIncomplete ? (
+                <div className="flex items-center justify-center py-20">
+                  <p className="text-amber-500/80 font-mono font-bold text-[10px] uppercase tracking-widest text-center">Please fill all details</p>
                 </div>
               ) : (
                 <ResultGauge bmi={bmi} />
               )}
               
-              {bmi >= 5 && bmi <= 120 && (
+              {!isFaded && bmi >= 5 && bmi <= 120 && (
                 <InsightsPanel 
                   bmi={bmi} category={category} idealWeightRange={idealWeightRange} 
                   unit={system === 'other' ? weightUnitOther : (system === 'metric' ? 'kg' : 'lb')}

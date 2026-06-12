@@ -1,7 +1,7 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import { Navbar } from '../components/Navbar';
-import Footer from '../components/Footer';
+import Footer from '../components/Footer.astro';
 ---
 
 <Layout title="500: Internal Server Error | QuickBMI" description="Something went wrong on our end. Please try again later or return to QuickBMI to calculate your Body Mass Index (BMI)." robots="noindex, nofollow">
@@ -46,5 +46,5 @@ import Footer from '../components/Footer';
 		</div>
 	</main>
 
-	<Footer client:visible />
+	<Footer />
 </Layout>

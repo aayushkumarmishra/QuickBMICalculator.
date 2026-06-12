@@ -1,7 +1,7 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import { Navbar } from '../components/Navbar';
-import Footer from '../components/Footer';
+import Footer from '../components/Footer.astro';
 import { CalorieCalculatorCard } from '../components/calculator/CalorieCalculatorCard';
 import { FAQAccordion } from '../components/FAQAccordion';
 import { calorieFaqs } from '../data/faq';
@@ -23,6 +23,7 @@ const faqSchema = {
 <Layout 
   title="Calorie Calculator – Daily Calories for Weight Loss & Maintenance"
   description="Calculate your daily calorie needs for fat loss, maintenance, or muscle gain using age, height, weight, and activity level."
+  appName="Calorie Calculator"
   extraSchema={[faqSchema]}
 >
   <Navbar client:load />
@@ -78,5 +79,5 @@ const faqSchema = {
     </section>
   </main>
 
-  <Footer client:visible />
+  <Footer />
 </Layout>

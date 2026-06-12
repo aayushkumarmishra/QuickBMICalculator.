@@ -1,7 +1,7 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import { Navbar } from '../components/Navbar';
-import Footer from '../components/Footer';
+import Footer from '../components/Footer.astro';
 import { WaterIntakeCalculatorCard } from '../components/calculator/WaterIntakeCalculatorCard';
 import { FAQAccordion } from '../components/FAQAccordion';
 import { waterFaqs } from '../data/faq';
@@ -23,6 +23,7 @@ const faqSchema = {
 <Layout 
   title="Water Intake Calculator – Daily Hydration Goal for Health"
   description="Calculate your recommended daily water intake based on weight, activity level, and climate to stay properly hydrated."
+  appName="Water Intake Calculator"
   extraSchema={[faqSchema]}
 >
   <Navbar client:load />
@@ -78,5 +79,5 @@ const faqSchema = {
     </section>
   </main>
 
-  <Footer client:visible />
+  <Footer />
 </Layout>

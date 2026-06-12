@@ -1,7 +1,7 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import { Navbar } from '../components/Navbar';
-import Footer from '../components/Footer';
+import Footer from '../components/Footer.astro';
 
 const title = "Privacy Policy - QuickBMI";
 const description = "Learn how QuickBMI handles your data. We prioritize your privacy with local-first processing and zero data tracking.";
@@ -63,5 +63,5 @@ const description = "Learn how QuickBMI handles your data. We prioritize your pr
 		</article>
 	</main>
 
-	<Footer client:visible />
+	<Footer />
 </Layout>

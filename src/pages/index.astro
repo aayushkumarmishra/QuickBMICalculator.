@@ -1,7 +1,7 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import { Navbar } from '../components/Navbar';
-import Footer from '../components/Footer';
+import Footer from '../components/Footer.astro';
 import { CalculatorCard } from '../components/calculator/CalculatorCard';
 import { FAQAccordion } from '../components/FAQAccordion';
 import { faqData } from '../data/faq';
@@ -21,7 +21,7 @@ const faqSchema = {
 };
 ---
 
-<Layout extraSchema={[faqSchema]}>
+<Layout appName="BMI Calculator" extraSchema={[faqSchema]}>
 	<Navbar client:load />
 
 	<main class="flex-grow">
@@ -119,13 +119,13 @@ const faqSchema = {
 										<tbody class="text-ink">
 											{[
 												{ cat: 'Severe Thinness', range: '< 16.0', color: 'bg-status-under' },
-												{ cat: 'Moderate Thinness', range: '16.0 – 16.9', color: 'bg-status-under' },
-												{ cat: 'Mild Thinness', range: '17.0 – 18.4', color: 'bg-status-under' },
-												{ cat: 'Normal Weight', range: '18.5 – 24.9', color: 'bg-status-healthy' },
-												{ cat: 'Overweight', range: '25.0 – 29.9', color: 'bg-status-over' },
-												{ cat: 'Obesity Class I', range: '30.0 – 34.9', color: 'bg-status-obese' },
-												{ cat: 'Obesity Class II', range: '35.0 – 39.9', color: 'bg-status-obese' },
-												{ cat: 'Obesity Class III', range: '≥ 40.0', color: 'bg-status-obese' },
+												{ cat: 'Moderate Thinness', range: '16.0 &ndash; 16.9', color: 'bg-status-under' },
+												{ cat: 'Mild Thinness', range: '17.0 &ndash; 18.4', color: 'bg-status-under' },
+												{ cat: 'Normal Weight', range: '18.5 &ndash; 24.9', color: 'bg-status-healthy' },
+												{ cat: 'Overweight', range: '25.0 &ndash; 29.9', color: 'bg-status-over' },
+												{ cat: 'Obesity Class I', range: '30.0 &ndash; 34.9', color: 'bg-status-obese' },
+												{ cat: 'Obesity Class II', range: '35.0 &ndash; 39.9', color: 'bg-status-obese' },
+												{ cat: 'Obesity Class III', range: '&ge; 40.0', color: 'bg-status-obese' },
 											].map((row, i) => (
 												<tr key={i} class="border-b border-hairline/60 hover:bg-canvas-soft transition-colors last:border-0 group">
 													<td class="py-4 pl-5 sm:py-5 sm:pl-8 pr-4">
@@ -237,7 +237,7 @@ const faqSchema = {
 
 	</main>
 
-	<Footer client:visible />
+	<Footer />
 </Layout>
 
 <style>

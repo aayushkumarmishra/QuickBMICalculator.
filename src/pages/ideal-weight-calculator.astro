@@ -1,7 +1,7 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import { Navbar } from '../components/Navbar';
-import Footer from '../components/Footer';
+import Footer from '../components/Footer.astro';
 import { IdealWeightCalculatorCard } from '../components/calculator/IdealWeightCalculatorCard';
 import { FAQAccordion } from '../components/FAQAccordion';
 import { idealWeightFaqs } from '../data/faq';
@@ -23,6 +23,7 @@ const faqSchema = {
 <Layout 
   title="Ideal Weight Calculator – Healthy Weight Range by Height"
   description="Find your ideal weight and healthy weight range using your height, gender, and body measurements."
+  appName="Ideal Weight Calculator"
   extraSchema={[faqSchema]}
 >
   <Navbar client:load />
@@ -78,5 +79,5 @@ const faqSchema = {
     </section>
   </main>
 
-  <Footer client:visible />
+  <Footer />
 </Layout>

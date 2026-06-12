@@ -1,7 +1,7 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import { Navbar } from '../components/Navbar';
-import Footer from '../components/Footer';
+import Footer from '../components/Footer.astro';
 import { BMRCalculatorCardV2 } from '../components/calculator/BMRCalculatorCardV2';
 import { FAQAccordion } from '../components/FAQAccordion';
 import { bmrFaqs } from '../data/faq';
@@ -23,6 +23,7 @@ const faqSchema = {
 <Layout 
   title="BMR Calculator - Calculate Basal Metabolic Rate | QuickBMI"
   description="Calculate your Basal Metabolic Rate (BMR) and Total Daily Energy Expenditure (TDEE) free online. Uses the Mifflin-St Jeor formula for accurate results."
+  appName="BMR Calculator"
   extraSchema={[faqSchema]}
 >
   <Navbar client:load />
@@ -76,5 +77,5 @@ const faqSchema = {
     </section>
   </main>
 
-  <Footer client:visible />
+  <Footer />
 </Layout>

@@ -6,13 +6,15 @@ interface Props {
 	description?: string;
 	robots?: string;
 	extraSchema?: any[];
+	appName?: string;
 }
 
 const { 
 	title = "BMI Calculator - Calculate Body Mass Index Online | QuickBMI",
 	description = "Calculate your Body Mass Index (BMI) easily with our free online tool. Supports metric and US units for adults and children, providing helpful health insights.",
 	robots = "index, follow",
-	extraSchema = []
+	extraSchema = [],
+	appName = "Quick BMI Calculator"
 } = Astro.props;
 
 ---
@@ -109,7 +111,7 @@ const {
 				{
 					"@type": "SoftwareApplication",
 					"@id": `${Astro.url.origin}/#software`,
-					"name": "Quick BMI Calculator",
+					"name": appName,
 					"applicationCategory": "HealthApplication",
 					"operatingSystem": "Web Browser",
 					"url": Astro.url.origin,

@@ -68,8 +68,8 @@ To make it easy to understand, here is the official classification for BMI in In
 | Category | BMI Range (kg/m²) |
 | :--- | :--- |
 | **Underweight** | Less than 18.5 |
-| **Normal / Healthy** | 18.5 – 22.9 |
-| **Overweight** | 23.0 – 24.9 |
+| **Normal / Healthy** | 18.5 &ndash; 22.9 |
+| **Overweight** | 23.0 &ndash; 24.9 |
 | **Obese** | 25.0 or higher |
 
 If you haven't checked your numbers recently, you can [estimate your BMI using our free BMI calculator](/). Knowing your number is the first step toward taking control of your health.
