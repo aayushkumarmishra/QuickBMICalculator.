@@ -71,18 +71,18 @@ const {
 		<meta name="keywords" content="BMI Calculator, online bmi calculator, bmi calculator for men, bmi calculator for women, bmi calculator kg" />
 
 		<!-- Open Graph / Facebook -->
-		<meta property="og:type" content="website" />
+		<meta property="og:type" content={ogType} />
 		<meta property="og:url" content={Astro.url.href} />
 		<meta property="og:title" content={title} />
 		<meta property="og:description" content={description} />
-		<meta property="og:image" content={new URL('/og-image.png', Astro.url)} />
+		<meta property="og:image" content={new URL(image, Astro.site)} />
 
 		<!-- Twitter -->
 		<meta property="twitter:card" content="summary_large_image" />
 		<meta property="twitter:url" content={Astro.url.href} />
 		<meta property="twitter:title" content={title} />
 		<meta property="twitter:description" content={description} />
-		<meta property="twitter:image" content={new URL('/og-image.png', Astro.url)} />
+		<meta name="twitter:image" content={new URL(image, Astro.site)} />
 
 		<!-- Structured Data -->
 		<script type="application/ld+json" set:html={JSON.stringify({
@@ -163,6 +163,13 @@ const {
 	#site-wrapper {
 		display: flex;
 		flex-direction: column;
+		min-height: 100vh;
+		min-height: 100dvh;
+		width: 100%;
+		position: relative;
+	}
+</style>
+: column;
 		min-height: 100vh;
 		min-height: 100dvh;
 		width: 100%;

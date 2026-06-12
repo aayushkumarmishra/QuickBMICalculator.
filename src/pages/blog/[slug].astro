@@ -60,6 +60,8 @@ const calculators = [
 <Layout 
 	title={`${post.data.title} | QuickBMI Blog`} 
 	description={post.data.description}
+	image={post.data.heroImage}
+	ogType="article"
 	extraSchema={[jsonLd]}
 >
 	<Navbar client:load />
