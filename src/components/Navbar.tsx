@@ -2,18 +2,40 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence, useScroll, useMotionValueEvent } from 'framer-motion';
 import { ThemeToggle } from './ThemeToggle';
 import { BrandLogo } from './BrandLogo';
-import { Menu, X, ChevronDown } from 'lucide-react';
+import { Menu, X, ChevronDown, User, LogOut } from 'lucide-react';
+import { supabase } from '../lib/supabase';
+import type { User as SupabaseUser } from '@supabase/supabase-js';
 
 export const Navbar: React.FC = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isToolsOpen, setIsToolsOpen] = useState(false);
+  const [user, setUser] = useState<SupabaseUser | null>(null);
   
   const { scrollY } = useScroll();
   const lastScrollY = useRef(0);
   const scrollStopTimer = useRef<NodeJS.Timeout | null>(null);
   const scrollThreshold = 10;
+
+  useEffect(() => {
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    window.location.href = '/';
+  };
 
   useMotionValueEvent(scrollY, "change", (latest) => {
     // Determine if scrolled enough to show background
@@ -206,6 +228,30 @@ export const Navbar: React.FC = () => {
           </div>
           
           <div className="flex items-center gap-6 xl:gap-8 pl-6 xl:pl-10 border-l border-hairline/40">
+            <div className="flex items-center gap-6 mr-2">
+              {user ? (
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-2 px-3 py-1.5 bg-canvas-soft border border-hairline rounded-ui">
+                    <User className="w-3.5 h-3.5 text-mute" />
+                    <span className="text-[11px] font-bold text-ink truncate max-w-[100px]">
+                      {user.user_metadata?.full_name || user.email?.split('@')[0]}
+                    </span>
+                  </div>
+                  <button 
+                    onClick={handleLogout}
+                    className="p-2 text-mute hover:text-red-500 transition-colors"
+                    title="Sign Out"
+                  >
+                    <LogOut className="w-4 h-4" />
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <a href="/login" className="text-[13px] font-bold text-mute hover:text-ink transition-colors">Sign In</a>
+                  <a href="/signup" className="text-[13px] font-bold text-ink hover:opacity-70 transition-opacity">Join Free</a>
+                </>
+              )}
+            </div>
             <ThemeToggle />
             <a 
               href={calcHref} 
@@ -290,7 +336,40 @@ export const Navbar: React.FC = () => {
                 </a>
               ))}
               
-              <div className="pt-6 border-t border-hairline">
+              <div className="pt-6 border-t border-hairline flex flex-col gap-4">
+                {user ? (
+                  <div className="flex items-center justify-between p-4 bg-canvas-soft border border-hairline rounded-xl">
+                    <div className="flex items-center gap-3">
+                      <User className="w-5 h-5 text-mute" />
+                      <span className="font-bold text-ink">
+                        {user.user_metadata?.full_name || user.email?.split('@')[0]}
+                      </span>
+                    </div>
+                    <button 
+                      onClick={handleLogout}
+                      className="text-mute hover:text-red-500 transition-colors"
+                    >
+                      <LogOut className="w-5 h-5" />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 gap-4">
+                    <a 
+                      href="/login" 
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="py-4 border border-hairline text-ink rounded-pill text-center font-bold text-sm uppercase tracking-widest"
+                    >
+                      Sign In
+                    </a>
+                    <a 
+                      href="/signup" 
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="py-4 bg-canvas-soft border border-hairline text-ink rounded-pill text-center font-bold text-sm uppercase tracking-widest"
+                    >
+                      Join Free
+                    </a>
+                  </div>
+                )}
                 <a 
                   href={calcHref} 
                   onClick={() => setIsMobileMenuOpen(false)}
