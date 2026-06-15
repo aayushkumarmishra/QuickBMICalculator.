@@ -1,8 +1,9 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { RotateCcw, Download, Check, Activity, ChevronDown, Target, Info, AlertCircle } from 'lucide-react';
+import { RotateCcw, Download, Check, Activity, ChevronDown, Target, Info, AlertCircle, Lock, Save } from 'lucide-react';
 import { InputGroup } from './InputGroup';
 import { BrandLogo } from '../BrandLogo';
+import { ReportActions } from './ReportActions';
 
 type UnitSystem = 'metric' | 'us' | 'other';
 type Goal = 'maintenance' | 'loss' | 'gain' | '';
@@ -76,6 +77,33 @@ export const BMRCalculatorCardV2: React.FC = () => {
   const [isExporting, setIsExporting] = useState(false);
   const [exportError, setExportError] = useState<string>('');
   const [isResetting, setIsResetting] = useState(false);
+
+  // Persistent State Logic
+  useEffect(() => {
+    const saved = sessionStorage.getItem('bmr_calculator_state');
+    if (saved) {
+      try {
+        const state = JSON.parse(saved);
+        if (state.weight !== undefined) setWeight(state.weight);
+        if (state.height !== undefined) setHeight(state.height);
+        if (state.feet !== undefined) setFeet(state.feet);
+        if (state.inches !== undefined) setInches(state.inches);
+        if (state.name !== undefined) setName(state.name);
+        if (state.age !== undefined) setAge(state.age);
+        if (state.gender !== undefined) setGender(state.gender);
+        if (state.system !== undefined) setSystem(state.system);
+        if (state.activity !== undefined) setActivity(state.activity);
+        if (state.goal !== undefined) setGoal(state.goal);
+        if (state.heightUnitOther !== undefined) setHeightUnitOther(state.heightUnitOther);
+        if (state.weightUnitOther !== undefined) setWeightUnitOther(state.weightUnitOther);
+
+        // Clear state after restoration to prevent stale persistence
+        sessionStorage.removeItem('bmr_calculator_state');
+      } catch (e) {
+        console.error('Failed to restore BMR state:', e);
+      }
+    }
+  }, []);
 
   const handleResetWithAnimation = () => {
     setIsResetting(true);
@@ -182,176 +210,25 @@ export const BMRCalculatorCardV2: React.FC = () => {
 
     setIsExporting(true);
     try {
-      const { jsPDF } = await import('jspdf');
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      const pageWidth = pdf.internal.pageSize.getWidth();
-      const margin = 20;
-      let y = 20;
-
-      const drawHeader = (title: string, yPos: number) => {
-        pdf.setFontSize(10);
-        pdf.setFont('helvetica', 'bold');
-        pdf.setTextColor(150, 150, 150);
-        pdf.text(title.toUpperCase(), margin, yPos);
-        return yPos + 6;
+      const { generateReportPDF } = await import('../../lib/pdf');
+      
+      const inputData = {
+        age, gender, height, weight, feet, inches, activity, goal, system, heightUnitOther, weightUnitOther
       };
 
-      // 1. HEADER
-      pdf.setFillColor(23, 23, 23);
-      pdf.rect(0, 0, pageWidth, 40, 'F');
-      pdf.setTextColor(255, 255, 255);
-      pdf.setFontSize(22);
-      pdf.setFont('helvetica', 'bold');
-      pdf.text('QuickBMI', margin, 22);
-      pdf.setFontSize(10);
-      pdf.setFont('helvetica', 'normal');
-      pdf.text('Basal Metabolic Rate Analysis', margin, 28);
-      pdf.setFontSize(10);
-      pdf.setFont('helvetica', 'bold');
-      pdf.text(name.toUpperCase(), margin, 35);
-      pdf.setFontSize(8);
-      pdf.text(`REPORT ID: ${Math.random().toString(36).substr(2, 9).toUpperCase()}`, pageWidth - margin - 40, 22);
-      pdf.text(`DATE: ${new Date().toLocaleDateString()}`, pageWidth - margin - 40, 26);
-      y = 50;
+      const resultData = {
+        bmr, tdee, caloriesByGoal, waterIntake, suggestedActivity, recommendations
+      };
 
-      // 2. PROFILE
-      y = drawHeader('Your Profile', y);
-      pdf.setDrawColor(240, 240, 240);
-      pdf.setFillColor(252, 252, 252);
-      pdf.roundedRect(margin, y, pageWidth - (margin * 2), 30, 2, 2, 'FD');
-      const colW = (pageWidth - (margin * 2)) / 3;
-      pdf.setFontSize(7); pdf.setTextColor(100, 100, 100); pdf.setFont('helvetica', 'normal');
-      pdf.text('AGE', margin + 8, y + 6);
-      pdf.text('GENDER', margin + 8 + colW, y + 6);
-      pdf.text('ACTIVITY', margin + 8 + (colW * 2), y + 6);
-      pdf.setFontSize(9); pdf.setTextColor(23, 23, 23); pdf.setFont('helvetica', 'bold');
-      pdf.text(age || '--', margin + 8, y + 14);
-      pdf.text((gender || '--').toUpperCase(), margin + 8 + colW, y + 14);
-      const actLabel = ACTIVITY_LEVELS.find(a => a.value === activity)?.label || '--';
-      pdf.text(actLabel, margin + 8 + (colW * 2), y + 14);
-      y += 18;
-      pdf.setFontSize(7); pdf.setTextColor(100, 100, 100); pdf.setFont('helvetica', 'normal');
-      pdf.text('HEIGHT', margin + 8, y + 6);
-      pdf.text('WEIGHT', margin + 8 + colW, y + 6);
-      let hStr = '';
-      let wStr = '';
-      if (system === 'us') { hStr = `${feet}ft ${inches}in`; wStr = `${weight} lb`; }
-      else if (system === 'metric') { hStr = `${height}cm`; wStr = `${weight} kg`; }
-      else { hStr = heightUnitOther === 'ft+in' ? `${feet}ft ${inches}in` : `${height} ${heightUnitOther}`; wStr = `${weight} ${weightUnitOther}`; }
-      pdf.setFontSize(9); pdf.setTextColor(23, 23, 23); pdf.setFont('helvetica', 'bold');
-      pdf.text(hStr || '--', margin + 8, y + 14);
-      pdf.text(wStr || '--', margin + 8 + colW, y + 14);
-      y += 20;
-
-      // 3. BMR RESULT
-      y = drawHeader('BMR Analysis', y);
-      pdf.setDrawColor(235, 235, 235);
-      pdf.setFillColor(255, 255, 255);
-      pdf.roundedRect(margin, y, pageWidth - (margin * 2), 22, 2, 2, 'D');
-      pdf.setTextColor(100, 100, 100); pdf.setFontSize(9); pdf.setFont('helvetica', 'normal');
-      pdf.text('BASAL METABOLIC RATE', margin + 8, y + 8);
-      pdf.text('TOTAL DAILY EXPENDITURE', margin + 90, y + 8);
-      pdf.setTextColor(23, 23, 23); pdf.setFontSize(16); pdf.setFont('helvetica', 'bold');
-      pdf.text(`${Math.round(bmr).toLocaleString()} kcal`, margin + 8, y + 16);
-      pdf.setFontSize(13);
-      pdf.text(`${Math.round(tdee).toLocaleString()} kcal`, margin + 90, y + 16);
-      y += 28;
-
-      // 4. BMR BAR
-      const barHeight = 8;
-      const barWidth = pageWidth - (margin * 2);
-      pdf.setFillColor(0, 112, 243); pdf.rect(margin, y, barWidth * 0.20, barHeight, 'F');
-      pdf.setFillColor(0, 223, 216); pdf.rect(margin + (barWidth * 0.20), y, barWidth * 0.40, barHeight, 'F');
-      pdf.setFillColor(245, 166, 35); pdf.rect(margin + (barWidth * 0.60), y, barWidth * 0.25, barHeight, 'F');
-      pdf.setFillColor(255, 0, 0); pdf.rect(margin + (barWidth * 0.85), y, barWidth * 0.15, barHeight, 'F');
-      const minBMR = 1000; const maxBMR = 3500;
-      const pct = Math.min(Math.max(((bmr - minBMR) / (maxBMR - minBMR)) * 100, 0), 100);
-      const markerX = margin + (barWidth * (pct / 100));
-      pdf.setDrawColor(23, 23, 23); pdf.setLineWidth(0.6);
-      pdf.line(markerX, y - 2, markerX, y + barHeight + 2);
-      pdf.setFillColor(23, 23, 23); pdf.circle(markerX, y - 3, 1.2, 'FD');
-      pdf.setFontSize(7); pdf.setTextColor(150, 150, 150);
-      pdf.text('Low', margin, y + barHeight + 5);
-      pdf.text('Normal', margin + (barWidth * 0.20), y + barHeight + 5);
-      pdf.text('Active', margin + (barWidth * 0.60), y + barHeight + 5);
-      pdf.text('High', margin + (barWidth * 0.85), y + barHeight + 5);
-      y += barHeight + 20;
-
-      // 5. CALORIE PLAN
-      y = drawHeader('Daily Calorie Goals', y);
-      pdf.setFillColor(248, 250, 252);
-      pdf.roundedRect(margin, y, pageWidth - (margin * 2), 20, 2, 2, 'F');
-      const calCol = (pageWidth - (margin * 2)) / 3;
-      pdf.setFontSize(7); pdf.setTextColor(100, 100, 100);
-      pdf.text('FAT LOSS', margin + 8, y + 6);
-      pdf.text('MAINTENANCE', margin + 8 + calCol, y + 6);
-      pdf.text('WEIGHT GAIN', margin + 8 + (colW * 2), y + 6);
-      pdf.setFontSize(9); pdf.setTextColor(23, 23, 23); pdf.setFont('helvetica', 'bold');
-      pdf.text(`${Math.round(caloriesByGoal.loss).toLocaleString()} kcal`, margin + 8, y + 14);
-      pdf.text(`${Math.round(caloriesByGoal.maintenance).toLocaleString()} kcal`, margin + 8 + calCol, y + 14);
-      pdf.text(`${Math.round(caloriesByGoal.gain).toLocaleString()} kcal`, margin + 8 + (colW * 2), y + 14);
-      y += 30;
-
-      // 6. GUIDANCE
-      y = drawHeader('Personalized Guidance', y);
-      pdf.setDrawColor(240, 240, 240);
-      pdf.setFillColor(252, 252, 252);
-      pdf.roundedRect(margin, y, pageWidth - (margin * 2), 20, 2, 2, 'FD');
-      const ahCol = (pageWidth - (margin * 2)) / 3;
-      pdf.setFontSize(7); pdf.setTextColor(100, 100, 100); pdf.setFont('helvetica', 'normal');
-      pdf.text('WALKING', margin + 8, y + 6);
-      pdf.text('STEPS / DAY', margin + 8 + ahCol, y + 6);
-      pdf.text('WATER INTAKE', margin + 8 + (ahCol * 2), y + 6);
-      pdf.setFontSize(9); pdf.setTextColor(23, 23, 23); pdf.setFont('helvetica', 'bold');
-      pdf.text(suggestedActivity.walking, margin + 8, y + 14);
-      pdf.text(suggestedActivity.steps, margin + 8 + ahCol, y + 14);
-      pdf.text(`${waterIntake.toFixed(1)} L / day`, margin + 8 + (ahCol * 2), y + 14);
-      y += 28;
-
-      pdf.setFontSize(8); pdf.setFont('helvetica', 'bold'); pdf.setTextColor(150, 150, 150);
-      pdf.text('RECOMMENDATIONS', margin, y);
-      y += 4;
-      recommendations.forEach((rec, i) => {
-        const recY = y + (i * 4.5);
-        pdf.setDrawColor(0, 223, 216);
-        pdf.setLineWidth(0.3);
-        pdf.line(margin, recY + 3, margin + 1, recY + 4);
-        pdf.line(margin + 1, recY + 4, margin + 3, recY + 1.5);
-        pdf.setFontSize(8); pdf.setFont('helvetica', 'normal'); pdf.setTextColor(50, 50, 50);
-        pdf.text(rec, margin + 5, recY + 3.5);
+      await generateReportPDF({
+        profileName: trimmedName,
+        calculatorType: 'bmr',
+        inputData,
+        resultData,
+        date: new Date().toLocaleDateString()
       });
-
-      // 6. FOOTER & DISCLAIMER (Surgical Overlap Fix)
-      const pageHeight = pdf.internal.pageSize.getHeight();
-      pdf.setFontSize(7);
-      pdf.setTextColor(100, 100, 100);
-      const disclaimer = "DISCLAIMER: This BMR report is for informational purposes only. Results are estimates based on the Mifflin-St Jeor equation. Consult a healthcare professional for medical advice.";
-      const splitDisclaimer = pdf.splitTextToSize(disclaimer, pageWidth - (margin * 2));
-      const disclaimerHeight = (splitDisclaimer.length * 3.5);
-      const footerHeight = 10;
-      const totalNeeded = disclaimerHeight + footerHeight;
-
-      if (y + totalNeeded > pageHeight - 15) {
-        pdf.addPage();
-        y = 20;
-      } else {
-        y = Math.max(y + 10, pageHeight - totalNeeded - 15);
-      }
-
-      pdf.text(splitDisclaimer, margin, y);
-      const footerY = y + disclaimerHeight + 2;
-      pdf.setFont('helvetica', 'bold');
-      pdf.text('quickbmicalculator.com', margin, footerY);
-
-      const dateStr = new Date().toLocaleDateString('en-GB').split('/').join('-');
-      const safeName = name.trim().replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-]/g, '');
-      pdf.save(`BMR-Report-${safeName}-${dateStr}.pdf`);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
     } catch (error) {
-      console.error('Export failed:', error);
-      setExportError('Export failed. Please try again.');
-      setTimeout(() => setExportError(''), 3000);
+      console.error('PDF generation failed:', error);
     } finally {
       setIsExporting(false);
     }
@@ -534,6 +411,21 @@ export const BMRCalculatorCardV2: React.FC = () => {
 
               <div className="space-y-6 lg:space-y-8 pt-6 border-t border-hairline/50">
                 <div className="space-y-4">
+                  <span className="text-[10px] font-mono font-bold text-mute uppercase tracking-[0.3em] ml-1">Body Goal</span>
+                  <div className="flex p-1 bg-canvas-soft border border-hairline rounded-ui gap-1">
+                    {['loss', 'maintenance', 'gain'].map((g) => (
+                      <button 
+                        key={g} 
+                        onClick={() => setGoal(g as Goal)}
+                        className={`flex-1 py-2.5 text-[10px] font-black uppercase tracking-[0.15em] transition-all duration-300 rounded-[4px] ${goal === g ? 'bg-ink text-canvas shadow-premium-md' : 'text-mute hover:text-ink hover:bg-canvas/50'}`}
+                      >
+                        {g}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-4">
                   <span className="text-[10px] font-mono font-bold text-mute uppercase tracking-[0.3em] ml-1">Physical Activity</span>
                   <div className="relative group">
                     <select 
@@ -550,21 +442,6 @@ export const BMRCalculatorCardV2: React.FC = () => {
                     <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-mute pointer-events-none group-hover:text-ink transition-colors" />
                   </div>
                 </div>
-
-                <div className="space-y-4">
-                  <span className="text-[10px] font-mono font-bold text-mute uppercase tracking-[0.3em] ml-1">Body Goal</span>
-                  <div className="flex p-1 bg-canvas-soft border border-hairline rounded-ui gap-1">
-                    {['loss', 'maintenance', 'gain'].map((g) => (
-                      <button 
-                        key={g} 
-                        onClick={() => setGoal(g as Goal)}
-                        className={`flex-1 py-2.5 text-[10px] font-black uppercase tracking-[0.15em] transition-all duration-300 rounded-[4px] ${goal === g ? 'bg-ink text-canvas shadow-premium-md' : 'text-mute hover:text-ink hover:bg-canvas/50'}`}
-                      >
-                        {g}
-                      </button>
-                    ))}
-                  </div>
-                </div>
               </div>
             </div>
           </div>
@@ -573,27 +450,37 @@ export const BMRCalculatorCardV2: React.FC = () => {
         {/* RIGHT: Intelligence Panel (Results) */}
         <div className="lg:col-span-7 bg-canvas-soft/40 p-6 sm:p-10 lg:p-12 relative border-t lg:border-t-0 border-hairline h-full overflow-y-auto">
           <div className="flex flex-col gap-6 lg:gap-8">
-            <div className="flex items-center justify-between border-b border-hairline/50 pb-8">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-xl bg-primary/5 text-primary flex items-center justify-center border border-primary/10 shadow-premium-sm">
-                  <Activity className="w-6 h-6" />
-                </div>
-                <div>
-                  <h2 className="text-2xl font-black tracking-tighter text-ink leading-none mb-2">Your Results</h2>
-                  <p className="text-[10px] font-mono font-bold text-mute uppercase tracking-widest">Real-time Feedback</p>
+            <div className="flex flex-col border-b border-hairline/50 pb-8">
+              <div className="flex items-center justify-between mb-8">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-primary/5 text-primary flex items-center justify-center border border-primary/10 shadow-premium-sm">
+                    <Activity className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-black tracking-tighter text-ink leading-none mb-2">Your Results</h2>
+                    <p className="text-[10px] font-mono font-bold text-mute uppercase tracking-widest">Real-time Feedback</p>
+                  </div>
                 </div>
               </div>
-              <button
-                onClick={handleExport}
-                disabled={isExporting || bmr <= 0 || name.trim().length < 2}
-                className="px-5 py-3 bg-canvas border border-hairline hover:bg-canvas-soft rounded-xl transition-all text-ink font-bold text-xs uppercase tracking-widest shadow-premium-md flex items-center gap-2 group active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-                title="Export Results to PDF"
-              >
-                {copied ? <Check className="w-4 h-4 text-status-healthy" /> : (isExporting ? <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1 }}><RotateCcw className="w-4 h-4 text-mute" /></motion.div> : <Download className="w-4 h-4 text-mute group-hover:text-ink transition-colors" />)}
-                <span>{copied ? 'Success' : (isExporting ? 'Downloading...' : 'Download')}</span>
-              </button>
+              
+              <ReportActions 
+                onDownload={handleExport}
+                isExporting={isExporting}
+                hasResult={bmr > 0}
+                isValidName={name.trim().length >= 2}
+                calculatorType="bmr"
+                inputData={{
+                  name, age, gender, weight, height, feet, inches, 
+                  system, activity, goal, heightUnitOther, weightUnitOther
+                }}
+                resultData={{
+                  bmr, tdee, waterIntake, caloriesByGoal, bmrLevel,
+                  recommendations, suggestedActivity
+                }}
+              />
+              
               {exportError && (
-                <p className="text-red-500 font-mono font-bold text-xs mt-2 text-right">
+                <p className="text-red-500 font-mono font-bold text-xs mt-3">
                   {exportError}
                 </p>
               )}

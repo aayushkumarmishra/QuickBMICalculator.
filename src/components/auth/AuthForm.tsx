@@ -32,7 +32,9 @@ export const AuthForm: React.FC<AuthFormProps> = ({ type }) => {
     const checkUser = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session && (type === 'login' || type === 'signup')) {
-        window.location.href = '/';
+        const params = new URLSearchParams(window.location.search);
+        const returnTo = params.get('returnTo') || '/';
+        window.location.href = returnTo;
       }
     };
     checkUser();
@@ -43,6 +45,9 @@ export const AuthForm: React.FC<AuthFormProps> = ({ type }) => {
     setLoading(true);
     setError(null);
     setMessage(null);
+
+    const params = new URLSearchParams(window.location.search);
+    const returnTo = params.get('returnTo') || '/';
 
     try {
       if (type === 'signup') {
@@ -65,7 +70,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({ type }) => {
           setIsSubmitted(true);
         } else {
           // If auto-logged in or confirmation not required
-          window.location.href = '/';
+          window.location.href = returnTo;
         }
       } else if (type === 'login') {
         const { error: signInError } = await supabase.auth.signInWithPassword({
@@ -73,7 +78,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({ type }) => {
           password,
         });
         if (signInError) throw signInError;
-        window.location.href = '/';
+        window.location.href = returnTo;
       } else if (type === 'forgot-password') {
         const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
           redirectTo: `${window.location.origin}/login`,

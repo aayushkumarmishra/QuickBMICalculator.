@@ -2,9 +2,98 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence, useScroll, useMotionValueEvent } from 'framer-motion';
 import { ThemeToggle } from './ThemeToggle';
 import { BrandLogo } from './BrandLogo';
-import { Menu, X, ChevronDown, User, LogOut } from 'lucide-react';
+import { Menu, X, ChevronDown, LogOut } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
+
+const ProfileDropdown: React.FC<{ user: SupabaseUser; handleLogout: () => void; isMobile?: boolean }> = ({ user, handleLogout, isMobile }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const getFirstLetter = () => {
+    try {
+      const name = user?.user_metadata?.full_name || user?.email || 'U';
+      return String(name).charAt(0).toUpperCase() || 'U';
+    } catch (e) {
+      return 'U';
+    }
+  };
+
+  if (!user) return null;
+
+  return (
+    <div className="relative flex items-center" ref={dropdownRef}>
+      <motion.button
+        onClick={() => setIsOpen(!isOpen)}
+        whileTap={{ scale: 0.85, rotate: -10 }}
+        whileHover={{ scale: 1.1 }}
+        transition={{ type: "spring", stiffness: 400, damping: 17 }}
+        className={`${
+          isMobile ? 'w-7 h-7 text-[8px]' : 'w-9 h-9 text-[11px]'
+        } rounded-full bg-canvas border border-hairline flex items-center justify-center font-black text-ink shadow-premium-sm hover:shadow-premium-md overflow-hidden group relative z-10 cursor-pointer`}
+      >
+        <motion.div 
+          animate={{ rotate: isOpen ? 360 : 0 }}
+          transition={{ duration: 0.3, ease: "easeOut" }}
+          className="absolute inset-0 bg-ink/[0.03] opacity-0 group-hover:opacity-100 transition-opacity" 
+        />
+        <span className="relative z-10 tracking-tight opacity-70 group-hover:opacity-100 transition-opacity">{getFirstLetter()}</span>
+      </motion.button>
+
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            key="profile-dropdown-content"
+            initial={{ opacity: 0, scale: 0.95, y: 10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 10 }}
+            transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+            className={`absolute top-full right-0 mt-3 ${
+              isMobile ? 'w-[240px]' : 'w-[300px]'
+            } bg-canvas/60 backdrop-blur-2xl border border-hairline rounded-[2.5rem] shadow-premium-2xl overflow-hidden z-[100] origin-top-right`}
+          >
+            <div className="p-8 border-b border-hairline/50 relative flex items-center gap-5 bg-gradient-to-br from-canvas/50 to-transparent">
+              <div className="w-12 h-12 rounded-full bg-ink flex items-center justify-center font-black text-canvas text-[12px] shadow-premium-md">
+                {getFirstLetter()}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[15px] font-black text-ink truncate leading-tight mb-1">
+                  {user?.user_metadata?.full_name || 'Premium User'}
+                </p>
+                <p className="text-[10px] font-bold text-mute truncate opacity-60 tracking-[0.1em] uppercase">
+                  {user?.email || ''}
+                </p>
+              </div>
+            </div>
+            
+            <div className="p-2.5">
+              <button
+                onClick={handleLogout}
+                className="w-full flex items-center justify-between px-6 py-5 text-[10px] font-black uppercase tracking-[0.25em] text-mute hover:text-red-500 hover:bg-red-500/5 rounded-[1.5rem] transition-all group"
+              >
+                <span className="flex items-center gap-4">
+                  <LogOut className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
+                  Sign Out
+                </span>
+                <div className="w-1.5 h-1.5 rounded-full bg-red-500 opacity-0 group-hover:opacity-100 transition-opacity shadow-[0_0_8px_rgba(239,68,68,0.5)]" />
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
 
 export const Navbar: React.FC = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -12,13 +101,28 @@ export const Navbar: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isToolsOpen, setIsToolsOpen] = useState(false);
   const [user, setUser] = useState<SupabaseUser | null>(null);
+  const [isMounted, setIsMounted] = useState(false);
   
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  useEffect(() => {
+    const handleModalOpen = () => setIsModalOpen(true);
+    const handleModalClose = () => setIsModalOpen(false);
+    window.addEventListener('modalOpen', handleModalOpen);
+    window.addEventListener('modalClose', handleModalClose);
+    return () => {
+      window.removeEventListener('modalOpen', handleModalOpen);
+      window.removeEventListener('modalClose', handleModalClose);
+    };
+  }, []);
+
   const { scrollY } = useScroll();
   const lastScrollY = useRef(0);
-  const scrollStopTimer = useRef<NodeJS.Timeout | null>(null);
+  const scrollStopTimer = useRef<any>(null);
   const scrollThreshold = 10;
 
   useEffect(() => {
+    setIsMounted(true);
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
@@ -34,29 +138,38 @@ export const Navbar: React.FC = () => {
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
-    window.location.href = '/';
+    
+    // Clear calculator states on logout
+    const calculatorKeys = [
+      'bmi_calculator_state',
+      'bmr_calculator_state',
+      'calorie_calculator_state',
+      'ideal_weight_calculator_state',
+      'water_intake_calculator_state'
+    ];
+    calculatorKeys.forEach(key => sessionStorage.removeItem(key));
+
+    if (window.location.pathname === '/') {
+      window.location.reload();
+    } else {
+      window.location.href = '/';
+    }
   };
 
   useMotionValueEvent(scrollY, "change", (latest) => {
-    // Determine if scrolled enough to show background
     setIsScrolled(latest > 20);
 
-    // Calculate direction and distance
     const diff = latest - lastScrollY.current;
     
-    // Intelligent Visibility Logic
     if (Math.abs(diff) > scrollThreshold) {
       if (diff > 0 && latest > 100) {
-        // Scrolling Down - Hide
         setIsVisible(false);
       } else {
-        // Scrolling Up - Show
         setIsVisible(true);
       }
       lastScrollY.current = latest;
     }
 
-    // Scroll Stop Logic: Gently reveal after 400ms of inactivity
     if (scrollStopTimer.current) clearTimeout(scrollStopTimer.current);
     scrollStopTimer.current = setTimeout(() => {
       setIsVisible(true);
@@ -81,6 +194,10 @@ export const Navbar: React.FC = () => {
   const secondaryLinks = [
     { name: 'About', href: '/about' },
     { name: 'Contact', href: '/contact' },
+  ];
+
+  const authenticatedLinks = [
+    { name: 'Tracker', href: '/tracker' },
   ];
 
   const toolLinks = [
@@ -136,7 +253,8 @@ export const Navbar: React.FC = () => {
         duration: 0.5, 
         ease: [0.16, 1, 0.3, 1] 
       }}
-      className={`h-16 fixed top-0 left-0 right-0 z-50 flex items-center transition-all duration-700 ${
+      style={{ zIndex: isModalOpen ? -1 : 50 }}
+      className={`h-20 fixed top-0 left-0 right-0 z-50 flex items-center transition-all duration-700 ${
         isScrolled 
           ? 'bg-canvas/60 backdrop-blur-2xl shadow-[0_10px_30px_-10px_rgba(0,0,0,0.1)]' 
           : 'bg-transparent'
@@ -152,8 +270,8 @@ export const Navbar: React.FC = () => {
         </a>
         
         {/* Desktop Navigation - Premium & Spaced */}
-        <div className="hidden lg:flex items-center gap-8 xl:gap-12">
-          <div className="flex items-center gap-6 xl:gap-10">
+        <div className="hidden lg:flex items-center gap-6 xl:gap-8">
+          <div className="flex items-center gap-6 xl:gap-8">
             {primaryLinks.map((item) => (
               <a 
                 key={item.name}
@@ -189,7 +307,7 @@ export const Navbar: React.FC = () => {
                     transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
                     className="absolute top-full left-1/2 -translate-x-1/2 mt-4 w-56 bg-canvas border border-hairline rounded-2xl shadow-premium-xl overflow-hidden py-2"
                   >
-                    <div className="absolute inset-x-0 -top-4 h-4 bg-transparent" /> {/* Bridge to prevent closing on gap hover */}
+                    <div className="absolute inset-x-0 -top-4 h-4 bg-transparent" />
                     {toolLinks.map((tool) => (
                       <a 
                         key={tool.name}
@@ -225,52 +343,54 @@ export const Navbar: React.FC = () => {
                 <span className="absolute -bottom-1 left-0 w-0 h-[1.5px] bg-ink/80 transition-all duration-500 cubic-bezier(0.16, 1, 0.3, 1) group-hover:w-full" />
               </a>
             ))}
+
+            {isMounted && user && authenticatedLinks.map((item) => (
+              <a 
+                key={item.name}
+                href={item.href} 
+                className="text-[13px] font-bold text-mute hover:text-ink transition-all duration-300 relative group flex items-center"
+              >
+                <span className="relative z-10">{item.name}</span>
+                <span className="absolute -bottom-1 left-0 w-0 h-[1.5px] bg-ink/80 transition-all duration-500 cubic-bezier(0.16, 1, 0.3, 1) group-hover:w-full" />
+              </a>
+            ))}
           </div>
           
-          <div className="flex items-center gap-6 xl:gap-8 pl-6 xl:pl-10 border-l border-hairline/40">
-            <div className="flex items-center gap-6 mr-2">
-              {user ? (
-                <div className="flex items-center gap-4">
-                  <div className="flex items-center gap-2 px-3 py-1.5 bg-canvas-soft border border-hairline rounded-ui">
-                    <User className="w-3.5 h-3.5 text-mute" />
-                    <span className="text-[11px] font-bold text-ink truncate max-w-[100px]">
-                      {user.user_metadata?.full_name || user.email?.split('@')[0]}
-                    </span>
-                  </div>
-                  <button 
-                    onClick={handleLogout}
-                    className="p-2 text-mute hover:text-red-500 transition-colors"
-                    title="Sign Out"
-                  >
-                    <LogOut className="w-4 h-4" />
-                  </button>
-                </div>
-              ) : (
-                <>
-                  <a href="/login" className="text-[13px] font-bold text-mute hover:text-ink transition-colors">Sign In</a>
-                  <a href="/signup" className="text-[13px] font-bold text-ink hover:opacity-70 transition-opacity">Join Free</a>
-                </>
-              )}
-            </div>
+          <div className="flex items-center gap-4 xl:gap-5">
             <ThemeToggle />
+
             <a 
               href={calcHref} 
-              className="relative px-6 xl:px-7 py-2.5 bg-ink text-canvas rounded-pill text-[11px] font-black uppercase tracking-[0.15em] transition-all duration-500 hover:scale-[1.04] active:scale-[0.96] shadow-premium-md hover:shadow-premium-xl group overflow-hidden"
+              className="relative px-5 xl:px-6 py-2.5 bg-ink text-canvas rounded-pill text-[10px] font-black uppercase tracking-[0.15em] transition-all duration-500 hover:scale-[1.04] active:scale-[0.96] shadow-premium-md hover:shadow-premium-xl group overflow-hidden whitespace-nowrap"
             >
               <span className="relative z-10">Calculate</span>
               <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-              {/* Subtle Depth Line */}
               <div className="absolute bottom-0 left-0 right-0 h-[1px] bg-white/20 opacity-30" />
             </a>
+
+            {isMounted ? (
+              user ? (
+                <ProfileDropdown user={user} handleLogout={handleLogout} />
+              ) : (
+                <a href="/login" className="text-[13px] font-bold text-mute hover:text-ink transition-colors px-1">Sign In</a>
+              )
+            ) : (
+              <div className="w-8 h-8 rounded-full bg-canvas-soft animate-pulse" />
+            )}
           </div>
         </div>
 
-        {/* Mobile Toggle */}
-        <div className="flex items-center gap-4 lg:hidden">
+        {/* Mobile Toggle & Auth */}
+        <div className="flex items-center gap-2 lg:hidden relative z-50">
           <ThemeToggle />
+          
+          {isMounted && user && (
+            <ProfileDropdown user={user} handleLogout={handleLogout} isMobile={true} />
+          )}
+
           <button 
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="p-2.5 text-ink transition-all hover:bg-canvas-soft rounded-xl relative z-50 active:scale-90"
+            className="p-2.5 text-ink transition-all hover:bg-canvas-soft rounded-xl relative active:scale-90"
             aria-label="Toggle Menu"
           >
             {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -282,6 +402,7 @@ export const Navbar: React.FC = () => {
       <AnimatePresence>
         {isMobileMenuOpen && (
           <motion.div
+            key="mobile-menu-overlay"
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
@@ -335,24 +456,20 @@ export const Navbar: React.FC = () => {
                   {item.name}
                 </a>
               ))}
+
+              {user && authenticatedLinks.map((item) => (
+                <a 
+                  key={item.name}
+                  href={item.href} 
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="text-2xl font-bold text-ink hover:text-mute transition-colors"
+                >
+                  {item.name}
+                </a>
+              ))}
               
               <div className="pt-6 border-t border-hairline flex flex-col gap-4">
-                {user ? (
-                  <div className="flex items-center justify-between p-4 bg-canvas-soft border border-hairline rounded-xl">
-                    <div className="flex items-center gap-3">
-                      <User className="w-5 h-5 text-mute" />
-                      <span className="font-bold text-ink">
-                        {user.user_metadata?.full_name || user.email?.split('@')[0]}
-                      </span>
-                    </div>
-                    <button 
-                      onClick={handleLogout}
-                      className="text-mute hover:text-red-500 transition-colors"
-                    >
-                      <LogOut className="w-5 h-5" />
-                    </button>
-                  </div>
-                ) : (
+                {!user && (
                   <div className="grid grid-cols-2 gap-4">
                     <a 
                       href="/login" 
@@ -385,5 +502,3 @@ export const Navbar: React.FC = () => {
     </motion.nav>
   );
 };
-
-
