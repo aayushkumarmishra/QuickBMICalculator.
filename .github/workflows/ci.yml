@@ -5,7 +5,6 @@ on:
     branches:
       - dev
       - main
-
   pull_request:
     branches:
       - main
@@ -21,10 +20,14 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version-file: package.json
+          node-version: '24'
+          cache: npm
 
       - name: Install Dependencies
         run: npm install
 
       - name: Build Project
+        env:
+          PUBLIC_SUPABASE_URL: ${{ secrets.PUBLIC_SUPABASE_URL }}
+          PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.PUBLIC_SUPABASE_ANON_KEY }}
         run: npm run build
