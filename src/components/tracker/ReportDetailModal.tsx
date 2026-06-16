@@ -13,11 +13,125 @@ import {
 
 interface ReportDetailModalProps {
   report: any | null;
+  profile?: {
+    profile_name: string;
+    relation_type: string;
+    nickname?: string;
+  } | null;
   onClose: () => void;
 }
 
-export const ReportDetailModal: React.FC<ReportDetailModalProps> = ({ report, onClose }) => {
+const FormattedValue: React.FC<{ 
+  value: any; 
+  label: string; 
+  parentLabel?: string; 
+  depth?: number 
+}> = ({ value, label, parentLabel = '', depth = 0 }) => {
+  if (value === null || value === undefined) return <span className="text-mute opacity-50">N/A</span>;
+
+  const upperLabel = label.toUpperCase();
+  const upperParentLabel = parentLabel.toUpperCase();
+  const contextLabel = `${upperLabel} ${upperParentLabel}`;
+
+  // 1. Primitive Handling
+  if (typeof value !== 'object') {
+    if (typeof value === 'number') {
+      // Smart formatting based on context
+      if (contextLabel.includes('BMI')) return <span>{formatBMI(value)}</span>;
+      if (contextLabel.includes('WEIGHT')) return <span>{formatWeight(value)}</span>;
+      if (
+        contextLabel.includes('CALORIE') || 
+        contextLabel.includes('BMR') || 
+        contextLabel.includes('BURN') || 
+        contextLabel.includes('GOAL') || 
+        contextLabel.includes('MAINTENANCE') ||
+        contextLabel.includes('GAIN') ||
+        contextLabel.includes('LOSS')
+      ) {
+        // Double check it's likely a calorie value (avoid formatting weight loss as kcal)
+        if (value > 300 || contextLabel.includes('CALORIE') || contextLabel.includes('BMR')) {
+          return <span>{formatKcal(value)}</span>;
+        }
+      }
+      if (contextLabel.includes('WATER')) return <span>{formatWater(value)}</span>;
+      if (contextLabel.includes('PERCENT')) return <span>{formatPercent(value)}</span>;
+      return <span>{formatNumber(value, 1)}</span>;
+    }
+    if (typeof value === 'boolean') return <span>{value ? 'Yes' : 'No'}</span>;
+    if (typeof value === 'string') return <span>{value.replace('-', '–')}</span>;
+    return <span>{String(value)}</span>;
+  }
+
+  // 2. Array Handling
+  if (Array.isArray(value)) {
+    if (value.length === 0) return <span className="text-mute opacity-50">None</span>;
+    return <span className="text-ink">{value.join(', ')}</span>;
+  }
+
+  // 3. Object Handling (Recursive)
+  // Check for specific known shapes first
+  if ('min' in value && 'max' in value) {
+    const unit = contextLabel.includes('WEIGHT') ? 'kg' : '';
+    return <span>{formatRange(value.min, value.max, unit)}</span>;
+  }
+  if ('low' in value && 'high' in value) {
+    return <span>{formatRange(value.low, value.high, 'kg')}</span>;
+  }
+  if ('text' in value) return <span>{value.text}</span>;
+
+  const entries = Object.entries(value);
+  if (entries.length === 0) return <span className="text-mute opacity-50">Empty</span>;
+
+  // Semantic mapping for common internal keys
+  const keyMap: Record<string, string> = {
+    gain: 'Gain Weight',
+    loss: 'Weight Loss',
+    maintenance: 'Maintenance',
+    walking: 'Walking',
+    steps: 'Steps',
+    strength: 'Strength Training',
+    cardio: 'Cardio',
+    other: 'Other Activity'
+  };
+
+  return (
+    <div className={`flex flex-col gap-2 ${depth === 0 ? 'items-end' : 'items-start w-full'}`}>
+      {entries
+        .sort((a, b) => {
+          // Sort calories descending, others alphabetical
+          if (typeof a[1] === 'number' && typeof b[1] === 'number' && contextLabel.includes('CALORIE')) {
+            return b[1] - a[1];
+          }
+          return 0;
+        })
+        .map(([k, v]) => {
+          const displaySubLabel = keyMap[k.toLowerCase()] || 
+            k.replace(/([A-Z])/g, ' $1')
+             .replace(/_/g, ' ')
+             .trim()
+             .replace(/^\w/, (c) => c.toUpperCase());
+          
+          return (
+            <div key={k} className="flex items-start gap-2 group/val justify-end">
+              <span className="text-[10px] font-medium text-mute whitespace-nowrap pt-0.5 opacity-70">
+                {displaySubLabel} →
+              </span>
+              <div className="text-[13px] font-bold text-ink text-right">
+                <FormattedValue value={v} label={k} parentLabel={label} depth={depth + 1} />
+              </div>
+            </div>
+          );
+        })}
+    </div>
+  );
+};
+
+export const ReportDetailModal: React.FC<ReportDetailModalProps> = ({ report, profile, onClose }) => {
   if (!report) return null;
+
+  const profileDisplayName = profile ? (
+    profile.nickname ? `${profile.profile_name} (${profile.nickname})` : profile.profile_name
+  ) : null;
 
   const renderData = (data: any, type?: string) => {
     // Process data to be more human-readable
@@ -69,42 +183,22 @@ export const ReportDetailModal: React.FC<ReportDetailModalProps> = ({ report, on
 
     Object.entries(data).forEach(([key, value]) => {
       if (!skipKeys.includes(key)) {
-        processedData.push([key.replace(/_/g, ' ').toUpperCase(), value]);
+        const label = key
+          .replace(/([A-Z])/g, ' $1')
+          .replace(/_/g, ' ')
+          .trim()
+          .toUpperCase();
+        processedData.push([label, value]);
       }
     });
 
     return processedData.map(([label, value]: [string, any], index) => {
-      // Format value
-      let displayValue = value;
-      
-      // Special formatting for known objects
-      if (typeof value === 'object' && value !== null) {
-        if ('min' in value && 'max' in value) {
-          displayValue = formatRange(value.min, value.max, 'kg');
-        } else if ('low' in value && 'high' in value) {
-          displayValue = formatRange(value.low, value.high, 'kg');
-        } else if ('text' in value) {
-          displayValue = value.text;
-        } else if (Array.isArray(value)) {
-          displayValue = value.join(', ');
-        } else {
-          displayValue = JSON.stringify(value);
-        }
-      } else if (typeof value === 'number') {
-        // Semantic formatting based on label
-        const upperLabel = label.toUpperCase();
-        if (upperLabel.includes('BMI')) displayValue = formatBMI(value);
-        else if (upperLabel.includes('WEIGHT')) displayValue = formatWeight(value);
-        else if (upperLabel.includes('CALORIE') || upperLabel.includes('BMR') || upperLabel.includes('BURN')) displayValue = formatKcal(value);
-        else if (upperLabel.includes('WATER')) displayValue = formatWater(value);
-        else if (upperLabel.includes('PERCENT')) displayValue = formatPercent(value);
-        else displayValue = formatNumber(value, 1);
-      }
-
       return (
         <div key={`${label}-${index}`} className="flex justify-between items-start py-3 border-b border-hairline last:border-0 gap-4">
           <span className="text-[10px] font-mono font-bold text-mute uppercase tracking-widest pt-1 shrink-0">{label}</span>
-          <span className="text-sm font-bold text-ink text-right break-words max-w-[60%]">{String(displayValue)}</span>
+          <div className="text-sm font-bold text-ink text-right break-words max-w-[70%]">
+            <FormattedValue value={value} label={label} />
+          </div>
         </div>
       );
     });
@@ -137,9 +231,17 @@ export const ReportDetailModal: React.FC<ReportDetailModalProps> = ({ report, on
                     <h3 className="text-xl font-black tracking-tighter text-ink leading-tight uppercase truncate">
                       {report.calculator_type.replace(/_/g, ' ')} Report
                     </h3>
-                    <p className="text-[10px] font-mono font-bold text-mute uppercase tracking-widest">
-                      {new Date(report.created_at).toLocaleDateString()}
-                    </p>
+                    <div className="text-[10px] font-mono font-bold text-mute uppercase tracking-widest flex items-center gap-1.5 flex-wrap">
+                      {profileDisplayName && (
+                        <>
+                          <span className="text-ink">{profileDisplayName}</span>
+                          <span className="opacity-30">•</span>
+                          <span>{profile?.relation_type}</span>
+                          <span className="opacity-30">•</span>
+                        </>
+                      )}
+                      <span>{new Date(report.created_at).toLocaleDateString('en-GB')}</span>
+                    </div>
                   </div>
                 </div>
                 <button 

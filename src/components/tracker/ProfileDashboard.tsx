@@ -33,6 +33,7 @@ interface Profile {
   id: string;
   profile_name: string;
   relation_type: string;
+  nickname?: string;
   created_at: string;
 }
 
@@ -151,6 +152,10 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({ profileId })
     );
   }
 
+  const profileDisplayName = profile.nickname 
+    ? `${profile.profile_name} (${profile.nickname})` 
+    : profile.profile_name;
+
   return (
     <div className="w-full">
       <TrackerHero 
@@ -165,8 +170,8 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({ profileId })
             </span>
           </>
         }
-        title={<span className="bg-linear-to-r from-status-healthy to-status-under bg-clip-text text-transparent dark:bg-none dark:text-ink">{profile.profile_name}</span>}
-        description={`Comprehensive health monitoring and history tracking for ${profile.profile_name}.`}
+        title={<span className="bg-linear-to-r from-status-healthy to-status-under bg-clip-text text-transparent dark:bg-none dark:text-ink">{profileDisplayName}</span>}
+        description={`Comprehensive health monitoring and history tracking for ${profileDisplayName}.`}
         rightContent={
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-5 w-full sm:w-auto">
             <div className="px-5 py-4 bg-canvas border border-hairline rounded-3xl shadow-premium-sm flex flex-col items-center justify-center min-w-[110px] sm:min-w-[130px] group hover:shadow-premium-md transition-all flex-1 sm:flex-none">
@@ -239,6 +244,8 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({ profileId })
                 key={report.id} 
                 report={report} 
                 profileName={profile.profile_name}
+                nickname={profile.nickname}
+                relation={profile.relation_type}
                 onView={() => setSelectedReport(report)}
                 onDelete={() => setReportToDelete(report)}
               />
@@ -249,6 +256,7 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({ profileId })
 
       <ReportDetailModal 
         report={selectedReport} 
+        profile={profile}
         onClose={() => setSelectedReport(null)} 
       />
 
@@ -265,9 +273,11 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({ profileId })
 const ReportCard: React.FC<{ 
   report: Report, 
   profileName: string,
+  nickname?: string,
+  relation?: string,
   onView: () => void,
   onDelete: () => void 
-}> = ({ report, profileName, onView, onDelete }) => {
+}> = ({ report, profileName, nickname, relation, onView, onDelete }) => {
   const [isExporting, setIsExporting] = useState(false);
 
   const handleDownload = async () => {
@@ -276,10 +286,12 @@ const ReportCard: React.FC<{
       const { generateReportPDF } = await import('../../lib/pdf');
       await generateReportPDF({
         profileName,
+        nickname,
+        relation,
         calculatorType: report.calculator_type,
         inputData: report.input_data,
         resultData: report.result_data,
-        date: new Date(report.created_at).toLocaleDateString()
+        date: new Date(report.created_at).toLocaleDateString('en-GB')
       });
     } finally {
       setIsExporting(false);

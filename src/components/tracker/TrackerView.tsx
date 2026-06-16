@@ -10,6 +10,7 @@ export interface ProfileWithStats {
   id: string;
   profile_name: string;
   relation_type: 'self' | 'family' | 'friend' | 'other';
+  nickname?: string;
   created_at: string;
   reportCount: number;
   lastActivity: string | null;

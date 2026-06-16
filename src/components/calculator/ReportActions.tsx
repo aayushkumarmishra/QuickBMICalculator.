@@ -58,12 +58,22 @@ export const ReportActions: React.FC<ReportActionsProps> = ({
       onDownload();
     } else {
       setIsSaveModalOpen(true);
+      document.body.style.overflow = 'hidden';
+      setTimeout(() => {
+        const modal = document.querySelector('[data-modal="save-report"]');
+        if (modal) {
+          const rect = modal.getBoundingClientRect();
+          const scrollTop = window.scrollY + rect.top - (window.innerHeight - rect.height) / 2;
+          window.scrollTo({ top: scrollTop, behavior: 'smooth' });
+        }
+      }, 50);
       window.dispatchEvent(new Event('modalOpen'));
     }
   };
 
   const handleSaveSuccess = () => {
     setIsSaveModalOpen(false);
+    document.body.style.overflow = '';
     window.dispatchEvent(new Event('modalClose'));
     setShowToast(true);
     setTimeout(() => setShowToast(false), 3000);

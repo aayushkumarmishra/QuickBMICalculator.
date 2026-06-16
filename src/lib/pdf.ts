@@ -2,6 +2,8 @@ import type { jsPDF } from 'jspdf';
 
 export interface PDFData {
   profileName: string;
+  nickname?: string;
+  relation?: string;
   calculatorType: 'bmi' | 'bmr' | 'calorie' | 'ideal_weight' | 'water_intake';
   inputData: any;
   resultData: any;
@@ -84,16 +86,18 @@ export const generateReportPDF = async (data: PDFData) => {
   };
 
   // 1. Header with Dark Band
+  const headerHeight = data.relation ? 48 : 42;
   pdf.setFillColor(23, 23, 23);
-  pdf.rect(0, 0, pageWidth, 40, 'F');
+  pdf.rect(0, 0, pageWidth, headerHeight, 'F');
   
   pdf.setTextColor(255, 255, 255);
   pdf.setFontSize(22);
   pdf.setFont('helvetica', 'bold');
-  pdf.text('QuickBMI', margin, 22);
+  pdf.text('QuickBMI', margin, 20);
   
-  pdf.setFontSize(10);
+  pdf.setFontSize(9);
   pdf.setFont('helvetica', 'normal');
+  pdf.setTextColor(180, 180, 180);
   const typeLabels: Record<string, string> = {
     bmi: 'Professional Biometric Analysis',
     bmr: 'Basal Metabolic Rate Analysis',
@@ -101,18 +105,28 @@ export const generateReportPDF = async (data: PDFData) => {
     ideal_weight: 'Ideal Weight Analysis',
     water_intake: 'Hydration Requirements'
   };
-  pdf.text(typeLabels[data.calculatorType] || 'Health Report', margin, 28);
+  pdf.text(typeLabels[data.calculatorType] || 'Health Report', margin, 26);
   
   pdf.setFontSize(10);
   pdf.setFont('helvetica', 'bold');
-  pdf.text(data.profileName.toUpperCase(), margin, 35);
+  pdf.setTextColor(255, 255, 255);
+  const displayName = data.nickname ? `${data.profileName} (${data.nickname})` : data.profileName;
+  pdf.text(displayName.toUpperCase(), margin, 34);
+  
+  if (data.relation) {
+    pdf.setFontSize(8);
+    pdf.setFont('helvetica', 'normal');
+    pdf.setTextColor(180, 180, 180);
+    pdf.text(data.relation.toUpperCase(), margin, 38.5);
+  }
   
   pdf.setFontSize(8);
+  pdf.setTextColor(150, 150, 150);
   const reportId = Math.random().toString(36).substr(2, 9).toUpperCase();
-  pdf.text(`REPORT ID: ${reportId}`, pageWidth - margin - 40, 22);
-  pdf.text(`DATE: ${data.date}`, pageWidth - margin - 40, 26);
+  pdf.text(`REPORT ID: ${reportId}`, pageWidth - margin - 40, 20);
+  pdf.text(`DATE: ${data.date}`, pageWidth - margin - 40, 24);
 
-  y = 50;
+  y = headerHeight + 10;
 
   // 2. Metrics Card
   y = sectionTitle('YOUR PROFILE', y);

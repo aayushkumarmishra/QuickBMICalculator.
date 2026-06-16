@@ -254,7 +254,7 @@ export const Navbar: React.FC = () => {
         ease: [0.16, 1, 0.3, 1] 
       }}
       style={{ zIndex: isModalOpen ? -1 : 50 }}
-      className={`h-20 fixed top-0 left-0 right-0 z-50 flex items-center transition-all duration-700 ${
+      className={`h-20 sticky top-0 left-0 right-0 z-50 flex items-center transition-all duration-700 ${
         isScrolled 
           ? 'bg-canvas/60 backdrop-blur-2xl shadow-[0_10px_30px_-10px_rgba(0,0,0,0.1)]' 
           : 'bg-transparent'

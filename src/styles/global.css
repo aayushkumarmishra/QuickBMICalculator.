@@ -123,6 +123,24 @@
   .text-gradient {
     @apply bg-clip-text text-transparent bg-gradient-to-br from-ink to-body dark:from-white dark:to-mute;
   }
+
+  /* Premium Custom Scrollbar */
+  .custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(102, 102, 102, 0.2) transparent;
+  }
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 5px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    @apply bg-mute/20 rounded-full border-2 border-transparent bg-clip-padding transition-colors;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    @apply bg-mute/40;
+  }
 }
 
 @layer components {

@@ -45,12 +45,15 @@ export const TrackerCard: React.FC<TrackerCardProps> = ({ profile, onDelete }) =
         {/* Profile Header */}
         <div className="flex justify-between items-start mb-6">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-canvas-soft border border-hairline flex items-center justify-center text-xl group-hover:scale-110 transition-transform duration-500">
-              {getRelationIcon(profile.relation_type)}
+            <div className="w-12 h-12 rounded-2xl bg-canvas-soft border border-hairline flex items-center justify-center text-sm font-black uppercase group-hover:scale-110 transition-transform duration-500">
+              {profile.profile_name.charAt(0)}
             </div>
             <div>
               <h3 className="text-xl font-black tracking-tighter text-ink leading-tight">
                 {profile.profile_name}
+                {profile.nickname && (
+                  <span className="text-sm font-bold text-mute ml-1.5 opacity-70">({profile.nickname})</span>
+                )}
               </h3>
               <p className="text-[10px] font-mono font-bold text-mute uppercase tracking-[0.2em]">
                 {profile.relation_type}
