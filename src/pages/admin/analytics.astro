@@ -1,0 +1,16 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { AdminLayout } from '../../components/admin/AdminLayout';
+import { AnalyticsDashboard } from '../../components/admin/AnalyticsDashboard';
+
+export const prerender = false;
+
+const title = "Analytics | Admin | QuickBMI";
+const description = "Visual growth metrics and user behavior analytics.";
+---
+
+<Layout title={title} description={description} robots="noindex, nofollow">
+  <AdminLayout currentPath={Astro.url.pathname} client:load>
+    <AnalyticsDashboard client:load />
+  </AdminLayout>
+</Layout>

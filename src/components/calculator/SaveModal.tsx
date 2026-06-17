@@ -88,7 +88,7 @@ export const SaveModal: React.FC<SaveModalProps> = ({
             user_id: user.id,
             profile_name: newProfileName.trim(), 
             relation_type: newProfileRelation,
-            nickname: newProfileNickname.trim() || null
+            nickname: newProfileNickname.trim().slice(0, 50) || null
           }
         ])
         .select()
@@ -183,7 +183,7 @@ export const SaveModal: React.FC<SaveModalProps> = ({
                     <Save className="w-6 h-6" />
                   </div>
                   <div>
-                    <h3 className="text-2xl font-black tracking-tighter text-ink leading-tight">Save Report.</h3>
+                    <h3 className="text-2xl font-black tracking-tighter text-ink leading-tight">Save Report</h3>
                     <p className="text-[10px] font-mono font-bold text-mute uppercase tracking-[0.2em] mt-1">Health Dashboard</p>
                   </div>
                 </div>

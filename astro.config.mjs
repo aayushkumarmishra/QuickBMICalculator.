@@ -10,7 +10,7 @@ import cloudflare from '@astrojs/cloudflare';
 // https://astro.build/config
 export default defineConfig({
   site: 'https://quickbmicalculator.com',
-  output: 'static',
+  output: 'server',
 
   devToolbar: {
     enabled: false

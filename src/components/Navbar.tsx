@@ -101,6 +101,7 @@ export const Navbar: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isToolsOpen, setIsToolsOpen] = useState(false);
   const [user, setUser] = useState<SupabaseUser | null>(null);
+  const [role, setRole] = useState<string | null>(null);
   const [isMounted, setIsMounted] = useState(false);
   
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -121,16 +122,33 @@ export const Navbar: React.FC = () => {
   const scrollStopTimer = useRef<any>(null);
   const scrollThreshold = 10;
 
+  const fetchProfile = async (userId: string) => {
+    const { data } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', userId)
+      .single();
+    setRole(data?.role || 'user');
+  };
+
   useEffect(() => {
     setIsMounted(true);
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
+      const currentUser = session?.user ?? null;
+      setUser(currentUser);
+      if (currentUser) fetchProfile(currentUser.id);
     });
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
+      const currentUser = session?.user ?? null;
+      setUser(currentUser);
+      if (currentUser) {
+        fetchProfile(currentUser.id);
+      } else {
+        setRole(null);
+      }
     });
 
     return () => subscription.unsubscribe();
@@ -139,6 +157,9 @@ export const Navbar: React.FC = () => {
   const handleLogout = async () => {
     await supabase.auth.signOut();
     
+    // Clear role cookie
+    document.cookie = 'sb-role=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+
     // Clear calculator states on logout
     const calculatorKeys = [
       'bmi_calculator_state',
@@ -149,11 +170,7 @@ export const Navbar: React.FC = () => {
     ];
     calculatorKeys.forEach(key => sessionStorage.removeItem(key));
 
-    if (window.location.pathname === '/') {
-      window.location.reload();
-    } else {
-      window.location.href = '/';
-    }
+    window.location.replace('/login');
   };
 
   useMotionValueEvent(scrollY, "change", (latest) => {
@@ -181,22 +198,28 @@ export const Navbar: React.FC = () => {
   const [howItWorksHref, setHowItWorksHref] = useState('/#how-it-works');
   const [bmiCategoriesHref, setBmiCategoriesHref] = useState('/#bmi-categories');
 
-  const primaryLinks = [
+  const isAdmin = role === 'admin' && window.location.pathname.startsWith('/admin');
+
+  const adminLinks = [
+    { name: 'Dashboard', href: '/admin' },
+  ];
+
+  const primaryLinks = isAdmin ? adminLinks : [
     { name: 'How it works', href: howItWorksHref },
   ];
 
-  const tertiaryLinks = [
+  const tertiaryLinks = isAdmin ? [] : [
     { name: 'BMI Categories', href: bmiCategoriesHref },
     { name: 'FAQ', href: faqHref },
     { name: 'Blog', href: '/blog' },
   ];
 
-  const secondaryLinks = [
+  const secondaryLinks = isAdmin ? [] : [
     { name: 'About', href: '/about' },
     { name: 'Contact', href: '/contact' },
   ];
 
-  const authenticatedLinks = [
+  const authenticatedLinks = isAdmin ? [] : [
     { name: 'Tracker', href: '/tracker' },
   ];
 
@@ -261,7 +284,7 @@ export const Navbar: React.FC = () => {
       }`}
     >
       <div className="max-w-7xl mx-auto px-6 w-full flex items-center justify-between">
-        <a href="/" className="flex items-center gap-2.5 group relative z-50">
+        <a href={isAdmin ? "/admin" : "/"} className="flex items-center gap-2.5 group relative z-50">
           <div className="relative">
             <BrandLogo className="w-8 h-8 transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3" />
             <div className="absolute inset-0 bg-primary/10 blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-full" />
@@ -283,44 +306,46 @@ export const Navbar: React.FC = () => {
               </a>
             ))}
 
-            {/* Tools Dropdown */}
-            <div 
-              className="relative group"
-              onMouseEnter={() => setIsToolsOpen(true)}
-              onMouseLeave={() => setIsToolsOpen(false)}
-            >
-              <button 
-                className={`text-[13px] font-bold transition-all duration-300 flex items-center gap-1 ${
-                  isToolsOpen ? 'text-ink' : 'text-mute hover:text-ink'
-                }`}
+            {/* Tools Dropdown - Hide for Admin */}
+            {!isAdmin && (
+              <div 
+                className="relative group"
+                onMouseEnter={() => setIsToolsOpen(true)}
+                onMouseLeave={() => setIsToolsOpen(false)}
               >
-                Tools
-                <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-300 ${isToolsOpen ? 'rotate-180' : ''}`} />
-              </button>
-              
-              <AnimatePresence>
-                {isToolsOpen && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 10 }}
-                    transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-                    className="absolute top-full left-1/2 -translate-x-1/2 mt-4 w-56 bg-canvas border border-hairline rounded-2xl shadow-premium-xl overflow-hidden py-2"
-                  >
-                    <div className="absolute inset-x-0 -top-4 h-4 bg-transparent" />
-                    {toolLinks.map((tool) => (
-                      <a 
-                        key={tool.name}
-                        href={tool.href}
-                        className="block px-5 py-3 text-[13px] font-bold text-mute hover:text-ink hover:bg-canvas-soft transition-colors first:pt-4 last:pb-4"
-                      >
-                        {tool.name}
-                      </a>
-                    ))}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
+                <button 
+                  className={`text-[13px] font-bold transition-all duration-300 flex items-center gap-1 ${
+                    isToolsOpen ? 'text-ink' : 'text-mute hover:text-ink'
+                  }`}
+                >
+                  Tools
+                  <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-300 ${isToolsOpen ? 'rotate-180' : ''}`} />
+                </button>
+                
+                <AnimatePresence>
+                  {isToolsOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 10 }}
+                      transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+                      className="absolute top-full left-1/2 -translate-x-1/2 mt-4 w-56 bg-canvas border border-hairline rounded-2xl shadow-premium-xl overflow-hidden py-2"
+                    >
+                      <div className="absolute inset-x-0 -top-4 h-4 bg-transparent" />
+                      {toolLinks.map((tool) => (
+                        <a 
+                          key={tool.name}
+                          href={tool.href}
+                          className="block px-5 py-3 text-[13px] font-bold text-mute hover:text-ink hover:bg-canvas-soft transition-colors first:pt-4 last:pb-4"
+                        >
+                          {tool.name}
+                        </a>
+                      ))}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            )}
 
             {tertiaryLinks.map((item) => (
               <a 
@@ -357,16 +382,16 @@ export const Navbar: React.FC = () => {
           </div>
           
           <div className="flex items-center gap-4 xl:gap-5">
-            <ThemeToggle />
-
-            <a 
-              href={calcHref} 
-              className="relative px-5 xl:px-6 py-2.5 bg-ink text-canvas rounded-pill text-[10px] font-black uppercase tracking-[0.15em] transition-all duration-500 hover:scale-[1.04] active:scale-[0.96] shadow-premium-md hover:shadow-premium-xl group overflow-hidden whitespace-nowrap"
-            >
-              <span className="relative z-10">Calculate</span>
-              <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-              <div className="absolute bottom-0 left-0 right-0 h-[1px] bg-white/20 opacity-30" />
-            </a>
+            {!isAdmin && (
+              <a 
+                href={calcHref} 
+                className="relative px-5 xl:px-6 py-2.5 bg-ink text-canvas rounded-pill text-[10px] font-black uppercase tracking-[0.15em] transition-all duration-500 hover:scale-[1.04] active:scale-[0.96] shadow-premium-md hover:shadow-premium-xl group overflow-hidden whitespace-nowrap"
+              >
+                <span className="relative z-10">Calculate</span>
+                <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                <div className="absolute bottom-0 left-0 right-0 h-[1px] bg-white/20 opacity-30" />
+              </a>
+            )}
 
             {isMounted ? (
               user ? (
@@ -382,8 +407,6 @@ export const Navbar: React.FC = () => {
 
         {/* Mobile Toggle & Auth */}
         <div className="flex items-center gap-2 lg:hidden relative z-50">
-          <ThemeToggle />
-          
           {isMounted && user && (
             <ProfileDropdown user={user} handleLogout={handleLogout} isMobile={true} />
           )}
@@ -421,19 +444,21 @@ export const Navbar: React.FC = () => {
                 </a>
               ))}
               
-              <div className="flex flex-col gap-4 pl-5 border-l-2 border-hairline/60 my-2">
-                <span className="text-[11px] uppercase tracking-[0.2em] text-mute font-black mb-1">Tools</span>
-                {toolLinks.map((tool) => (
-                  <a 
-                    key={tool.name}
-                    href={tool.href}
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className="text-xl font-bold text-mute hover:text-ink transition-colors"
-                  >
-                    {tool.name}
-                  </a>
-                ))}
-              </div>
+              {!isAdmin && (
+                <div className="flex flex-col gap-4 pl-5 border-l-2 border-hairline/60 my-2">
+                  <span className="text-[11px] uppercase tracking-[0.2em] text-mute font-black mb-1">Tools</span>
+                  {toolLinks.map((tool) => (
+                    <a 
+                      key={tool.name}
+                      href={tool.href}
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="text-xl font-bold text-mute hover:text-ink transition-colors"
+                    >
+                      {tool.name}
+                    </a>
+                  ))}
+                </div>
+              )}
 
               {tertiaryLinks.map((item) => (
                 <a 
@@ -487,13 +512,15 @@ export const Navbar: React.FC = () => {
                     </a>
                   </div>
                 )}
-                <a 
-                  href={calcHref} 
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="w-full py-4 bg-ink text-canvas rounded-pill text-center font-bold text-sm uppercase tracking-widest block shadow-premium-lg"
-                >
-                  Calculate Now
-                </a>
+                {!isAdmin && (
+                  <a 
+                    href={calcHref} 
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="w-full py-4 bg-ink text-canvas rounded-pill text-center font-bold text-sm uppercase tracking-widest block shadow-premium-lg"
+                  >
+                    Calculate Now
+                  </a>
+                )}
               </div>
             </div>
           </motion.div>

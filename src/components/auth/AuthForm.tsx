@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { Mail, Lock, User, ArrowRight, Loader2, AlertCircle, CheckCircle2, Eye, EyeOff } from 'lucide-react';
 
 interface AuthFormProps {
-  type: 'login' | 'signup' | 'forgot-password';
+  type: 'login' | 'signup' | 'forgot-password' | 'admin-login';
 }
 
 const passwordRequirements = [
@@ -27,14 +27,41 @@ export const AuthForm: React.FC<AuthFormProps> = ({ type }) => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
 
+  const redirectExecuted = React.useRef(false);
+
   useEffect(() => {
     // Check if user is already logged in
     const checkUser = async () => {
+      if (redirectExecuted.current) return;
+
       const { data: { session } } = await supabase.auth.getSession();
-      if (session && (type === 'login' || type === 'signup')) {
+      console.log(`[AUTH FORM] path=${window.location.pathname} session=${!!session} type=${type}`);
+      
+      if (session && (type === 'login' || type === 'signup' || type === 'admin-login')) {
+        const ADMIN_EMAIL = import.meta.env.PUBLIC_ADMIN_EMAIL;
+        
+        // Fetch role to determine landing page
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', session.user.id)
+          .single();
+
+        if (session.user.email === ADMIN_EMAIL && profile?.role === 'admin') {
+          redirectExecuted.current = true;
+          window.location.replace('/admin');
+          return;
+        }
+
         const params = new URLSearchParams(window.location.search);
         const returnTo = params.get('returnTo') || '/';
-        window.location.href = returnTo;
+        
+        // Safety check: avoid redirect loops by only allowing safe paths
+        const safePaths = ['/', '/tracker', '/bmi-calculator', '/bmr-calculator', '/calorie-calculator', '/ideal-weight', '/water-intake', '/ideal-weight-calculator', '/water-intake-calculator'];
+        const destination = safePaths.includes(returnTo) ? returnTo : '/';
+        
+        redirectExecuted.current = true;
+        window.location.replace(destination);
       }
     };
     checkUser();
@@ -46,11 +73,16 @@ export const AuthForm: React.FC<AuthFormProps> = ({ type }) => {
     setError(null);
     setMessage(null);
 
-    const params = new URLSearchParams(window.location.search);
-    const returnTo = params.get('returnTo') || '/';
+    const ADMIN_EMAIL = import.meta.env.PUBLIC_ADMIN_EMAIL;
 
     try {
       if (type === 'signup') {
+        if (email.trim().toLowerCase() === ADMIN_EMAIL?.toLowerCase()) {
+          setError('This email is reserved. Please use a different email address.');
+          setLoading(false);
+          return;
+        }
+
         if (password !== confirmPassword) {
           throw new Error('Passwords do not match');
         }
@@ -69,16 +101,45 @@ export const AuthForm: React.FC<AuthFormProps> = ({ type }) => {
         if (signUpData.user && signUpData.session === null) {
           setIsSubmitted(true);
         } else {
-          // If auto-logged in or confirmation not required
-          window.location.href = returnTo;
+          // Check for admin
+          if (signUpData.user?.email === ADMIN_EMAIL) {
+             window.location.replace('/admin');
+          } else {
+             window.location.replace('/');
+          }
         }
-      } else if (type === 'login') {
-        const { error: signInError } = await supabase.auth.signInWithPassword({
+      } else if (type === 'login' || type === 'admin-login') {
+        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
         if (signInError) throw signInError;
-        window.location.href = returnTo;
+
+        // Fetch profile to check role for redirect
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', signInData.user.id)
+          .single();
+
+        const role = profile?.role || 'user';
+
+        if (profile?.role === 'admin') {
+          if (type === 'admin-login') {
+            document.cookie = `sb-role=admin; path=/; max-age=31536000; SameSite=Lax`;
+            window.location.replace('/admin');
+          } else {
+            // Admin on regular login page - force user cookie and redirect home
+            document.cookie = `sb-role=user; path=/; max-age=0; SameSite=Lax`;
+            document.cookie = `sb-role=; path=/; max-age=0; SameSite=Lax`;
+            window.location.replace('/');
+          }
+        } else {
+          document.cookie = `sb-role=${role}; path=/; max-age=31536000; SameSite=Lax`;
+          const params = new URLSearchParams(window.location.search);
+          const returnTo = params.get('returnTo') || '/';
+          window.location.replace(returnTo);
+        }
       } else if (type === 'forgot-password') {
         const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
           redirectTo: `${window.location.origin}/login`,
@@ -100,7 +161,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({ type }) => {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/tracker`,
+          redirectTo: `${window.location.origin}/auth/callback`,
         },
       });
       if (error) throw error;
@@ -110,8 +171,8 @@ export const AuthForm: React.FC<AuthFormProps> = ({ type }) => {
     }
   };
 
-  const title = type === 'login' ? 'Welcome back' : type === 'signup' ? 'Create an account' : 'Reset password';
-  const subtitle = type === 'login' 
+  const title = (type === 'login' || type === 'admin-login') ? 'Welcome back' : type === 'signup' ? 'Create an account' : 'Reset password';
+  const subtitle = (type === 'login' || type === 'admin-login')
     ? 'Enter your credentials to access your account.' 
     : type === 'signup' 
     ? 'Join us to track your health journey.' 
@@ -123,14 +184,14 @@ export const AuthForm: React.FC<AuthFormProps> = ({ type }) => {
       animate={{ opacity: 1, y: 0 }}
       className="w-full max-w-md mx-auto"
     >
-      <div className="bg-canvas border border-hairline rounded-[2rem] p-10 sm:p-12 shadow-premium-2xl relative overflow-hidden group/card transition-all duration-500 hover:border-hairline-strong">
+      <div className="bg-canvas border border-hairline dark:border-white/10 rounded-[2rem] p-10 sm:p-12 shadow-premium-2xl dark:shadow-[0_0_0_1px_rgba(255,255,255,0.04),0_8px_32px_rgba(0,0,0,0.4)] relative overflow-hidden group/card transition-all duration-500 hover:border-hairline-strong">
         {/* Subtle Background Glow */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full pointer-events-none -z-10 opacity-50 group-hover/card:opacity-100 transition-opacity duration-700">
           <div className="absolute top-[-20%] left-1/2 -translate-x-1/2 w-[120%] h-[60%] bg-[radial-gradient(circle,rgba(23,23,23,0.03)_0%,transparent_70%)] dark:bg-[radial-gradient(circle,rgba(255,255,255,0.03)_0%,transparent_70%)] blur-[60px] rounded-full"></div>
         </div>
 
         <div className="text-center mb-10">
-          <h1 className="text-3xl sm:text-4xl font-black tracking-tighter text-ink mb-3 leading-tight">
+          <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tighter text-ink mb-3 leading-tight">
             {isSubmitted ? 'Account Created Successfully' : title}
           </h1>
           <p className="text-sm text-mute font-medium leading-relaxed max-w-[280px] mx-auto opacity-80">
@@ -192,12 +253,12 @@ export const AuthForm: React.FC<AuthFormProps> = ({ type }) => {
           </div>
         ) : (
           <div className="space-y-10">
-            {(type === 'login' || type === 'signup') && (
+            {(type === 'login' || type === 'signup') && type !== 'admin-login' && (
               <div className="space-y-6">
                 <button
                   onClick={handleGoogleLogin}
                   disabled={loading}
-                  className="w-full h-15 bg-canvas border border-hairline rounded-2xl flex items-center justify-center gap-4 hover:bg-canvas-soft hover:border-hairline-strong transition-all duration-500 shadow-premium-sm hover:shadow-premium-md group active:scale-[0.98] disabled:opacity-50 relative overflow-hidden"
+                  className="w-full h-15 bg-[#EFF6FF] border-[1.5px] border-[#BFDBFE] dark:bg-canvas dark:border-[#334155] rounded-2xl flex items-center justify-center gap-4 hover:bg-blue-100 dark:hover:bg-canvas-soft hover:border-blue-300 dark:hover:border-hairline-strong transition-all duration-500 shadow-premium-sm hover:shadow-premium-md group active:scale-[0.98] disabled:opacity-50 relative overflow-hidden"
                 >
                   <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-ink/[0.02] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none" />
                   <svg className="w-5 h-5 transition-transform duration-500 group-hover:scale-110 relative z-10" viewBox="0 0 24 24">
@@ -215,7 +276,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({ type }) => {
                     />
                     <path
                       fill="#EA4335"
-                      d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                      d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
                     />
                   </svg>
                   <span className="text-sm font-bold text-ink relative z-10">Continue with Google</span>
@@ -225,13 +286,13 @@ export const AuthForm: React.FC<AuthFormProps> = ({ type }) => {
                   If you've used this email before, Google Sign-In will continue to your existing account.
                 </p>
 
-                <div className="relative pt-2">
+                <div className="relative my-6">
                   <div className="absolute inset-0 flex items-center">
                     <div className="w-full border-t border-hairline"></div>
                   </div>
                   <div className="relative flex justify-center text-[10px] font-mono font-bold uppercase tracking-[0.2em]">
                     <span className="bg-canvas px-4 text-mute opacity-60">
-                      {type === 'login' ? 'or sign in with email' : 'or continue with email'}
+                      {(type === 'login' || type === 'admin-login') ? 'or sign in with email' : 'or continue with email'}
                     </span>
                   </div>
                 </div>
@@ -303,7 +364,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({ type }) => {
                   <div className="space-y-2.5">
                     <div className="flex items-center justify-between ml-1">
                       <label className="text-[10px] font-mono font-bold text-mute uppercase tracking-[0.25em] opacity-70">Password</label>
-                      {type === 'login' && (
+                      {(type === 'login' || type === 'admin-login') && (
                         <a href="/forgot-password" className="text-[10px] font-mono font-bold text-mute hover:text-ink transition-colors uppercase tracking-[0.1em] opacity-60 hover:opacity-100">Forgot?</a>
                       )}
                     </div>
@@ -380,13 +441,13 @@ export const AuthForm: React.FC<AuthFormProps> = ({ type }) => {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full h-15 bg-ink text-canvas rounded-full font-black text-xs uppercase tracking-[0.25em] shadow-premium-xl hover:shadow-[0_20px_40px_-10px_rgba(0,0,0,0.3)] transition-all active:scale-[0.97] flex items-center justify-center gap-4 group disabled:opacity-70 disabled:cursor-not-allowed"
+                className="w-full h-15 bg-ink text-canvas rounded-full font-black text-xs uppercase tracking-[0.25em] shadow-premium-xl hover:shadow-[0_20px_40px_-10px_rgba(0,0,0,0.3)] transition-all duration-200 hover:-translate-y-px active:scale-[0.97] flex items-center justify-center gap-4 group disabled:opacity-70 disabled:cursor-not-allowed"
               >
                 {loading ? (
                   <Loader2 className="w-5 h-5 animate-spin" />
                 ) : (
                   <>
-                    <span>{type === 'login' ? 'Sign In' : type === 'signup' ? 'Create Account' : 'Send Reset Link'}</span>
+                    <span>{(type === 'login' || type === 'admin-login') ? 'Sign In' : type === 'signup' ? 'Create Account' : 'Send Reset Link'}</span>
                     <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
                   </>
                 )}
@@ -398,7 +459,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({ type }) => {
 
         {!isSubmitted && (
           <div className="mt-12 pt-8 border-t border-hairline text-center">
-            {type === 'login' ? (
+            {(type === 'login' || type === 'admin-login') ? (
               <p className="text-sm text-mute font-medium leading-relaxed opacity-80">
                 Don't have an account?{' '}
                 <a href="/signup" className="text-ink font-bold hover:underline decoration-hairline-strong underline-offset-8 transition-all">Sign up for free</a>

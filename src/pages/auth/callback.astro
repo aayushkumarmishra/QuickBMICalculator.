@@ -1,0 +1,95 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { Loader2 } from 'lucide-react';
+
+export const prerender = false;
+---
+
+<Layout title="Authenticating... | QuickBMI">
+  <main class="min-h-[80vh] flex flex-col items-center justify-center p-6 text-center">
+    <div class="space-y-6">
+      <div class="relative">
+        <div class="absolute inset-0 bg-ink/5 blur-2xl rounded-full scale-150 animate-pulse"></div>
+        <Loader2 className="w-12 h-12 animate-spin text-ink relative z-10 mx-auto" />
+      </div>
+      
+      <div class="space-y-2">
+        <h1 class="text-2xl font-black tracking-tighter text-ink">Completing Secure Login</h1>
+        <p class="text-sm text-mute font-medium max-w-[280px] mx-auto opacity-70">
+          We're finalizing your session and preparing your dashboard. Please wait a moment...
+        </p>
+      </div>
+    </div>
+  </main>
+</Layout>
+
+<script>
+  import { supabase } from '../../lib/supabase';
+
+  const ADMIN_EMAIL = import.meta.env.PUBLIC_ADMIN_EMAIL;
+
+  const handleAuthCallback = async () => {
+    let session = null;
+    let retries = 0;
+    const maxRetries = 15; // 15 * 300ms = 4.5 seconds
+
+    try {
+      // 1. Wait for stable hydrated session
+      while (!session && retries < maxRetries) {
+        const { data } = await supabase.auth.getSession();
+        session = data.session;
+        
+        if (!session) {
+          await new Promise(resolve => setTimeout(resolve, 300));
+          retries++;
+        }
+      }
+
+      if (!session) {
+        console.error('Session hydration failed after max retries');
+        window.location.replace('/login?error=session_timeout');
+        return;
+      }
+
+      await processRedirect(session);
+    } catch (err) {
+      console.error('Auth callback error:', err);
+      window.location.replace('/login?error=auth_callback_failed');
+    }
+  };
+
+  const processRedirect = async (session: any) => {
+    const user = session.user;
+
+    try {
+      // 2. Fetch role to determine landing page
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single();
+
+      if (profileError) {
+        console.error('Error fetching profile in callback:', profileError);
+        window.location.replace('/tracker');
+        return;
+      }
+
+      // 3. Absolute Redirection Logic with replace()
+      const role = profile?.role || 'user';
+      document.cookie = `sb-role=${role}; path=/; max-age=31536000; SameSite=Lax`;
+
+      if (user.email === ADMIN_EMAIL && profile?.role === 'admin') {
+        window.location.replace('/admin');
+      } else {
+        window.location.replace('/');
+      }
+    } catch (err) {
+      console.error('Redirect processing error:', err);
+      window.location.replace('/');
+    }
+  };
+
+  // Execute on load
+  handleAuthCallback();
+</script>
