@@ -44,7 +44,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                   </button>
                 </div>
 
-                <h3 className="text-2xl font-black tracking-tighter text-ink mb-3">Login Required.</h3>
+                <h3 className="text-2xl font-black tracking-tighter text-ink mb-3">Login Required</h3>
                 <p className="text-sm text-mute font-medium leading-relaxed mb-6">
                   Create an account or login to save reports, track progress, and download PDF reports.
                 </p>

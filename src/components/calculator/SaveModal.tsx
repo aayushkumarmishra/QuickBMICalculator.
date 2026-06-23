@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Save, UserPlus, Check, Loader2, AlertCircle } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { logActivity } from '../../lib/audit';
 
 interface TrackerProfile {
   id: string;
@@ -81,7 +82,7 @@ export const SaveModal: React.FC<SaveModalProps> = ({
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
 
-      const { data, error } = await supabase
+      const { data: newProfile, error } = await supabase
         .from('tracker_profiles')
         .insert([
           { 
@@ -96,8 +97,15 @@ export const SaveModal: React.FC<SaveModalProps> = ({
 
       if (error) throw error;
 
-      setProfiles(prev => [...prev, data]);
-      setSelectedProfileId(data.id);
+      // Log tracker profile creation
+      try {
+        await logActivity('Tracker Profile Created', 'tracker_profile', newProfile?.id || null, `New tracker profile created`);
+      } catch (logErr) {
+        console.error('Failed to log tracker profile creation:', logErr);
+      }
+
+      setProfiles(prev => [...prev, newProfile]);
+      setSelectedProfileId(newProfile.id);
       setIsAddingProfile(false);
       setNewProfileName('');
       setNewProfileNickname('');
@@ -121,7 +129,7 @@ export const SaveModal: React.FC<SaveModalProps> = ({
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
 
-      const { error } = await supabase
+      const { data: newReport, error } = await supabase
         .from('health_reports')
         .insert([
           {
@@ -131,9 +139,18 @@ export const SaveModal: React.FC<SaveModalProps> = ({
             input_data: inputData,
             result_data: resultData
           }
-        ]);
+        ])
+        .select()
+        .single();
 
       if (error) throw error;
+
+      // Log report generation
+      try {
+        await logActivity('Report Generated', 'report', newReport?.id || null, `${calculatorType} report saved for profile`);
+      } catch (logErr) {
+        console.error('Failed to log report generation:', logErr);
+      }
 
       setSuccess(true);
       setTimeout(() => {

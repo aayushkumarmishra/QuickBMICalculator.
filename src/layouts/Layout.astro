@@ -35,7 +35,7 @@ const {
 		<meta name="apple-mobile-web-app-title" content="QuickBMI" />
 		<link rel="manifest" href="/site.webmanifest" />
 		<meta name="generator" content={Astro.generator} />
-		<link rel="canonical" href={"https://quickbmicalculator.com" + new URL(Astro.url.href).pathname} />
+		<link rel="canonical" href={"https://quickbmicalculator.com" + (Astro.url.pathname.endsWith('/') && Astro.url.pathname !== '/' ? Astro.url.pathname.slice(0, -1) : Astro.url.pathname)} />
 		<meta name="robots" content={robots} />
 		<meta name="color-scheme" content="light dark" />
 		
@@ -143,6 +143,22 @@ const {
 			gtag('js', new Date());
 
 			gtag('config', 'G-ZTL6D0NEJL');
+		</script>
+
+		<!-- Auth Session Cookie Sync -->
+		<script>
+			import { supabase } from '../lib/supabase';
+
+			supabase.auth.onAuthStateChange((event, session) => {
+				if (session) {
+					document.cookie = `sb-access-token=${session.access_token}; path=/; max-age=${session.expires_in || 3600}; SameSite=Lax; Secure`;
+					document.cookie = `sb-refresh-token=${session.refresh_token}; path=/; max-age=31536000; SameSite=Lax; Secure`;
+				} else {
+					document.cookie = 'sb-access-token=; path=/; max-age=0; SameSite=Lax; Secure';
+					document.cookie = 'sb-refresh-token=; path=/; max-age=0; SameSite=Lax; Secure';
+					document.cookie = 'sb-role=; path=/; max-age=0; SameSite=Lax';
+				}
+			});
 		</script>
 	</head>
 	<body class="grain">

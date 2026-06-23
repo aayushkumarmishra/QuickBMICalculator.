@@ -140,7 +140,7 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({ profileId })
         <div className="w-16 h-16 bg-red-50 text-red-600 rounded-full flex items-center justify-center mb-6">
           <AlertCircle className="w-8 h-8" />
         </div>
-        <h2 className="text-2xl font-black tracking-tighter text-ink mb-2">Access Denied.</h2>
+        <h2 className="text-2xl font-black tracking-tighter text-ink mb-2">Access Denied</h2>
         <p className="text-mute mb-8">{error || 'You do not have permission to view this profile.'}</p>
         <a 
           href="/tracker"
@@ -224,7 +224,7 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({ profileId })
             <div className="w-16 h-16 bg-canvas-soft rounded-full flex items-center justify-center mx-auto mb-6">
               <Activity className="w-8 h-8 text-mute/30" />
             </div>
-            <h3 className="text-xl font-black tracking-tighter text-ink mb-2">No reports found.</h3>
+            <h3 className="text-xl font-black tracking-tighter text-ink mb-2">No reports found</h3>
             <p className="text-sm text-mute font-medium mb-8">No saved reports for this category yet.</p>
             <a 
               href="/"

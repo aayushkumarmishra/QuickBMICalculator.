@@ -1,20 +1,61 @@
 import { defineMiddleware } from 'astro:middleware';
-import { supabase } from './lib/supabase';
+import { createClient } from '@supabase/supabase-js';
 
 export const onRequest = defineMiddleware(async ({ locals, url, redirect, cookies }, next) => {
   const currentPath = url.pathname;
   
-  // 1. Get Session & Role from Cookie (reliable on server)
-  const roleCookie = cookies.get('sb-role');
-  const role = roleCookie?.value || 'user';
-  const isAdmin = role === 'admin';
+  // Early return for static assets to prevent infinite redirection loops for CSS/JS
+  if (
+    currentPath.startsWith('/_astro/') || 
+    currentPath.includes('.') || 
+    currentPath === '/favicon.ico'
+  ) {
+    return next();
+  }
   
-  // For session check, use the access token cookie that Supabase sets automatically
-  const hasSession = !!cookies.get('sb-access-token')?.value || 
-                     !!cookies.get('supabase-auth-token')?.value ||
-                     !!cookies.get(`sb-${import.meta.env.PUBLIC_SUPABASE_URL?.split('//')[1]?.split('.')[0]}-auth-token`)?.value ||
-                     isAdmin; // if role cookie exists, user was authenticated at some point
+  const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL;
+  const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY;
 
+  let role = 'user';
+  let hasSession = false;
+
+  const accessToken = cookies.get('sb-access-token')?.value;
+
+  if (accessToken && supabaseUrl && supabaseAnonKey) {
+    try {
+      const supabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
+        auth: {
+          persistSession: false,
+          autoRefreshToken: false,
+        },
+        global: {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        },
+      });
+
+      const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
+
+      if (user && !authError) {
+        hasSession = true;
+
+        const { data: profile, error: profileError } = await supabaseClient
+          .from('profiles')
+          .select('role')
+          .eq('id', user.id)
+          .single();
+
+        if (profile && !profileError) {
+          role = profile.role;
+        }
+      }
+    } catch (err) {
+      console.error('Error verifying session in middleware:', err);
+    }
+  }
+
+  const isAdmin = role === 'admin';
 
   // Pass role to locals
   locals.role = role;
@@ -25,13 +66,19 @@ export const onRequest = defineMiddleware(async ({ locals, url, redirect, cookie
     '/admin/users',
     '/admin/reports',
     '/admin/analytics',
+    '/admin/audit-logs',
+    '/admin/monitoring',
+    '/admin/settings',
     '/login',
     '/admin-login',
     '/logout',
     '/403',
     '/404',
     '/500',
-    '/auth/callback'
+    '/auth/callback',
+    '/sitemap.xml',
+    '/sitemap-index.xml',
+    '/sitemap-0.xml'
   ];
 
   // Normalize path for comparison (handle trailing slashes)
@@ -39,7 +86,9 @@ export const onRequest = defineMiddleware(async ({ locals, url, redirect, cookie
     ? currentPath.slice(0, -1) 
     : currentPath;
 
-  const isAllowedPath = allowedAdminPaths.includes(normalizedPath);
+  const isAllowedPath = allowedAdminPaths.includes(normalizedPath) || 
+                        (normalizedPath.startsWith('/admin/users/') && normalizedPath.split('/').length === 4) ||
+                        (normalizedPath.startsWith('/admin/reports/') && normalizedPath.split('/').length === 4);
 
   // 3. Block regular users/anonymous from admin routes
   if (normalizedPath.startsWith('/admin') && normalizedPath !== '/admin-login') {
@@ -56,15 +105,8 @@ export const onRequest = defineMiddleware(async ({ locals, url, redirect, cookie
     }
   }
 
-  // 4. Redirect Admin if on Blocked Route (User-facing routes)
-  if (isAdmin && !isAllowedPath) {
-    if (normalizedPath !== '/admin') {
-      return redirect('/admin');
-    }
-  }
-
-  // 5. If Admin is already logged in, don't let them see login/signup
-  if (isAdmin && hasSession && normalizedPath === '/login') {
+  // 4. Redirect logged-in admin away from auth pages (login, signup, admin-login)
+  if (isAdmin && hasSession && (normalizedPath === '/login' || normalizedPath === '/signup' || normalizedPath === '/admin-login')) {
     return redirect('/admin');
   }
 

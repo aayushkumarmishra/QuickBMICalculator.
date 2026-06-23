@@ -50,43 +50,17 @@ export const TrackerView: React.FC = () => {
     if (!userId) return;
     setLoading(true);
     try {
-      // 1. Fetch profiles
-      const { data: profileData, error: pError } = await supabase
-        .from('tracker_profiles')
-        .select('*')
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false });
+      const { data, error } = await supabase.rpc('get_profiles_with_stats');
+      if (error) throw error;
 
-      if (pError) throw pError;
-
-      // 2. Fetch stats for each profile
-      const profilesWithStats = await Promise.all((profileData || []).map(async (profile) => {
-        try {
-          const { count } = await supabase
-            .from('health_reports')
-            .select('*', { count: 'exact', head: true })
-            .eq('tracker_profile_id', profile.id);
-          
-          const { data: lastReport } = await supabase
-            .from('health_reports')
-            .select('created_at')
-            .eq('tracker_profile_id', profile.id)
-            .order('created_at', { ascending: false })
-            .limit(1);
-
-          return {
-            ...profile,
-            reportCount: count || 0,
-            lastActivity: lastReport && lastReport.length > 0 ? lastReport[0].created_at : null
-          };
-        } catch (err) {
-          console.error('Error fetching profile stats:', err);
-          return {
-            ...profile,
-            reportCount: 0,
-            lastActivity: null
-          };
-        }
+      const profilesWithStats: ProfileWithStats[] = (data || []).map((profile: any) => ({
+        id: profile.id,
+        profile_name: profile.profile_name,
+        relation_type: profile.relation_type,
+        nickname: profile.nickname || undefined,
+        created_at: profile.created_at,
+        reportCount: profile.report_count || 0,
+        lastActivity: profile.last_activity || null
       }));
 
       setProfiles(profilesWithStats);
@@ -117,7 +91,7 @@ export const TrackerView: React.FC = () => {
         <div className="w-16 h-16 bg-red-50 text-red-600 rounded-full flex items-center justify-center mb-6">
           <Activity className="w-8 h-8" />
         </div>
-        <h2 className="text-2xl font-black tracking-tighter text-ink mb-2">Something went wrong.</h2>
+        <h2 className="text-2xl font-black tracking-tighter text-ink mb-2">Something went wrong</h2>
         <p className="text-mute mb-8">{error}</p>
         <button 
           onClick={() => window.location.reload()}
@@ -158,7 +132,7 @@ export const TrackerView: React.FC = () => {
               <Activity className="w-10 h-10 text-mute/50" />
             </div>
             <h2 className="text-2xl sm:text-3xl font-black tracking-tighter text-ink mb-4">
-              No tracker profiles yet.
+              No tracker profiles yet
             </h2>
             <p className="text-mute font-medium max-w-md mb-10 leading-relaxed">
               Use a calculator and save reports to start tracking progress for yourself and your family.

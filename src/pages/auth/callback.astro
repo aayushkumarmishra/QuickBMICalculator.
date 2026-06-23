@@ -26,7 +26,7 @@ export const prerender = false;
 <script>
   import { supabase } from '../../lib/supabase';
 
-  const ADMIN_EMAIL = import.meta.env.PUBLIC_ADMIN_EMAIL;
+
 
   const handleAuthCallback = async () => {
     let session = null;
@@ -79,7 +79,12 @@ export const prerender = false;
       const role = profile?.role || 'user';
       document.cookie = `sb-role=${role}; path=/; max-age=31536000; SameSite=Lax`;
 
-      if (user.email === ADMIN_EMAIL && profile?.role === 'admin') {
+      if (session) {
+        document.cookie = `sb-access-token=${session.access_token}; path=/; max-age=${session.expires_in || 3600}; SameSite=Lax; Secure`;
+        document.cookie = `sb-refresh-token=${session.refresh_token}; path=/; max-age=31536000; SameSite=Lax; Secure`;
+      }
+
+      if (profile?.role === 'admin') {
         window.location.replace('/admin');
       } else {
         window.location.replace('/');

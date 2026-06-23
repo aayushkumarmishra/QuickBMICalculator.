@@ -1,0 +1,22 @@
+---
+import Layout from '../../../layouts/Layout.astro';
+import { AdminLayout } from '../../../components/admin/AdminLayout';
+import { UserDetailsView } from '../../../components/admin/UserDetailsView';
+
+export const prerender = false;
+
+const { id } = Astro.params;
+
+if (!id) {
+  return Astro.redirect('/admin/users');
+}
+
+const title = "User Details | Admin | QuickBMI";
+const description = "View and manage registered user's health history.";
+---
+
+<Layout title={title} description={description} robots="noindex, nofollow">
+  <AdminLayout currentPath="/admin/users" client:load>
+    <UserDetailsView userId={id} client:load />
+  </AdminLayout>
+</Layout>

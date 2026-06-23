@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Trash2, Loader2, AlertTriangle } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { logActivity } from '../../lib/audit';
 
 interface DeleteReportModalProps {
   reportId: string;
@@ -29,6 +30,14 @@ export const DeleteReportModal: React.FC<DeleteReportModalProps> = ({
         .eq('id', reportId);
 
       if (error) throw error;
+
+      // Log report deletion
+      try {
+        await logActivity('Report Deleted', 'report', reportId || null, `Health report deleted from tracker`);
+      } catch (logErr) {
+        console.error('Failed to log report deletion:', logErr);
+      }
+
       onSuccess();
     } catch (err: any) {
       console.error('Error deleting report:', err);
@@ -62,7 +71,7 @@ export const DeleteReportModal: React.FC<DeleteReportModalProps> = ({
               </div>
               
               <h3 className="text-2xl font-black tracking-tighter text-ink mb-2 leading-tight">
-                Delete Report.
+                Delete Report
               </h3>
               <p className="text-sm text-mute font-medium">
                 Are you sure you want to remove this report?

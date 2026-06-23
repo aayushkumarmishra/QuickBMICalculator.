@@ -1,0 +1,57 @@
+---
+export const prerender = false;
+
+// Clear cookies server-side
+Astro.cookies.delete('sb-role', { path: '/' });
+Astro.cookies.delete('sb-access-token', { path: '/' });
+Astro.cookies.delete('sb-refresh-token', { path: '/' });
+---
+
+<script>
+  import { supabase } from '../lib/supabase';
+  import { logActivity } from '../lib/audit';
+  
+  // Clear client-side session and redirect
+  async function performLogout() {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('role, full_name')
+          .eq('id', session.user.id)
+          .single();
+        const role = profile?.role || 'user';
+        const actionType = role === 'admin' ? 'Admin Logout' : 'User Logout';
+        const nameOrEmail = profile?.full_name || session.user.email;
+        
+        await logActivity(
+          actionType,
+          'user',
+          session.user.id,
+          `${nameOrEmail} logged out of the platform`
+        );
+      }
+      await supabase.auth.signOut();
+      
+      // Clear cookie client-side just in case
+      document.cookie = 'sb-role=; path=/; max-age=0; SameSite=Lax';
+      document.cookie = 'sb-access-token=; path=/; max-age=0; SameSite=Lax; Secure';
+      document.cookie = 'sb-refresh-token=; path=/; max-age=0; SameSite=Lax; Secure';
+    } catch (e) {
+      console.error('Error during client-side sign out:', e);
+    }
+    
+    // Redirect to login page
+    window.location.replace('/login');
+  }
+  
+  performLogout();
+</script>
+
+<div class="min-h-screen bg-canvas-soft flex items-center justify-center">
+  <div class="text-center space-y-4">
+    <div class="w-12 h-12 border-4 border-ink border-t-transparent rounded-full animate-spin mx-auto"></div>
+    <p class="text-sm font-mono font-bold text-mute uppercase tracking-widest animate-pulse">Logging out secure session...</p>
+  </div>
+</div>

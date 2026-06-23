@@ -3,8 +3,28 @@ import Layout from '../layouts/Layout.astro';
 import { Navbar } from '../components/Navbar';
 import Footer from '../components/Footer.astro';
 import { TrackerView } from '../components/tracker/TrackerView';
+import { createClient } from '@supabase/supabase-js';
 
 export const prerender = false;
+
+const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY;
+
+const accessToken = Astro.cookies.get('sb-access-token')?.value;
+let hasSession = false;
+
+if (accessToken && supabaseUrl && supabaseAnonKey) {
+  const supabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
+    auth: { persistSession: false, autoRefreshToken: false },
+    global: { headers: { Authorization: `Bearer ${accessToken}` } }
+  });
+  const { data: { user } } = await supabaseClient.auth.getUser();
+  if (user) hasSession = true;
+}
+
+if (!hasSession) {
+  return Astro.redirect('/login?returnTo=/tracker');
+}
 
 const title = "My Tracker - Progress Dashboard | QuickBMI";
 const description = "Track your health metrics over time. View saved reports for yourself and your family members in one place.";

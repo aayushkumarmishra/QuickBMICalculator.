@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Trash2, Loader2, AlertCircle } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { logActivity } from '../../lib/audit';
 
 interface DeleteProfileModalProps {
   isOpen: boolean;
@@ -31,6 +32,14 @@ export const DeleteProfileModal: React.FC<DeleteProfileModalProps> = ({
         .eq('id', profileId);
 
       if (error) throw error;
+
+      // Log tracker profile deletion
+      try {
+        await logActivity('Tracker Profile Deleted', 'tracker_profile', profileId || null, `Tracker profile deleted`);
+      } catch (logErr) {
+        console.error('Failed to log tracker profile deletion:', logErr);
+      }
+
       onConfirm();
     } catch (err: any) {
       console.error('Error deleting profile:', err);
@@ -68,7 +77,7 @@ export const DeleteProfileModal: React.FC<DeleteProfileModalProps> = ({
               </div>
               
               <h3 className="text-2xl font-black tracking-tighter text-ink mb-2 leading-tight">
-                Delete Profile.
+                Delete Profile
               </h3>
               <p className="text-sm text-mute font-medium">
                 This action cannot be undone.

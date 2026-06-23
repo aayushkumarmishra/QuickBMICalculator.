@@ -4,6 +4,7 @@ import { ThemeToggle } from './ThemeToggle';
 import { BrandLogo } from './BrandLogo';
 import { Menu, X, ChevronDown, LogOut } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { logActivity } from '../lib/audit';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
 
 const ProfileDropdown: React.FC<{ user: SupabaseUser; handleLogout: () => void; isMobile?: boolean }> = ({ user, handleLogout, isMobile }) => {
@@ -155,6 +156,13 @@ export const Navbar: React.FC = () => {
   }, []);
 
   const handleLogout = async () => {
+    // Log user logout
+    try {
+      await logActivity('User Logout', 'user', user?.id || null, `User logged out`);
+    } catch (logErr) {
+      console.error('Failed to log user logout:', logErr);
+    }
+
     await supabase.auth.signOut();
     
     // Clear role cookie
@@ -198,7 +206,7 @@ export const Navbar: React.FC = () => {
   const [howItWorksHref, setHowItWorksHref] = useState('/#how-it-works');
   const [bmiCategoriesHref, setBmiCategoriesHref] = useState('/#bmi-categories');
 
-  const isAdmin = role === 'admin' && window.location.pathname.startsWith('/admin');
+  const isAdmin = role === 'admin' && (typeof window !== 'undefined' && window.location.pathname.startsWith('/admin'));
 
   const adminLinks = [
     { name: 'Dashboard', href: '/admin' },
@@ -382,6 +390,7 @@ export const Navbar: React.FC = () => {
           </div>
           
           <div className="flex items-center gap-4 xl:gap-5">
+            <ThemeToggle />
             {!isAdmin && (
               <a 
                 href={calcHref} 
@@ -407,6 +416,7 @@ export const Navbar: React.FC = () => {
 
         {/* Mobile Toggle & Auth */}
         <div className="flex items-center gap-2 lg:hidden relative z-50">
+          <ThemeToggle />
           {isMounted && user && (
             <ProfileDropdown user={user} handleLogout={handleLogout} isMobile={true} />
           )}

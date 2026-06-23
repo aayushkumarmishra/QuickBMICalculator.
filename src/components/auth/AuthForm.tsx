@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import { motion } from 'framer-motion';
 import { Mail, Lock, User, ArrowRight, Loader2, AlertCircle, CheckCircle2, Eye, EyeOff } from 'lucide-react';
+import { logActivity } from '../../lib/audit';
 
 interface AuthFormProps {
   type: 'login' | 'signup' | 'forgot-password' | 'admin-login';
@@ -14,6 +15,14 @@ const passwordRequirements = [
   { label: 'Number', test: (p: string) => /[0-9]/.test(p) },
   { label: 'Special character', test: (p: string) => /[^A-Za-z0-9]/.test(p) },
 ];
+
+const getSafeRedirect = (url: string | null): string => {
+  if (!url) return '/';
+  if (!url.startsWith('/')) return '/';
+  if (url.startsWith('//')) return '/';
+  if (url.includes('://')) return '/';
+  return url;
+};
 
 export const AuthForm: React.FC<AuthFormProps> = ({ type }) => {
   const [email, setEmail] = useState('');
@@ -38,8 +47,6 @@ export const AuthForm: React.FC<AuthFormProps> = ({ type }) => {
       console.log(`[AUTH FORM] path=${window.location.pathname} session=${!!session} type=${type}`);
       
       if (session && (type === 'login' || type === 'signup' || type === 'admin-login')) {
-        const ADMIN_EMAIL = import.meta.env.PUBLIC_ADMIN_EMAIL;
-        
         // Fetch role to determine landing page
         const { data: profile } = await supabase
           .from('profiles')
@@ -47,7 +54,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({ type }) => {
           .eq('id', session.user.id)
           .single();
 
-        if (session.user.email === ADMIN_EMAIL && profile?.role === 'admin') {
+        if (profile?.role === 'admin') {
           redirectExecuted.current = true;
           window.location.replace('/admin');
           return;
@@ -55,10 +62,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({ type }) => {
 
         const params = new URLSearchParams(window.location.search);
         const returnTo = params.get('returnTo') || '/';
-        
-        // Safety check: avoid redirect loops by only allowing safe paths
-        const safePaths = ['/', '/tracker', '/bmi-calculator', '/bmr-calculator', '/calorie-calculator', '/ideal-weight', '/water-intake', '/ideal-weight-calculator', '/water-intake-calculator'];
-        const destination = safePaths.includes(returnTo) ? returnTo : '/';
+        const destination = getSafeRedirect(returnTo);
         
         redirectExecuted.current = true;
         window.location.replace(destination);
@@ -73,16 +77,14 @@ export const AuthForm: React.FC<AuthFormProps> = ({ type }) => {
     setError(null);
     setMessage(null);
 
-    const ADMIN_EMAIL = import.meta.env.PUBLIC_ADMIN_EMAIL;
-
     try {
       if (type === 'signup') {
-        if (email.trim().toLowerCase() === ADMIN_EMAIL?.toLowerCase()) {
-          setError('This email is reserved. Please use a different email address.');
-          setLoading(false);
-          return;
+        if (!password) {
+          throw new Error('Password cannot be empty');
         }
-
+        if (password.length > 15) {
+          throw new Error('Password cannot exceed 15 characters');
+        }
         if (password !== confirmPassword) {
           throw new Error('Passwords do not match');
         }
@@ -97,15 +99,28 @@ export const AuthForm: React.FC<AuthFormProps> = ({ type }) => {
         });
         if (signUpError) throw signUpError;
         
+        // Log successful user registration
+        try {
+          await logActivity('User Registration', 'user', signUpData.user?.id || null, `New user registered: ${email}`);
+        } catch (logErr) {
+          console.error('Failed to log user registration:', logErr);
+        }
+        
         // If email confirmation is required, show success screen
         if (signUpData.user && signUpData.session === null) {
           setIsSubmitted(true);
         } else {
-          // Check for admin
-          if (signUpData.user?.email === ADMIN_EMAIL) {
-             window.location.replace('/admin');
+          // Fetch role to redirect correctly
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', signUpData.user?.id || '')
+            .single();
+
+          if (profile?.role === 'admin') {
+            window.location.replace('/admin');
           } else {
-             window.location.replace('/');
+            window.location.replace('/');
           }
         }
       } else if (type === 'login' || type === 'admin-login') {
@@ -115,17 +130,29 @@ export const AuthForm: React.FC<AuthFormProps> = ({ type }) => {
         });
         if (signInError) throw signInError;
 
+        // Log successful user login
+        try {
+          await logActivity('User Login', 'user', signInData.user?.id || null, `User logged in via email: ${email}`);
+        } catch (logErr) {
+          console.error('Failed to log user login:', logErr);
+        }
+
         // Fetch profile to check role for redirect
         const { data: profile } = await supabase
           .from('profiles')
           .select('role')
-          .eq('id', signInData.user.id)
+          .eq('id', signInData.user?.id || '')
           .single();
 
         const role = profile?.role || 'user';
+        const session = signInData.session;
 
         if (profile?.role === 'admin') {
           if (type === 'admin-login') {
+            if (session) {
+              document.cookie = `sb-access-token=${session.access_token}; path=/; max-age=${session.expires_in}; SameSite=Lax; Secure`;
+              document.cookie = `sb-refresh-token=${session.refresh_token}; path=/; max-age=31536000; SameSite=Lax; Secure`;
+            }
             document.cookie = `sb-role=admin; path=/; max-age=31536000; SameSite=Lax`;
             window.location.replace('/admin');
           } else {
@@ -135,10 +162,14 @@ export const AuthForm: React.FC<AuthFormProps> = ({ type }) => {
             window.location.replace('/');
           }
         } else {
+          if (session) {
+            document.cookie = `sb-access-token=${session.access_token}; path=/; max-age=${session.expires_in}; SameSite=Lax; Secure`;
+            document.cookie = `sb-refresh-token=${session.refresh_token}; path=/; max-age=31536000; SameSite=Lax; Secure`;
+          }
           document.cookie = `sb-role=${role}; path=/; max-age=31536000; SameSite=Lax`;
           const params = new URLSearchParams(window.location.search);
           const returnTo = params.get('returnTo') || '/';
-          window.location.replace(returnTo);
+          window.location.replace(getSafeRedirect(returnTo));
         }
       } else if (type === 'forgot-password') {
         const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
@@ -276,7 +307,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({ type }) => {
                     />
                     <path
                       fill="#EA4335"
-                      d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                      d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
                     />
                   </svg>
                   <span className="text-sm font-bold text-ink relative z-10">Continue with Google</span>
@@ -378,6 +409,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({ type }) => {
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         placeholder="••••••••"
+                        maxLength={type === 'signup' ? 15 : undefined}
                         className="w-full h-15 pl-14 pr-14 bg-canvas-soft border border-hairline rounded-[1rem] text-sm font-bold text-ink focus:outline-none focus:ring-4 focus:ring-ink/5 focus:border-ink transition-all placeholder:text-mute/25 placeholder:font-medium"
                       />
                       <button
@@ -421,6 +453,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({ type }) => {
                           value={confirmPassword}
                           onChange={(e) => setConfirmPassword(e.target.value)}
                           placeholder="••••••••"
+                          maxLength={type === 'signup' ? 15 : undefined}
                           className="w-full h-15 pl-14 pr-14 bg-canvas-soft border border-hairline rounded-[1rem] text-sm font-bold text-ink focus:outline-none focus:ring-4 focus:ring-ink/5 focus:border-ink transition-all placeholder:text-mute/25 placeholder:font-medium"
                         />
                         <button

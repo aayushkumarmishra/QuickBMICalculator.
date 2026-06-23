@@ -3,6 +3,30 @@ import Layout from '../layouts/Layout.astro';
 import { Navbar } from '../components/Navbar';
 import Footer from '../components/Footer.astro';
 import { AuthForm } from '../components/auth/AuthForm';
+import { createClient } from '@supabase/supabase-js';
+
+export const prerender = false;
+
+const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY;
+
+const accessToken = Astro.cookies.get('sb-access-token')?.value;
+
+if (accessToken && supabaseUrl && supabaseAnonKey) {
+  const supabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
+    auth: { persistSession: false, autoRefreshToken: false },
+    global: { headers: { Authorization: `Bearer ${accessToken}` } }
+  });
+  const { data: { user } } = await supabaseClient.auth.getUser();
+  if (user) {
+    const { data: profile } = await supabaseClient
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single();
+    return Astro.redirect(profile?.role === 'admin' ? '/admin' : '/');
+  }
+}
 
 const title = "Login - Access Your Account | QuickBMI";
 const description = "Sign in to your QuickBMI account to track your health metrics and saved calculations.";

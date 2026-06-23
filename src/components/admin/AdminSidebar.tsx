@@ -11,7 +11,9 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   Sun,
-  Moon
+  Moon,
+  History,
+  Activity
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -26,6 +28,8 @@ const navItems = [
   { name: 'Users', href: '/admin/users', icon: Users },
   { name: 'Reports', href: '/admin/reports', icon: FileText },
   { name: 'Analytics', href: '/admin/analytics', icon: BarChart3 },
+  { name: 'Audit Logs', href: '/admin/audit-logs', icon: History },
+  { name: 'Monitoring', href: '/admin/monitoring', icon: Activity },
   { name: 'Settings', href: '/admin/settings', icon: Settings }
 ];
 
@@ -110,7 +114,7 @@ export const AdminSidebar: React.FC<SidebarProps> = ({ currentPath, isOpen, onCl
                     exit={{ opacity: 0, x: -10 }}
                     className="flex flex-col whitespace-nowrap"
                   >
-                    <span className="font-black tracking-tighter text-ink leading-tight text-lg">Admin.</span>
+                    <span className="font-black tracking-tighter text-ink leading-tight text-lg">Admin</span>
                     <span className="text-[10px] font-mono font-black text-mute uppercase tracking-widest opacity-40">QuickBMI Platform</span>
                   </motion.div>
                 )}

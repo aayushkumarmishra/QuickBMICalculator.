@@ -6,8 +6,10 @@ import Footer from '../../components/Footer.astro';
 import { FAQAccordion } from '../../components/FAQAccordion';
 import { ArrowRight, Clock, User, Calendar, ArrowLeft } from 'lucide-react';
 
+export const prerender = true;
+
 export async function getStaticPaths() {
-	const posts = await getCollection('blog');
+	const posts = await getCollection('blog', (post) => !post.data.draft);
 	return posts.map((post) => ({
 		params: { slug: post.id },
 		props: post,
@@ -17,7 +19,7 @@ export async function getStaticPaths() {
 const post = Astro.props;
 const { Content } = await render(post);
 
-const posts = await getCollection('blog');
+const posts = await getCollection('blog', (p) => !p.data.draft);
 const relatedPosts = posts
 	.filter((p) => p.id !== post.id)
 	.slice(0, 3);
