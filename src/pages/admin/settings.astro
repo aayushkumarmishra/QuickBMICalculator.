@@ -1,0 +1,18 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { AdminLayout } from '../../components/admin/AdminLayout';
+
+import { AdminSettings } from '../../components/admin/AdminSettings';
+
+export const prerender = false;
+
+const title = "Settings | Admin | QuickBMI";
+const description = "Admin platform configuration and settings.";
+---
+
+<Layout title={title} description={description} robots="noindex, nofollow">
+  <AdminLayout currentPath={Astro.url.pathname} client:load>
+    <AdminSettings client:load />
+  </AdminLayout>
+</Layout>
+

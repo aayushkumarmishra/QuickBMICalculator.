@@ -1,8 +1,9 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { RotateCcw, Download, Check, Activity, ChevronDown, Target, Droplets, Sun, Clock, AlertCircle } from 'lucide-react';
+import { RotateCcw, Download, Check, Activity, ChevronDown, Target, Droplets, Sun, Clock, AlertCircle, Lock, Save } from 'lucide-react';
 import { InputGroup } from './InputGroup';
 import { BrandLogo } from '../BrandLogo';
+import { ReportActions } from './ReportActions';
 
 type UnitSystem = 'metric' | 'us' | 'other';
 
@@ -38,6 +39,29 @@ export const WaterIntakeCalculatorCard: React.FC = () => {
   const [isExporting, setIsExporting] = useState(false);
   const [exportError, setExportError] = useState<string>('');
   const [isResetting, setIsResetting] = useState(false);
+
+  // Persistent State Logic
+  useEffect(() => {
+    const saved = sessionStorage.getItem('water_intake_calculator_state');
+    if (saved) {
+      try {
+        const state = JSON.parse(saved);
+        if (state.weight !== undefined) setWeight(state.weight);
+        if (state.name !== undefined) setName(state.name);
+        if (state.age !== undefined) setAge(state.age);
+        if (state.gender !== undefined) setGender(state.gender);
+        if (state.activity !== undefined) setActivity(state.activity);
+        if (state.climate !== undefined) setClimate(state.climate);
+        if (state.system !== undefined) setSystem(state.system);
+        if (state.weightUnitOther !== undefined) setWeightUnitOther(state.weightUnitOther);
+
+        // Clear state after restoration to prevent stale persistence
+        sessionStorage.removeItem('water_intake_calculator_state');
+      } catch (e) {
+        console.error('Failed to restore Water Intake state:', e);
+      }
+    }
+  }, []);
 
   const handleResetWithAnimation = () => {
     setIsResetting(true);
@@ -144,175 +168,25 @@ export const WaterIntakeCalculatorCard: React.FC = () => {
 
     setIsExporting(true);
     try {
-      const { jsPDF } = await import('jspdf');
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      const pageWidth = pdf.internal.pageSize.getWidth();
-      const margin = 20;
-      let y = 20;
-
-      const drawHeader = (title: string, yPos: number) => {
-        pdf.setFontSize(10);
-        pdf.setFont('helvetica', 'bold');
-        pdf.setTextColor(150, 150, 150);
-        pdf.text(title.toUpperCase(), margin, yPos);
-        return yPos + 6;
+      const { generateReportPDF } = await import('../../lib/pdf');
+      
+      const inputData = {
+        age, gender, weight, activity, climate, system, weightUnitOther
       };
 
-      // 1. HEADER
-      pdf.setFillColor(23, 23, 23);
-      pdf.rect(0, 0, pageWidth, 40, 'F');
-      pdf.setTextColor(255, 255, 255);
-      pdf.setFontSize(22);
-      pdf.setFont('helvetica', 'bold');
-      pdf.text('QuickBMI', margin, 22);
-      pdf.setFontSize(10);
-      pdf.setFont('helvetica', 'normal');
-      pdf.text('Water Intake & Hydration Report', margin, 28);
-      pdf.setFontSize(10);
-      pdf.setFont('helvetica', 'bold');
-      pdf.text(name.toUpperCase(), margin, 35);
-      pdf.setFontSize(8);
-      pdf.text(`REPORT ID: ${Math.random().toString(36).substr(2, 9).toUpperCase()}`, pageWidth - margin - 40, 22);
-      pdf.text(`DATE: ${new Date().toLocaleDateString()}`, pageWidth - margin - 40, 26);
-      y = 50;
+      const resultData = {
+        waterGoal, waterIntake: waterGoal, timings, recommendations
+      };
 
-      // 2. PROFILE
-      y = drawHeader('Your Profile', y);
-      pdf.setDrawColor(240, 240, 240);
-      pdf.setFillColor(252, 252, 252);
-      pdf.roundedRect(margin, y, pageWidth - (margin * 2), 22, 2, 2, 'FD');
-      const colW = (pageWidth - (margin * 2)) / 4;
-      pdf.setFontSize(7); pdf.setTextColor(100, 100, 100); pdf.setFont('helvetica', 'normal');
-      pdf.text('AGE', margin + 8, y + 6);
-      pdf.text('GENDER', margin + 8 + colW, y + 6);
-      pdf.text('ACTIVITY', margin + 8 + (colW * 2), y + 6);
-      pdf.text('CLIMATE', margin + 8 + (colW * 3), y + 6);
-      pdf.setFontSize(9); pdf.setTextColor(23, 23, 23); pdf.setFont('helvetica', 'bold');
-      pdf.text(age || '--', margin + 8, y + 14);
-      pdf.text((gender || '--').toUpperCase(), margin + 8 + colW, y + 14);
-      const actLabel = ACTIVITY_LEVELS.find(a => a.value === activity)?.label || '--';
-      const climLabel = CLIMATE_TYPES.find(c => c.value === climate)?.label || '--';
-      pdf.text(actLabel, margin + 8 + (colW * 2), y + 14);
-      pdf.text(climLabel, margin + 8 + (colW * 3), y + 14);
-      y += 28;
-
-      // 3. MAIN RESULT
-      y = drawHeader('Hydration Goal', y);
-      pdf.setDrawColor(235, 235, 235);
-      pdf.setFillColor(255, 255, 255);
-      pdf.roundedRect(margin, y, pageWidth - (margin * 2), 22, 2, 2, 'D');
-      pdf.setTextColor(100, 100, 100); pdf.setFontSize(9); pdf.setFont('helvetica', 'normal');
-      pdf.text('DAILY WATER INTAKE GOAL', margin + 8, y + 8);
-      pdf.text('STATUS', margin + 90, y + 8);
-      pdf.setTextColor(23, 23, 23); pdf.setFontSize(16); pdf.setFont('helvetica', 'bold');
-      pdf.text(`${waterGoal.toFixed(1)} Liters / day`, margin + 8, y + 16);
-      pdf.setFontSize(13);
-      pdf.text(hydrationStatus.toUpperCase(), margin + 90, y + 16);
-      y += 28;
-
-      // 4. HYDRATION VISUAL BAR (Enhanced Visibility Fix)
-      const barHeight = 8;
-      const barWidth = pageWidth - (margin * 2);
-      
-      // Reset Draw State
-      pdf.setGState(new (pdf as any).GState({ opacity: 1 }));
-      pdf.setLineWidth(0.1);
-      
-      // Low (30%) - #0070f3
-      pdf.setFillColor(0, 112, 243);
-      pdf.setDrawColor(0, 112, 243);
-      pdf.rect(margin, y, barWidth * 0.30, barHeight, 'FD');
-      
-      // Normal (40%) - #00dfd8
-      pdf.setFillColor(0, 223, 216);
-      pdf.setDrawColor(0, 223, 216);
-      pdf.rect(margin + (barWidth * 0.30), y, barWidth * 0.40, barHeight, 'FD');
-      
-      // High (30%) - #f5a623
-      pdf.setFillColor(245, 166, 35);
-      pdf.setDrawColor(245, 166, 35);
-      pdf.rect(margin + (barWidth * 0.70), y, barWidth * 0.30, barHeight, 'FD');
-
-      // Marker Position (Scale 1L to 5L)
-      const minW = 1;
-      const maxW = 5;
-      const pct = Math.min(Math.max(((waterGoal - minW) / (maxW - minW)) * 100, 0), 100);
-      const markerX = margin + (barWidth * (pct / 100));
-
-      pdf.setDrawColor(23, 23, 23); 
-      pdf.setFillColor(23, 23, 23);
-      pdf.setLineWidth(0.8);
-      pdf.line(markerX, y - 2, markerX, y + barHeight + 2);
-      pdf.circle(markerX, y - 3, 1.2, 'FD');
-
-      pdf.setFontSize(7); pdf.setTextColor(100, 100, 100); pdf.setFont('helvetica', 'bold');
-      pdf.text('LOW', margin, y + barHeight + 5);
-      pdf.text('NORMAL', margin + (barWidth * 0.30), y + barHeight + 5);
-      pdf.text('HIGH', margin + (barWidth * 0.70), y + barHeight + 5);
-      y += barHeight + 15;
-
-      // 5. TIMING
-      y = drawHeader('Suggested Intake Timing', y);
-      pdf.setFillColor(248, 250, 252);
-      pdf.roundedRect(margin, y, pageWidth - (margin * 2), 20, 2, 2, 'F');
-      const timeCol = (pageWidth - (margin * 2)) / 4;
-      pdf.setFontSize(7); pdf.setTextColor(100, 100, 100);
-      pdf.text('MORNING', margin + 8, y + 6);
-      pdf.text('AFTERNOON', margin + 8 + timeCol, y + 6);
-      pdf.text('NIGHT', margin + 8 + (timeCol * 2), y + 6);
-      pdf.text('WORKOUT', margin + 8 + (timeCol * 3), y + 6);
-      pdf.setFontSize(9); pdf.setTextColor(23, 23, 23); pdf.setFont('helvetica', 'bold');
-      pdf.text(`${timings.morning.toFixed(2)} L`, margin + 8, y + 14);
-      pdf.text(`${timings.afternoon.toFixed(2)} L`, margin + 8 + timeCol, y + 14);
-      pdf.text(`${timings.night.toFixed(2)} L`, margin + 8 + (timeCol * 2), y + 14);
-      pdf.text(`${timings.workout.toFixed(2)} L`, margin + 8 + (timeCol * 3), y + 14);
-      y += 30;
-
-      // 5. RECOMMENDATIONS
-      pdf.setFontSize(8); pdf.setFont('helvetica', 'bold'); pdf.setTextColor(150, 150, 150);
-      pdf.text('HYDRATION RECOMMENDATIONS', margin, y);
-      y += 6;
-      recommendations.forEach((rec, i) => {
-        const recY = y + (i * 6);
-        pdf.setDrawColor(0, 223, 216);
-        pdf.setLineWidth(0.3);
-        pdf.line(margin, recY + 3, margin + 1, recY + 4);
-        pdf.line(margin + 1, recY + 4, margin + 3, recY + 1.5);
-        pdf.setFontSize(8); pdf.setFont('helvetica', 'normal'); pdf.setTextColor(50, 50, 50);
-        pdf.text(rec, margin + 5, recY + 3.5);
+      await generateReportPDF({
+        profileName: trimmedName,
+        calculatorType: 'water_intake',
+        inputData,
+        resultData,
+        date: new Date().toLocaleDateString()
       });
-
-      // 6. FOOTER & DISCLAIMER (Surgical Overlap Fix)
-      const pageHeight = pdf.internal.pageSize.getHeight();
-      pdf.setFontSize(7);
-      pdf.setTextColor(100, 100, 100);
-      const disclaimer = "DISCLAIMER: This report is for informational purposes only. Water intake results are estimates based on body weight, activity level, and environmental conditions. Consult a healthcare professional for personalized hydration advice.";
-      const splitDisclaimer = pdf.splitTextToSize(disclaimer, pageWidth - (margin * 2));
-      const disclaimerHeight = (splitDisclaimer.length * 3.5);
-      const footerHeight = 10;
-      const totalNeeded = disclaimerHeight + footerHeight;
-
-      if (y + totalNeeded > pageHeight - 15) {
-        pdf.addPage();
-        y = 20;
-      } else {
-        y = Math.max(y + 10, pageHeight - totalNeeded - 15);
-      }
-
-      pdf.text(splitDisclaimer, margin, y);
-      const footerY = y + disclaimerHeight + 2;
-      pdf.setFont('helvetica', 'bold');
-      pdf.text('quickbmicalculator.com', margin, footerY);
-
-      const dateStr = new Date().toLocaleDateString('en-GB').split('/').join('-');
-      const safeName = name.trim().replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-]/g, '');
-      pdf.save(`Water-Intake-Report-${safeName}-${dateStr}.pdf`);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
     } catch (error) {
-      console.error('PDF Export Error:', error);
-      setExportError('Export failed. Please try again.');
-      setTimeout(() => setExportError(''), 3000);
+      console.error('PDF generation failed:', error);
     } finally {
       setIsExporting(false);
     }
@@ -483,27 +357,35 @@ export const WaterIntakeCalculatorCard: React.FC = () => {
         {/* RIGHT: Intelligence Panel (Results) */}
         <div className="lg:col-span-7 bg-canvas-soft/40 p-6 sm:p-10 lg:p-12 relative border-t lg:border-t-0 border-hairline h-full overflow-y-auto">
           <div className="flex flex-col gap-6 lg:gap-8">
-            <div className="flex items-center justify-between border-b border-hairline/50 pb-8">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-xl bg-primary/5 text-primary flex items-center justify-center border border-primary/10 shadow-premium-sm">
-                  <Droplets className="w-6 h-6" />
-                </div>
-                <div>
-                  <h2 className="text-2xl font-black tracking-tighter text-ink leading-none mb-2">Daily Intake</h2>
-                  <p className="text-[10px] font-mono font-bold text-mute uppercase tracking-widest">Hydration Goal Analysis</p>
+            <div className="flex flex-col border-b border-hairline/50 pb-8">
+              <div className="flex items-center justify-between mb-8">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-primary/5 text-primary flex items-center justify-center border border-primary/10 shadow-premium-sm">
+                    <Droplets className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-black tracking-tighter text-ink leading-none mb-2">Daily Intake</h2>
+                    <p className="text-[10px] font-mono font-bold text-mute uppercase tracking-widest">Hydration Goal Analysis</p>
+                  </div>
                 </div>
               </div>
-              <button
-                onClick={handleExport}
-                disabled={isExporting || waterGoal <= 0 || name.trim().length < 2}
-                className="px-5 py-3 bg-canvas border border-hairline hover:bg-canvas-soft rounded-xl transition-all text-ink font-bold text-xs uppercase tracking-widest shadow-premium-md flex items-center gap-2 group active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-                title="Export Results to PDF"
-              >
-                {copied ? <Check className="w-4 h-4 text-status-healthy" /> : (isExporting ? <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1 }}><RotateCcw className="w-4 h-4 text-mute" /></motion.div> : <Download className="w-4 h-4 text-mute group-hover:text-ink transition-colors" />)}
-                <span>{copied ? 'Success' : (isExporting ? 'Downloading...' : 'Download')}</span>
-              </button>
+              
+              <ReportActions 
+                onDownload={handleExport}
+                isExporting={isExporting}
+                hasResult={waterGoal > 0}
+                isValidName={name.trim().length >= 2}
+                calculatorType="water_intake"
+                inputData={{
+                  name, age, gender, weight, activity, climate, system, weightUnitOther
+                }}
+                resultData={{
+                  waterGoal, hydrationStatus, timings, recommendations
+                }}
+              />
+              
               {exportError && (
-                <p className="text-red-500 font-mono font-bold text-xs mt-2 text-right">
+                <p className="text-red-500 font-mono font-bold text-xs mt-3">
                   {exportError}
                 </p>
               )}

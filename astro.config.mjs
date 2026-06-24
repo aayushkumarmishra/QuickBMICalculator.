@@ -10,7 +10,7 @@ import cloudflare from '@astrojs/cloudflare';
 // https://astro.build/config
 export default defineConfig({
   site: 'https://quickbmicalculator.com',
-  output: 'static',
+  output: 'server',
 
   devToolbar: {
     enabled: false
@@ -19,10 +19,34 @@ export default defineConfig({
   integrations: [
     react(), 
     sitemap({
-      filter: (page) => 
-        page !== 'https://quickbmicalculator.com/403/' && 
-        page !== 'https://quickbmicalculator.com/404/' && 
-        page !== 'https://quickbmicalculator.com/500/'
+      filter: (page) => {
+        const url = new URL(page);
+        const path = url.pathname;
+        
+        // Normalize path by stripping trailing slash
+        const normalizedPath = path.endsWith('/') && path !== '/' ? path.slice(0, -1) : path;
+        
+        // Exclude system pages and authenticated/admin/tracker zones
+        const excludedExact = [
+          '/403', '/404', '/500',
+          '/login', '/logout', '/signup',
+          '/admin-login', '/forgot-password',
+          '/tracker', '/admin', '/auth'
+        ];
+        
+        if (excludedExact.includes(normalizedPath)) return false;
+        
+        // Exclude wildcards/sub-paths
+        if (
+          normalizedPath.startsWith('/admin/') || 
+          normalizedPath.startsWith('/auth/') || 
+          normalizedPath.startsWith('/tracker/')
+        ) {
+          return false;
+        }
+        
+        return true;
+      }
     })
   ],
 

@@ -1,0 +1,16 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { AdminLayout } from '../../components/admin/AdminLayout';
+import { UserManagement } from '../../components/admin/UserManagement';
+
+export const prerender = false;
+
+const title = "User Management | Admin | QuickBMI";
+const description = "Manage registered users, profiles, and health reports.";
+---
+
+<Layout title={title} description={description} robots="noindex, nofollow">
+  <AdminLayout currentPath={Astro.url.pathname} client:load>
+    <UserManagement client:load />
+  </AdminLayout>
+</Layout>

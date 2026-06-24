@@ -1,5 +1,5 @@
 ---
-title: "BMI for Indians: What Is a Healthy BMI Range?"
+title: "BMI for Indians: Healthy BMI Range & Why It Differs"
 description: "What is a healthy BMI for Indians? Learn why the standard BMI range is different for the Indian population and check your category with our updated 2026 guide."
 pubDate: 2026-06-11
 heroImage: "/og-image.png"

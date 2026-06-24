@@ -1,4 +1,9 @@
 User-agent: *
 Allow: /
+Disallow: /admin/
+Disallow: /auth/
+Disallow: /tracker/
+Disallow: /login
+Disallow: /admin-login
 
 Sitemap: https://quickbmicalculator.com/sitemap-index.xml

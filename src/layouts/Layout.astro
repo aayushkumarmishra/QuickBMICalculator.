@@ -4,6 +4,8 @@ import '../styles/global.css';
 interface Props {
 	title?: string;
 	description?: string;
+	image?: string;
+	ogType?: string;
 	robots?: string;
 	extraSchema?: any[];
 	appName?: string;
@@ -12,6 +14,8 @@ interface Props {
 const { 
 	title = "BMI Calculator - Calculate Body Mass Index Online | QuickBMI",
 	description = "Calculate your Body Mass Index (BMI) easily with our free online tool. Supports metric and US units for adults and children, providing helpful health insights.",
+	image = "/og-image.png",
+	ogType = "website",
 	robots = "index, follow",
 	extraSchema = [],
 	appName = "Quick BMI Calculator"
@@ -31,7 +35,7 @@ const {
 		<meta name="apple-mobile-web-app-title" content="QuickBMI" />
 		<link rel="manifest" href="/site.webmanifest" />
 		<meta name="generator" content={Astro.generator} />
-		<link rel="canonical" href={"https://quickbmicalculator.com" + new URL(Astro.url.href).pathname} />
+		<link rel="canonical" href={"https://quickbmicalculator.com" + (Astro.url.pathname.endsWith('/') && Astro.url.pathname !== '/' ? Astro.url.pathname.slice(0, -1) : Astro.url.pathname)} />
 		<meta name="robots" content={robots} />
 		<meta name="color-scheme" content="light dark" />
 		
@@ -71,18 +75,18 @@ const {
 		<meta name="keywords" content="BMI Calculator, online bmi calculator, bmi calculator for men, bmi calculator for women, bmi calculator kg" />
 
 		<!-- Open Graph / Facebook -->
-		<meta property="og:type" content="website" />
+		<meta property="og:type" content={ogType} />
 		<meta property="og:url" content={Astro.url.href} />
 		<meta property="og:title" content={title} />
 		<meta property="og:description" content={description} />
-		<meta property="og:image" content={new URL('/og-image.png', Astro.url)} />
+		<meta property="og:image" content={new URL(image, Astro.site)} />
 
 		<!-- Twitter -->
 		<meta property="twitter:card" content="summary_large_image" />
 		<meta property="twitter:url" content={Astro.url.href} />
 		<meta property="twitter:title" content={title} />
 		<meta property="twitter:description" content={description} />
-		<meta property="twitter:image" content={new URL('/og-image.png', Astro.url)} />
+		<meta name="twitter:image" content={new URL(image, Astro.site)} />
 
 		<!-- Structured Data -->
 		<script type="application/ld+json" set:html={JSON.stringify({
@@ -140,6 +144,22 @@ const {
 
 			gtag('config', 'G-ZTL6D0NEJL');
 		</script>
+
+		<!-- Auth Session Cookie Sync -->
+		<script>
+			import { supabase } from '../lib/supabase';
+
+			supabase.auth.onAuthStateChange((event, session) => {
+				if (session) {
+					document.cookie = `sb-access-token=${session.access_token}; path=/; max-age=${session.expires_in || 3600}; SameSite=Lax; Secure`;
+					document.cookie = `sb-refresh-token=${session.refresh_token}; path=/; max-age=31536000; SameSite=Lax; Secure`;
+				} else {
+					document.cookie = 'sb-access-token=; path=/; max-age=0; SameSite=Lax; Secure';
+					document.cookie = 'sb-refresh-token=; path=/; max-age=0; SameSite=Lax; Secure';
+					document.cookie = 'sb-role=; path=/; max-age=0; SameSite=Lax';
+				}
+			});
+		</script>
 	</head>
 	<body class="grain">
 		<div id="site-wrapper">
@@ -166,6 +186,5 @@ const {
 		min-height: 100vh;
 		min-height: 100dvh;
 		width: 100%;
-		position: relative;
 	}
 </style>

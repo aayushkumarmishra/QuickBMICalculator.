@@ -4,6 +4,9 @@ import { X, Send, ArrowUpRight } from 'lucide-react';
 
 const currentYear = new Date().getFullYear();
 
+const { role } = Astro.locals;
+const isAdmin = role === 'admin';
+
 const socialLinks = [
   { 
     name: 'X (Twitter)', 
@@ -43,6 +46,7 @@ const legalLinks = [
 ];
 ---
 
+{!isAdmin && (
 <footer class="bg-canvas border-t border-hairline pt-12 pb-12 lg:pt-16 lg:pb-16 relative z-10">
   <div class="max-w-7xl mx-auto px-6">
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-x-8 gap-y-12 lg:gap-16 mb-12 lg:mb-16">
@@ -133,3 +137,4 @@ const legalLinks = [
     </div>
   </div>
 </footer>
+)}

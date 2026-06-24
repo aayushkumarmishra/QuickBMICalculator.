@@ -1,6 +1,6 @@
 ---
-title: "What Is a Normal BMI for Men and Women? Gender-Specific Insights"
-description: "Is there a different normal BMI for men and women? Discover how gender, body composition, and age impact your BMI results and what a healthy range looks like for you."
+title: "Normal BMI for Men and Women: A Complete Guide"
+description: "Is there a different normal BMI for men and women? Learn how gender, age, and body composition impact your BMI results and what a healthy range looks like."
 pubDate: 2026-06-11
 heroImage: "/og-image.png"
 excerpt: "Men and women have different body compositions, but does the BMI formula account for this? Let's dive into the nuances of healthy weight ranges."

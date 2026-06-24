@@ -1,6 +1,6 @@
 ---
 title: "Does BMI Matter If You Workout? Muscle vs. Fat Explained"
-description: "Does BMI matter if you have a lot of muscle? Learn why athletes often have 'overweight' BMI readings and what metrics you should track instead."
+description: "Does BMI matter if you have a lot of muscle? Learn why athletes often have 'overweight' BMI readings and which health metrics you should track instead today."
 pubDate: 2026-06-11
 heroImage: "/og-image.png"
 excerpt: "If you lift weights or do intense cardio, your BMI might say you are overweight. But does that number actually matter for your health?"

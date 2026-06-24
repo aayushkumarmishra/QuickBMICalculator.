@@ -1,10 +1,11 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { RotateCcw, Download, Check, Activity, ChevronDown } from 'lucide-react';
+import { RotateCcw, Download, Check, Activity, ChevronDown, Lock, Save } from 'lucide-react';
 import { InputGroup } from './InputGroup';
 import { ResultGauge } from './ResultGauge';
 import { InsightsPanel } from './InsightsPanel';
 import { BrandLogo } from '../BrandLogo';
+import { ReportActions } from './ReportActions';
 
 type UnitSystem = 'metric' | 'us' | 'other';
 type Goal = 'maintenance' | 'loss' | 'gain' | '';
@@ -36,6 +37,33 @@ export const CalculatorCard: React.FC = () => {
   const [isExporting, setIsExporting] = useState(false);
   const [exportError, setExportError] = useState<string>('');
   const [isResetting, setIsResetting] = useState(false);
+
+  // Persistent State Logic
+  useEffect(() => {
+    const saved = sessionStorage.getItem('bmi_calculator_state');
+    if (saved) {
+      try {
+        const state = JSON.parse(saved);
+        if (state.weight !== undefined) setWeight(state.weight);
+        if (state.height !== undefined) setHeight(state.height);
+        if (state.feet !== undefined) setFeet(state.feet);
+        if (state.inches !== undefined) setInches(state.inches);
+        if (state.name !== undefined) setName(state.name);
+        if (state.age !== undefined) setAge(state.age);
+        if (state.gender !== undefined) setGender(state.gender);
+        if (state.system !== undefined) setSystem(state.system);
+        if (state.heightUnitOther !== undefined) setHeightUnitOther(state.heightUnitOther);
+        if (state.weightUnitOther !== undefined) setWeightUnitOther(state.weightUnitOther);
+        if (state.goal !== undefined) setGoal(state.goal);
+        if (state.activity !== undefined) setActivity(state.activity);
+        
+        // Clear state after restoration to prevent stale persistence
+        sessionStorage.removeItem('bmi_calculator_state');
+      } catch (e) {
+        console.error('Failed to restore BMI state:', e);
+      }
+    }
+  }, []);
 
   const handleResetWithAnimation = () => {
     setIsResetting(true);
@@ -199,378 +227,30 @@ export const CalculatorCard: React.FC = () => {
   const handleExport = async () => {
     if (bmi <= 0) return;
     setIsExporting(true);
-    
-    const element = document.getElementById('bmi-gauge-export');
-    if (!element) {
-      setIsExporting(false);
-      return;
-    }
-
     try {
-      // Lazy load jsPDF
-      const { jsPDF } = await import('jspdf');
-
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      const pageWidth = pdf.internal.pageSize.getWidth();
-      const margin = 20;
-      let y = 20;
+      const { generateReportPDF } = await import('../../lib/pdf');
       
-      // Helper: Section Header
-      const drawHeader = (title: string, yPos: number) => {
-        pdf.setFontSize(10);
-        pdf.setFont('helvetica', 'bold');
-        pdf.setTextColor(150, 150, 150);
-        pdf.text(title.toUpperCase(), margin, yPos);
-        return yPos + 6;
+      const inputData = {
+        age, gender, height, weight, feet, inches, activity, goal, system, heightUnitOther, weightUnitOther
       };
 
-      // 1. HEADER & BRANDING
-      pdf.setFillColor(23, 23, 23);
-      pdf.rect(0, 0, pageWidth, 40, 'F');
-      pdf.setTextColor(255, 255, 255);
-      pdf.setFontSize(22);
-      pdf.setFont('helvetica', 'bold');
-      pdf.text('QuickBMI', margin, 22);
-      pdf.setFontSize(10);
-      pdf.setFont('helvetica', 'normal');
-      pdf.text('Professional Biometric Analysis', margin, 28);
-      
-      pdf.setFontSize(10);
-      pdf.setFont('helvetica', 'bold');
-      pdf.setTextColor(255, 255, 255);
-      pdf.text(name.toUpperCase(), margin, 35);
-      
-      pdf.setTextColor(255, 255, 255);
-      pdf.setFontSize(8);
-      pdf.text(`REPORT ID: ${Math.random().toString(36).substr(2, 9).toUpperCase()}`, pageWidth - margin - 40, 22);
-      pdf.text(`DATE: ${new Date().toLocaleDateString()}`, pageWidth - margin - 40, 26);
-      
-      y = 50;
-
-      // 2. PATIENT METRICS SUMMARY
-      y = drawHeader('Your Profile', y);
-      pdf.setDrawColor(240, 240, 240);
-      pdf.setFillColor(252, 252, 252);
-      pdf.roundedRect(margin, y, pageWidth - (margin * 2), 30, 2, 2, 'FD');
-      
-      pdf.setFontSize(9);
-      pdf.setTextColor(100, 100, 100);
-      const metricsY = y + 7;
-      const colWidth = (pageWidth - (margin * 2)) / 3;
-      
-      // Row 1
-      pdf.text('AGE', margin + 10, metricsY);
-      pdf.text('GENDER', margin + 10 + colWidth, metricsY);
-      pdf.text('ACTIVITY', margin + 10 + (colWidth * 2), metricsY);
-      
-      pdf.setTextColor(23, 23, 23);
-      pdf.setFont('helvetica', 'bold');
-      pdf.text(age || '--', margin + 10, metricsY + 5);
-      pdf.text(gender?.toUpperCase() || '--', margin + 10 + colWidth, metricsY + 5);
-      const actLabel = ACTIVITY_LEVELS.find(a => a.value === activity)?.label || 'Moderate';
-      pdf.text(actLabel, margin + 10 + (colWidth * 2), metricsY + 5);
-      
-      // Row 2
-      pdf.setTextColor(100, 100, 100);
-      pdf.setFont('helvetica', 'normal');
-      pdf.text('HEIGHT', margin + 10, metricsY + 13);
-      pdf.text('WEIGHT', margin + 10 + colWidth, metricsY + 13);
-      pdf.text('GOAL', margin + 10 + (colWidth * 2), metricsY + 13);
-      
-      pdf.setTextColor(23, 23, 23);
-      pdf.setFont('helvetica', 'bold');
-      let hStr = '';
-      let wStr = '';
-      if (system === 'us') {
-        hStr = `${feet}ft ${inches}in`;
-        wStr = `${weight} lb`;
-      } else if (system === 'metric') {
-        hStr = `${height}cm`;
-        wStr = `${weight} kg`;
-      } else {
-        if (heightUnitOther === 'ft+in') {
-          hStr = `${feet}ft ${inches}in`;
-        } else {
-          hStr = `${height} ${heightUnitOther}`;
-        }
-        wStr = `${weight} ${weightUnitOther}`;
-      }
-      pdf.text(hStr, margin + 10, metricsY + 18);
-      pdf.text(wStr, margin + 10 + colWidth, metricsY + 18);
-      pdf.text(goal.toUpperCase(), margin + 10 + (colWidth * 2), metricsY + 18);
-      
-      y += 34; // Card height + gap
-
-      // 3. BMI RESULT & PROGRAMMATIC BAR
-      y = drawHeader('Biometric Analysis', y);
-      
-      // Result Card
-      pdf.setDrawColor(235, 235, 235);
-      pdf.setFillColor(255, 255, 255);
-      pdf.roundedRect(margin, y, pageWidth - (margin * 2), 22, 2, 2, 'D');
-      
-      pdf.setTextColor(100, 100, 100);
-      pdf.setFontSize(9);
-      pdf.setFont('helvetica', 'normal');
-      pdf.text('CURRENT BMI', margin + 10, y + 8);
-      pdf.text('CLASSIFICATION', margin + 70, y + 8);
-      
-      pdf.setTextColor(23, 23, 23);
-      pdf.setFontSize(16);
-      pdf.setFont('helvetica', 'bold');
-      pdf.text(bmi.toFixed(1), margin + 10, y + 16);
-      pdf.setFontSize(13);
-      pdf.text(category, margin + 70, y + 16);
-      
-      y += 28;
-
-      // NEW: BMI Visual Bar (Programmatic replacement for gauge snapshot)
-      const barHeight = 8;
-      const barWidth = pageWidth - (margin * 2);
-
-      // Draw Colored Segments (Matching UI zones)
-      // Underweight (14%) - #0070f3
-      pdf.setFillColor(0, 112, 243);
-      pdf.rect(margin, y, barWidth * 0.14, barHeight, 'F');
-
-      // Normal (26%) - #00dfd8
-      pdf.setFillColor(0, 223, 216);
-      pdf.rect(margin + (barWidth * 0.14), y, barWidth * 0.26, barHeight, 'F');
-
-      // Overweight (20%) - #f5a623
-      pdf.setFillColor(245, 166, 35);
-      pdf.rect(margin + (barWidth * 0.40), y, barWidth * 0.20, barHeight, 'F');
-
-      // Obese (40%) - #ff0000
-      pdf.setFillColor(255, 0, 0);
-      pdf.rect(margin + (barWidth * 0.60), y, barWidth * 0.40, barHeight, 'F');
-
-      // Calculate Marker Position (Scale: 15 to 40)
-      const minBMI = 15;
-      const maxBMI = 40;
-      const percentage = Math.min(Math.max(((bmi - minBMI) / (maxBMI - minBMI)) * 100, 0), 100);
-      const markerX = margin + (barWidth * (percentage / 100));
-
-      // Draw Marker Line & Pin
-      pdf.setDrawColor(23, 23, 23);
-      pdf.setLineWidth(0.6);
-      pdf.line(markerX, y - 2, markerX, y + barHeight + 2);
-      pdf.setFillColor(23, 23, 23);
-      pdf.circle(markerX, y - 3, 1.2, 'FD');
-
-      // Scale Labels
-      pdf.setFontSize(7);
-      pdf.setTextColor(150, 150, 150);
-      pdf.text('15', margin, y + barHeight + 5);
-      pdf.text('18.5', margin + (barWidth * 0.14), y + barHeight + 5, { align: 'center' });
-      pdf.text('25', margin + (barWidth * 0.40), y + barHeight + 5, { align: 'center' });
-      pdf.text('30', margin + (barWidth * 0.60), y + barHeight + 5, { align: 'center' });
-      pdf.text('40+', margin + barWidth, y + barHeight + 5, { align: 'right' });
-
-      y += barHeight + 15; // Gap after bar
-
-      // 4. HEALTHY WEIGHT & INSIGHTS
-      const leftColWidth = (pageWidth - (margin * 2) - 10) * 0.55;
-      const rightColWidth = (pageWidth - (margin * 2) - 10) * 0.45;
-
-      // Healthy Weight Range & Advanced Metrics side-by-side
-      pdf.setFontSize(10);
-      pdf.setFont('helvetica', 'bold');
-      pdf.setTextColor(150, 150, 150);
-      pdf.text('HEALTHY WEIGHT RANGE', margin, y);
-      pdf.text('ADVANCED ANALYTICS', margin + leftColWidth + 10, y);
-      
-      y += 6;
-      pdf.setDrawColor(240, 240, 240);
-      pdf.roundedRect(margin, y, leftColWidth, 22, 2, 2, 'D');
-      pdf.setFontSize(13);
-      pdf.setFont('helvetica', 'bold');
-      pdf.setTextColor(0, 112, 243);
-      const unit = (system === 'us' || (system === 'other' && weightUnitOther === 'lb')) ? 'lb' : 'kg';
-      pdf.text(`${idealWeightRange.min.toFixed(1)} - ${idealWeightRange.max.toFixed(1)} ${unit}`, margin + 8, y + 10);
-      pdf.setFontSize(8);
-      pdf.setTextColor(100, 100, 100);
-      const insightBase = category === 'Normal Weight' ? 'You are currently within the healthy range.' : `Target healthy range for your height.`;
-      pdf.text(insightBase, margin + 8, y + 16);
-
-      pdf.roundedRect(margin + leftColWidth + 10, y, rightColWidth, 22, 2, 2, 'D');
-      pdf.setFontSize(8);
-      pdf.setTextColor(100, 100, 100);
-      pdf.text('BMI PRIME', margin + leftColWidth + 18, y + 8);
-      pdf.text('PONDERAL INDEX', margin + leftColWidth + 18, y + 16);
-      pdf.setTextColor(23, 23, 23);
-      pdf.setFont('helvetica', 'bold');
-      pdf.text((bmi / 25).toFixed(2), margin + leftColWidth + 55, y + 8);
-      pdf.text(ponderalIndex?.toFixed(1) || '--', margin + leftColWidth + 55, y + 16);
-
-      y += 28; // Card height + gap
-
-      // 5. DAILY CALORIE ESTIMATE
-      y = drawHeader('Energy Expenditure Plan', y);
-      pdf.setFillColor(248, 250, 252);
-      pdf.roundedRect(margin, y, pageWidth - (margin * 2), 20, 2, 2, 'F');
-      
-      const calCol = (pageWidth - (margin * 2)) / 4;
-      pdf.setFontSize(7);
-      pdf.setTextColor(100, 100, 100);
-      pdf.text('BMR BASE', margin + 5, y + 6);
-      pdf.text('MAINTENANCE', margin + 5 + calCol, y + 6);
-      pdf.text('WEIGHT LOSS', margin + 5 + (calCol * 2), y + 6);
-      pdf.text('WEIGHT GAIN', margin + 5 + (calCol * 3), y + 6);
-      
-      pdf.setFontSize(9);
-      pdf.setTextColor(23, 23, 23);
-      pdf.setFont('helvetica', 'bold');
-      pdf.text(bmr ? `${Math.round(bmr).toLocaleString()} kcal` : '--', margin + 5, y + 14);
-      pdf.text(tdee ? `${Math.round(tdee).toLocaleString()} kcal` : '--', margin + 5 + calCol, y + 14);
-      pdf.setTextColor(235, 100, 100);
-      pdf.text(tdee ? `${Math.round(tdee - 500).toLocaleString()} kcal` : '--', margin + 5 + (calCol * 2), y + 14);
-      pdf.setTextColor(34, 197, 94);
-      pdf.text(tdee ? `${Math.round(tdee + 500).toLocaleString()} kcal` : '--', margin + 5 + (calCol * 3), y + 14);
-      
-      y += 26; // Gap after calorie plan
-
-      // 6. ACTIVITY & HYDRATION GUIDE
-      y = drawHeader('Activity & Hydration Guide', y);
-      pdf.setDrawColor(240, 240, 240);
-      pdf.setFillColor(252, 252, 252);
-      pdf.roundedRect(margin, y, pageWidth - (margin * 2), 20, 2, 2, 'FD');
-
-      const activityMap: Record<string, { walking: string; steps: string }> = {
-        'Underweight':     { walking: '20-30 min/day', steps: '5,000-7,000 steps/day' },
-        'Normal Weight':   { walking: '30 min/day',    steps: '7,000-8,000 steps/day' },
-        'Overweight':      { walking: '30-45 min/day', steps: '7,000-9,000 steps/day' },
-        'Obesity Class I': { walking: '30-45 min/day', steps: '9,000+ steps/day' },
-        'Obesity Class II':  { walking: '30-45 min/day', steps: '9,000+ steps/day' },
-        'Obesity Class III': { walking: '30-45 min/day', steps: '9,000+ steps/day' },
+      const resultData = {
+        bmi, category, idealWeightRange, ponderalIndex, bmr, tdee
       };
-      const actData = activityMap[category] || activityMap['Normal Weight'];
-      const wNum = parseFloat(weight) || 0;
-      const wKg = (system === 'us' || (system === 'other' && weightUnitOther === 'lb')) ? wNum * 0.453592 : wNum;
-      const waterL = wKg > 0 ? (wKg * 35 / 1000).toFixed(1) : '--';
 
-      const ahCol = (pageWidth - (margin * 2)) / 3;
-      pdf.setFontSize(7);
-      pdf.setTextColor(100, 100, 100);
-      pdf.setFont('helvetica', 'normal');
-      pdf.text('WALKING', margin + 5, y + 6);
-      pdf.text('STEPS / DAY', margin + 5 + ahCol, y + 6);
-      pdf.text('WATER INTAKE', margin + 5 + (ahCol * 2), y + 6);
-      pdf.setFontSize(9);
-      pdf.setTextColor(23, 23, 23);
-      pdf.setFont('helvetica', 'bold');
-      pdf.text(actData.walking, margin + 5, y + 14);
-      pdf.text(actData.steps, margin + 5 + ahCol, y + 14);
-      pdf.text(`${waterL} L / day`, margin + 5 + (ahCol * 2), y + 14);
-
-      y += 26; // Gap after activity guide
-
-      // 6. HEALTH INSIGHT & RECOMMENDATIONS
-      const insights = {
-        'Underweight': "Your BMI indicates lower body mass. Nutritional optimization may help support metabolic health.",
-        'Normal Weight': "Your BMI is in the healthy range. Maintaining balanced nutrition and activity supports longevity.",
-        'Overweight': "Your BMI suggests elevated mass. Regular activity and nutrition may help improve outcomes.",
-        'Obesity Class I': "Your BMI indicates class I obesity. Consult a specialist for a tailored wellness plan.",
-        'Obesity Class II': "Your BMI indicates class II obesity. Professional guidance is recommended for health management.",
-        'Obesity Class III': "Your BMI indicates class III obesity. Immediate professional consultation is highly advised."
-      };
-      
-      y = drawHeader('Personalized Insights', y);
-      pdf.setFontSize(8);
-      pdf.setFont('helvetica', 'normal');
-      pdf.setTextColor(50, 50, 50);
-      const splitInsight = pdf.splitTextToSize(insights[category as keyof typeof insights] || insights['Normal Weight'], pageWidth - (margin * 2));
-      pdf.text(splitInsight, margin, y + 2);
-      
-      y += 10; // Move to table area
-
-      // WHO Table & Recommendations
-      const tableWidth = (pageWidth - (margin * 2)) * 0.45;
-      const recX = margin + tableWidth + 15;
-      pdf.setFontSize(8);
-      pdf.setFont('helvetica', 'bold');
-      pdf.setTextColor(150, 150, 150);
-      pdf.text('WHO CATEGORY REFERENCE', margin, y);
-      pdf.text('RECOMMENDATIONS', recX, y);
-      
-      y += 4;
-      const tableRows = [
-        ['Underweight', '< 18.5'],
-        ['Normal Weight', '18.5 - 24.9'],
-        ['Overweight', '25.0 - 29.9'],
-        ['Obesity', '30.0+']
-      ];
-      
-      tableRows.forEach((row, i) => {
-        const rowY = y + (i * 4.5);
-        pdf.setFillColor(i % 2 === 0 ? 255 : 250, i % 2 === 0 ? 255 : 250, i % 2 === 0 ? 255 : 250);
-        pdf.rect(margin, rowY, tableWidth, 4.5, 'F');
-        pdf.setFont('helvetica', 'normal');
-        pdf.setTextColor(80, 80, 80);
-        pdf.text(row[0], margin + 3, rowY + 3);
-        pdf.text(row[1], margin + tableWidth - 15, rowY + 3);
+      await generateReportPDF({
+        profileName: name || 'Valued User',
+        calculatorType: 'bmi',
+        inputData,
+        resultData,
+        date: new Date().toLocaleDateString()
       });
-
-      pdf.setFont('helvetica', 'normal');
-      pdf.setTextColor(80, 80, 80);
-      const recsMap: Record<string, string[]> = {
-        'Underweight':     ['Focus on protein-rich foods', 'Add strength training 3x/week', 'Increase daily calorie intake', 'Eat 5-6 smaller meals/day', 'Track weight weekly'],
-        'Normal Weight':   ['Maintain balanced nutrition', 'Stay active 30 min/day', 'Keep consistent sleep schedule', 'Track progress monthly', 'Stay hydrated daily'],
-        'Overweight':      ['Walk 30-45 min daily', 'Target 7,000-9,000 steps/day', 'Aim for calorie deficit', 'Reduce processed foods', 'Track calories daily'],
-        'Obesity Class I': ['Walk 30-45 min daily', 'Target 9,000+ steps/day', 'Consult a nutritionist', 'Track calories daily', 'Monitor progress weekly'],
-        'Obesity Class II':  ['Start with light walking', 'Consult a healthcare professional', 'Focus on dietary changes', 'Monitor progress weekly', 'Reduce sugar intake'],
-        'Obesity Class III': ['Seek medical guidance immediately', 'Work with a specialist', 'Gradual lifestyle changes', 'Monitor health markers regularly', 'Professional diet plan'],
-      };
-      const recs = recsMap[category] || recsMap['Normal Weight'];
-      recs.forEach((rec, i) => {
-        const recY = y + (i * 4.5);
-        // Draw custom checkmark
-        pdf.setDrawColor(34, 197, 94);
-        pdf.setLineWidth(0.3);
-        pdf.line(recX, recY + 3, recX + 1, recY + 4);
-        pdf.line(recX + 1, recY + 4, recX + 3, recY + 1.5);
-        pdf.text(rec, recX + 5, recY + 3.5);
-      });
-
-      y += (tableRows.length * 4.5) + 8; // End of table + gap
-
-      // 7. FOOTER & DISCLAIMER (Surgical Overlap Fix)
-      const pageHeight = pdf.internal.pageSize.getHeight();
-      pdf.setFontSize(7);
-      pdf.setTextColor(100, 100, 100);
-      const disclaimer = "DISCLAIMER: This report is for informational purposes only and does not constitute medical advice. BMI has limitations and does not account for muscle mass, bone density, or fat distribution. Always consult with a qualified healthcare professional before making health or diet changes.";
-      const splitDisclaimer = pdf.splitTextToSize(disclaimer, pageWidth - (margin * 2));
-      const disclaimerHeight = (splitDisclaimer.length * 3.5);
-      const footerHeight = 10;
-      const totalNeeded = disclaimerHeight + footerHeight;
-
-      if (y + totalNeeded > pageHeight - 15) {
-        pdf.addPage();
-        y = 20;
-      } else {
-        y = Math.max(y + 10, pageHeight - totalNeeded - 15);
-      }
-
-      pdf.text(splitDisclaimer, margin, y);
-      const footerY = y + disclaimerHeight + 2;
-      pdf.setFont('helvetica', 'bold');
-      pdf.text('quickbmicalculator.com', margin, footerY);
-
-      const dateStr = new Date().toLocaleDateString('en-GB').split('/').join('-');
-      const safeName = name.trim().replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-]/g, '');
-      pdf.save(`BMI-Report-${safeName}-${dateStr}.pdf`);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
     } catch (error) {
-      console.error('Export failed:', error);
-      setExportError('Export failed. Please try again.');
-      setTimeout(() => setExportError(''), 3000);
+      console.error('PDF generation failed:', error);
     } finally {
       setIsExporting(false);
     }
   };
-
-
 
   return (
     <motion.div 
@@ -768,27 +448,36 @@ export const CalculatorCard: React.FC = () => {
         {/* RIGHT: Intelligence Panel (Results) */}
         <div className="lg:col-span-7 bg-canvas-soft/40 p-6 sm:p-10 lg:p-12 relative border-t lg:border-t-0 border-hairline h-full overflow-y-auto">
           <div className="flex flex-col gap-6 lg:gap-8">
-            <div className="flex items-center justify-between border-b border-hairline/50 pb-8">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-xl bg-primary/5 text-primary flex items-center justify-center border border-primary/10 shadow-premium-sm">
-                  <Activity className="w-6 h-6" />
-                </div>
-                <div>
-                  <h2 className="text-2xl font-black tracking-tighter text-ink leading-none mb-2">Your Results</h2>
-                  <p className="text-[10px] font-mono font-bold text-mute uppercase tracking-widest">Real-time Feedback</p>
+            <div className="flex flex-col border-b border-hairline/50 pb-8">
+              <div className="flex items-center justify-between mb-8">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-primary/5 text-primary flex items-center justify-center border border-primary/10 shadow-premium-sm">
+                    <Activity className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-black tracking-tighter text-ink leading-none mb-2">Your Results</h2>
+                    <p className="text-[10px] font-mono font-bold text-mute uppercase tracking-widest">Real-time Feedback</p>
+                  </div>
                 </div>
               </div>
-              <button
-                onClick={handleExport}
-                disabled={isExporting || bmi <= 0 || name.trim().length < 2}
-                className="px-5 py-3 bg-canvas border border-hairline hover:bg-canvas-soft rounded-xl transition-all text-ink font-bold text-xs uppercase tracking-widest shadow-premium-md flex items-center gap-2 group active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-                title="Export Results to PDF"
-              >
-                {copied ? <Check className="w-4 h-4 text-status-healthy" /> : (isExporting ? <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1 }}><RotateCcw className="w-4 h-4 text-mute" /></motion.div> : <Download className="w-4 h-4 text-mute group-hover:text-ink transition-colors" />)}
-                <span>{copied ? 'Success' : (isExporting ? 'Downloading...' : 'Download')}</span>
-              </button>
+              
+              <ReportActions 
+                onDownload={handleExport}
+                isExporting={isExporting}
+                hasResult={bmi > 0 && bmi >= 5 && bmi <= 120}
+                isValidName={name.trim().length >= 2}
+                calculatorType="bmi"
+                inputData={{
+                  name, age, gender, weight, height, feet, inches,
+                  system, heightUnitOther, weightUnitOther, goal, activity
+                }}
+                resultData={{
+                  bmi, category, idealWeightRange, ponderalIndex, bmr, tdee
+                }}
+              />
+              
               {exportError && (
-                <p className="text-red-500 font-mono font-bold text-xs mt-2 text-right">
+                <p className="text-red-500 font-mono font-bold text-xs mt-3">
                   {exportError}
                 </p>
               )}
