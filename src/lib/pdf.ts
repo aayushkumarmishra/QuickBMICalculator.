@@ -4,7 +4,7 @@ export interface PDFData {
   profileName: string;
   nickname?: string;
   relation?: string;
-  calculatorType: 'bmi' | 'bmr' | 'calorie' | 'ideal_weight' | 'water_intake';
+  calculatorType: 'bmi' | 'bmr' | 'calorie' | 'ideal_weight' | 'water_intake' | 'body_fat' | 'lean_body_mass' | 'protein_intake' | 'macro' | 'daily_nutrition';
   inputData: any;
   resultData: any;
   date: string;
@@ -103,7 +103,12 @@ export const generateReportPDF = async (data: PDFData) => {
     bmr: 'Basal Metabolic Rate Analysis',
     calorie: 'Daily Calorie Requirements',
     ideal_weight: 'Ideal Weight Analysis',
-    water_intake: 'Hydration Requirements'
+    water_intake: 'Hydration Requirements',
+    body_fat: 'Body Fat Composition Analysis',
+    lean_body_mass: 'Lean Body Mass Analysis',
+    protein_intake: 'Daily Protein Requirements',
+    macro: 'Macronutrient Balancer Split',
+    daily_nutrition: 'Daily Nutrition Plan Analysis'
   };
   pdf.text(typeLabels[data.calculatorType] || 'Health Report', margin, 26);
   
@@ -200,6 +205,42 @@ export const generateReportPDF = async (data: PDFData) => {
     pdf.setTextColor(23, 23, 23); pdf.setFontSize(16); pdf.setFont('helvetica', 'bold');
     const water = rData.waterIntake || rData.waterGoal || 0;
     pdf.text(`${Number(water).toFixed(1)} Liters`, margin + 10, y + 16);
+  } else if (data.calculatorType === 'body_fat') {
+    pdf.text('BODY FAT PERCENTAGE', margin + 10, y + 8);
+    pdf.text('CLASSIFICATION', margin + 90, y + 8);
+    pdf.setTextColor(23, 23, 23); pdf.setFontSize(16); pdf.setFont('helvetica', 'bold');
+    pdf.text(`${Number(rData.bodyFat || 0).toFixed(1)}%`, margin + 10, y + 16);
+    pdf.setFontSize(13);
+    pdf.text(String(rData.category || '--'), margin + 90, y + 16);
+  } else if (data.calculatorType === 'lean_body_mass') {
+    pdf.text('LEAN BODY MASS', margin + 10, y + 8);
+    pdf.text('METHODOLOGY', margin + 90, y + 8);
+    pdf.setTextColor(23, 23, 23); pdf.setFontSize(16); pdf.setFont('helvetica', 'bold');
+    const unit = system === 'us' ? 'lb' : 'kg';
+    pdf.text(`${Number(rData.leanMass || 0).toFixed(1)} ${unit}`, margin + 10, y + 16);
+    pdf.setFontSize(13);
+    pdf.text(String(rData.method || '--'), margin + 90, y + 16);
+  } else if (data.calculatorType === 'protein_intake') {
+    pdf.text('PROTEIN REQUIREMENT', margin + 10, y + 8);
+    pdf.text('CALORIE SHARE', margin + 90, y + 8);
+    pdf.setTextColor(23, 23, 23); pdf.setFontSize(16); pdf.setFont('helvetica', 'bold');
+    pdf.text(`${Math.round(rData.proteinGoal || 0)} g/day`, margin + 10, y + 16);
+    pdf.setFontSize(13);
+    pdf.text(`${Math.round(rData.proteinCalories || 0)} kcal`, margin + 90, y + 16);
+  } else if (data.calculatorType === 'macro') {
+    pdf.text('MACRONUTRIENTS (C/P/F)', margin + 10, y + 8);
+    pdf.text('DIET PROFILE', margin + 90, y + 8);
+    pdf.setTextColor(23, 23, 23); pdf.setFontSize(14); pdf.setFont('helvetica', 'bold');
+    pdf.text(`${Math.round(rData.carbsGrams || 0)}g / ${Math.round(rData.proteinGrams || 0)}g / ${Math.round(rData.fatGrams || 0)}g`, margin + 10, y + 16);
+    pdf.setFontSize(13);
+    pdf.text(String(iData.preset || 'custom').toUpperCase(), margin + 90, y + 16);
+  } else if (data.calculatorType === 'daily_nutrition') {
+    pdf.text('DAILY CALORIE BUDGET', margin + 10, y + 8);
+    pdf.text('TDEE (MAINTENANCE)', margin + 90, y + 8);
+    pdf.setTextColor(23, 23, 23); pdf.setFontSize(16); pdf.setFont('helvetica', 'bold');
+    pdf.text(`${Math.round(rData.targetCalories || 0)} kcal`, margin + 10, y + 16);
+    pdf.setFontSize(13);
+    pdf.text(`${Math.round(rData.tdee || 0)} kcal`, margin + 90, y + 16);
   }
 
   y += 30;
@@ -208,15 +249,17 @@ export const generateReportPDF = async (data: PDFData) => {
   const barHeight = 8;
   const barWidth = pageWidth - (margin * 2);
 
-  if (data.calculatorType === 'bmi' || data.calculatorType === 'ideal_weight') {
-    // BMI/Weight Zones
+  if (data.calculatorType === 'bmi' || data.calculatorType === 'ideal_weight' || data.calculatorType === 'body_fat') {
+    const isBodyFat = data.calculatorType === 'body_fat';
     pdf.setFillColor(0, 112, 243); pdf.rect(margin, y, barWidth * 0.14, barHeight, 'F');
     pdf.setFillColor(0, 223, 216); pdf.rect(margin + (barWidth * 0.14), y, barWidth * 0.26, barHeight, 'F');
     pdf.setFillColor(245, 166, 35); pdf.rect(margin + (barWidth * 0.40), y, barWidth * 0.20, barHeight, 'F');
     pdf.setFillColor(255, 0, 0); pdf.rect(margin + (barWidth * 0.60), y, barWidth * 0.40, barHeight, 'F');
 
-    const bmi = Number(rData.bmi || (rData.idealWeight ? 22 : 0));
-    const pct = Math.min(Math.max(((bmi - 15) / (40 - 15)) * 100, 0), 100);
+    const score = isBodyFat ? Number(rData.bodyFat || 22) : Number(rData.bmi || (rData.idealWeight ? 22 : 0));
+    const minVal = isBodyFat ? 5 : 15;
+    const maxVal = isBodyFat ? 40 : 40;
+    const pct = Math.min(Math.max(((score - minVal) / (maxVal - minVal)) * 100, 0), 100);
     const markerX = margin + (barWidth * (pct / 100));
 
     pdf.setDrawColor(23, 23, 23); pdf.setLineWidth(0.6);
@@ -224,11 +267,11 @@ export const generateReportPDF = async (data: PDFData) => {
     pdf.setFillColor(23, 23, 23); pdf.circle(markerX, y - 3, 1.2, 'FD');
 
     pdf.setFontSize(7); pdf.setTextColor(150, 150, 150);
-    pdf.text('15', margin, y + barHeight + 5);
-    pdf.text('18.5', margin + (barWidth * 0.14), y + barHeight + 5, { align: 'center' });
-    pdf.text('25', margin + (barWidth * 0.40), y + barHeight + 5, { align: 'center' });
-    pdf.text('30', margin + (barWidth * 0.60), y + barHeight + 5, { align: 'center' });
-    pdf.text('40+', margin + barWidth, y + barHeight + 5, { align: 'right' });
+    pdf.text(String(minVal), margin, y + barHeight + 5);
+    pdf.text(isBodyFat ? '14' : '18.5', margin + (barWidth * 0.14), y + barHeight + 5, { align: 'center' });
+    pdf.text(isBodyFat ? '21' : '25', margin + (barWidth * 0.40), y + barHeight + 5, { align: 'center' });
+    pdf.text(isBodyFat ? '25' : '30', margin + (barWidth * 0.60), y + barHeight + 5, { align: 'center' });
+    pdf.text(isBodyFat ? '32+' : '40+', margin + barWidth, y + barHeight + 5, { align: 'right' });
     y += barHeight + 15;
   } else if (data.calculatorType === 'bmr' || data.calculatorType === 'calorie') {
     // Calorie Zones

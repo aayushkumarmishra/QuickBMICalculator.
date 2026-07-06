@@ -295,6 +295,11 @@ export const AnalyticsDashboard: React.FC = () => {
         { type: 'calorie', count: dashboardStats.reports_calorie || 0, name: 'Calorie Calculator' },
         { type: 'water_intake', count: dashboardStats.reports_water || 0, name: 'Water Intake' },
         { type: 'ideal_weight', count: dashboardStats.reports_ideal || 0, name: 'Ideal Weight' },
+        { type: 'body_fat', count: dashboardStats.reports_body_fat || 0, name: 'Body Fat' },
+        { type: 'lean_body_mass', count: dashboardStats.reports_lean_body_mass || 0, name: 'Lean Body Mass' },
+        { type: 'protein_intake', count: dashboardStats.reports_protein_intake || 0, name: 'Protein Intake' },
+        { type: 'macro', count: dashboardStats.reports_macro || 0, name: 'Macro Split' },
+        { type: 'daily_nutrition', count: dashboardStats.reports_daily_nutrition || 0, name: 'Daily Nutrition' },
       ];
       const calculatorRankings = calculatorTypes
         .map(c => ({
@@ -530,7 +535,12 @@ export const AnalyticsDashboard: React.FC = () => {
     { name: 'BMR Calculator', type: 'bmr', value: calculators.find(c => c.type === 'bmr')?.count || 0, percent: calculators.find(c => c.type === 'bmr')?.percent || 0, color: '#3b82f6' },
     { name: 'Calorie Calculator', type: 'calorie', value: calculators.find(c => c.type === 'calorie')?.count || 0, percent: calculators.find(c => c.type === 'calorie')?.percent || 0, color: '#f97316' },
     { name: 'Water Intake', type: 'water_intake', value: calculators.find(c => c.type === 'water_intake')?.count || 0, percent: calculators.find(c => c.type === 'water_intake')?.percent || 0, color: '#06b6d4' },
-    { name: 'Ideal Weight', type: 'ideal_weight', value: calculators.find(c => c.type === 'ideal_weight')?.count || 0, percent: calculators.find(c => c.type === 'ideal_weight')?.percent || 0, color: '#a855f7' }
+    { name: 'Ideal Weight', type: 'ideal_weight', value: calculators.find(c => c.type === 'ideal_weight')?.count || 0, percent: calculators.find(c => c.type === 'ideal_weight')?.percent || 0, color: '#a855f7' },
+    { name: 'Body Fat', type: 'body_fat', value: calculators.find(c => c.type === 'body_fat')?.count || 0, percent: calculators.find(c => c.type === 'body_fat')?.percent || 0, color: '#ec4899' },
+    { name: 'Lean Mass', type: 'lean_body_mass', value: calculators.find(c => c.type === 'lean_body_mass')?.count || 0, percent: calculators.find(c => c.type === 'lean_body_mass')?.percent || 0, color: '#14b8a6' },
+    { name: 'Protein', type: 'protein_intake', value: calculators.find(c => c.type === 'protein_intake')?.count || 0, percent: calculators.find(c => c.type === 'protein_intake')?.percent || 0, color: '#6366f1' },
+    { name: 'Macros', type: 'macro', value: calculators.find(c => c.type === 'macro')?.count || 0, percent: calculators.find(c => c.type === 'macro')?.percent || 0, color: '#eab308' },
+    { name: 'Nutrition', type: 'daily_nutrition', value: calculators.find(c => c.type === 'daily_nutrition')?.count || 0, percent: calculators.find(c => c.type === 'daily_nutrition')?.percent || 0, color: '#f43f5e' }
   ];
 
   const calculatorColors: Record<string, string> = {
@@ -538,7 +548,12 @@ export const AnalyticsDashboard: React.FC = () => {
     bmr: '#3b82f6',           // Blue
     calorie: '#f97316',       // Orange
     water_intake: '#06b6d4',  // Cyan
-    ideal_weight: '#a855f7'   // Purple
+    ideal_weight: '#a855f7',  // Purple
+    body_fat: '#ec4899',      // Pink
+    lean_body_mass: '#14b8a6',// Teal
+    protein_intake: '#6366f1',// Indigo
+    macro: '#eab308',         // Yellow
+    daily_nutrition: '#f43f5e'// Rose
   };
 
   const hasCalculatorsData = calculators.some(c => c.count > 0);

@@ -39,7 +39,7 @@ interface Profile {
 
 interface Report {
   id: string;
-  calculator_type: 'bmi' | 'bmr' | 'calorie' | 'ideal_weight' | 'water_intake';
+  calculator_type: 'bmi' | 'bmr' | 'calorie' | 'ideal_weight' | 'water_intake' | 'body_fat' | 'lean_body_mass' | 'protein_intake' | 'macro' | 'daily_nutrition';
   input_data: any;
   result_data: any;
   created_at: string;
@@ -52,6 +52,11 @@ const TABS = [
   { id: 'calorie', label: 'Calories' },
   { id: 'ideal_weight', label: 'Ideal Weight' },
   { id: 'water_intake', label: 'Water' },
+  { id: 'body_fat', label: 'Body Fat' },
+  { id: 'lean_body_mass', label: 'Lean Mass' },
+  { id: 'protein_intake', label: 'Protein' },
+  { id: 'macro', label: 'Macros' },
+  { id: 'daily_nutrition', label: 'Nutrition' },
 ];
 
 export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({ profileId }) => {
@@ -357,6 +362,43 @@ const ReportCard: React.FC<{
             <div className="flex items-center justify-between">
               <span className="text-[10px] font-mono font-bold text-mute uppercase tracking-widest">Daily Intake</span>
               <span className="text-lg font-black text-ink">{formatWater(result_data.waterIntake || 0)}</span>
+            </div>
+          );
+        case 'body_fat': 
+          return (
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-mono font-bold text-mute uppercase tracking-widest">Body Fat</span>
+              <span className="text-lg font-black text-ink">{Number(result_data.bodyFat || 0).toFixed(1)}%</span>
+            </div>
+          );
+        case 'lean_body_mass': 
+          return (
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-mono font-bold text-mute uppercase tracking-widest">Lean Mass</span>
+              <span className="text-lg font-black text-ink">{Number(result_data.leanMass || 0).toFixed(1)} kg</span>
+            </div>
+          );
+        case 'protein_intake': 
+          return (
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-mono font-bold text-mute uppercase tracking-widest">Protein Goal</span>
+              <span className="text-lg font-black text-ink">{Math.round(result_data.proteinGoal || 0)} g</span>
+            </div>
+          );
+        case 'macro': 
+          return (
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-mono font-bold text-mute uppercase tracking-widest">Macros</span>
+              <span className="text-xs font-black text-ink">
+                {Math.round(result_data.carbsGrams || 0)}c/{Math.round(result_data.proteinGrams || 0)}p/{Math.round(result_data.fatGrams || 0)}f
+              </span>
+            </div>
+          );
+        case 'daily_nutrition': 
+          return (
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-mono font-bold text-mute uppercase tracking-widest">Calories</span>
+              <span className="text-lg font-black text-ink">{Math.round(result_data.targetCalories || 0)} kcal</span>
             </div>
           );
         default: 

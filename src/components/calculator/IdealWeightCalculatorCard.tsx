@@ -252,7 +252,7 @@ export const IdealWeightCalculatorCard: React.FC = () => {
 
               <div className="grid grid-cols-2 gap-3 sm:gap-6 lg:gap-8">
                 <div className="flex flex-col gap-1.5 col-span-2">
-                  <label className="text-[10px] font-mono font-bold text-mute uppercase tracking-widest">Name (PDF Export)</label>
+                  <label className="text-[10px] font-mono font-bold text-mute uppercase tracking-widest">Name</label>
                   <div className="relative">
                     <input
                       type="text"

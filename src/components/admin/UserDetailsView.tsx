@@ -42,7 +42,7 @@ interface TrackerProfile {
 
 interface HealthReport {
   id: string;
-  calculator_type: 'bmi' | 'bmr' | 'calorie' | 'ideal_weight' | 'water_intake';
+  calculator_type: 'bmi' | 'bmr' | 'calorie' | 'ideal_weight' | 'water_intake' | 'body_fat' | 'lean_body_mass' | 'protein_intake' | 'macro' | 'daily_nutrition';
   input_data: any;
   result_data: any;
   created_at: string;
@@ -136,6 +136,16 @@ export const UserDetailsView: React.FC<UserDetailsProps> = ({ userId }) => {
           return result_data.range ? formatRange(result_data.range.min, result_data.range.max, 'kg') : 'N/A';
         case 'water_intake': 
           return formatWater(result_data.waterIntake || 0);
+        case 'body_fat': 
+          return `${Number(result_data.bodyFat || 0).toFixed(1)}%`;
+        case 'lean_body_mass': 
+          return `${Number(result_data.leanMass || 0).toFixed(1)} kg`;
+        case 'protein_intake': 
+          return `${Math.round(result_data.proteinGoal || 0)} g/day`;
+        case 'macro': 
+          return `${Math.round(result_data.carbsGrams || 0)}g / ${Math.round(result_data.proteinGrams || 0)}g / ${Math.round(result_data.fatGrams || 0)}g`;
+        case 'daily_nutrition': 
+          return `${Math.round(result_data.targetCalories || 0)} kcal/day`;
         default: 
           return 'N/A';
       }

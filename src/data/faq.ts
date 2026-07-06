@@ -136,3 +136,79 @@ export const faqData = [
     a: "BMI is a mathematical ratio of your total weight relative to your height, used as a general screening tool for health risks. Body Fat Percentage is a more specific measurement that distinguishes between fat mass and lean mass (muscles, bones, and organs). While BMI is easier to calculate, body fat percentage provides a more detailed look at your actual body composition."
   }
 ];
+
+export const bodyFatFaqs = [
+  {
+    q: "What is the Navy Method for body fat calculation?",
+    a: "The US Navy Method is a formula developed by the Naval Health Research Center that estimates body fat percentage using circumference measurements: neck, waist (abdomen), and hips (for women), along with height. It has been validated as a reliable and cost-effective screening tool."
+  },
+  {
+    q: "How accurate is the Navy Method?",
+    a: "For most people, the Navy Method is accurate to within 3% to 4% of clinical methods (like DXA scans or hydrostatic weighing). It is highly consistent and excellent for tracking changes in body composition over time."
+  },
+  {
+    q: "How should I measure my waist and neck?",
+    a: "Measure your neck just below the larynx, keeping the tape flat. Measure your waist at the navel level for men, or at the natural narrowest part for women. Keep the tape snug but do not compress the skin."
+  }
+];
+
+export const leanBodyMassFaqs = [
+  {
+    q: "What is Lean Body Mass?",
+    a: "Lean Body Mass (LBM) is the amount of weight you carry that is not body fat. It includes your muscles, bones, organs, water weight, and connective tissue. It is a critical metric for athletes and weight loss."
+  },
+  {
+    q: "What is the Boer formula for LBM?",
+    a: "The Boer formula is a widely accepted mathematical equation to estimate lean body mass based on height, weight, gender, and age. It is popular in clinical and physical fitness settings for its simplicity and accuracy."
+  },
+  {
+    q: "Why is Lean Body Mass important for weight loss?",
+    a: "When losing weight, the goal is typically to lose body fat while preserving lean body mass (primarily muscle). Higher lean body mass helps maintain a higher metabolic rate, making weight maintenance easier."
+  }
+];
+
+export const proteinFaqs = [
+  {
+    q: "How much protein do I need daily?",
+    a: "The standard Recommended Dietary Allowance (RDA) is 0.8 grams per kilogram of body weight to prevent deficiency. However, active individuals, seniors, and those aiming for muscle gain or weight loss require more—typically between 1.2 to 2.2 grams per kilogram."
+  },
+  {
+    q: "Why does protein intake increase during weight loss?",
+    a: "Eating more protein while in a calorie deficit helps prevent muscle breakdown. It also increases satiety (feeling full) and has a higher thermic effect than carbs or fats, meaning your body burns more energy digesting it."
+  },
+  {
+    q: "Can I consume too much protein?",
+    a: "For healthy adults, higher protein intakes (up to 2.5g/kg or 1.1g/lb) are generally safe. However, individuals with pre-existing kidney disease should consult a doctor, as high protein can increase workload on kidneys."
+  }
+];
+
+export const macroFaqs = [
+  {
+    q: "What are macronutrients?",
+    a: "Macronutrients are the main nutrients your body needs in large quantities to function: carbohydrates (4 kcal/g) for energy, proteins (4 kcal/g) for muscle repair and growth, and fats (9 kcal/g) for hormone production and cell function."
+  },
+  {
+    q: "What is the best macro ratio for fat loss?",
+    a: "There is no single 'best' ratio, but a common starting point for fat loss is a high-protein, moderate-carb setup, such as 30% protein, 40% carbs, and 30% fat. This supports muscle preservation while keeping energy levels stable."
+  },
+  {
+    q: "How do I calculate macros from calories?",
+    a: "To find grams: multiply your total calorie target by the macro's percentage to find calories allocated to it. Then, divide by 4 for protein and carbs, or divide by 9 for fats."
+  }
+];
+
+export const dailyNutritionFaqs = [
+  {
+    q: "What is TDEE?",
+    a: "Total Daily Energy Expenditure (TDEE) is the total number of calories your body burns in a day. It is calculated by taking your Basal Metabolic Rate (BMR) and multiplying it by an activity multiplier based on your lifestyle."
+  },
+  {
+    q: "How do I calculate a safe calorie deficit?",
+    a: "A safe deficit is typically 250 to 500 calories below your TDEE for a steady loss of 0.5 to 1 pound per week. Calorie intake should generally not fall below 1200 calories per day for women or 1500 for men to prevent nutrient deficiencies."
+  },
+  {
+    q: "Why does my TDEE change as I lose weight?",
+    a: "As your body mass decreases, it requires less energy to function and move. To continue losing weight, you may need to adjust your calorie intake or increase physical activity to maintain a calorie deficit."
+  }
+];
+

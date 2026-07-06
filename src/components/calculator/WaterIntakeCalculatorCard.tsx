@@ -5,7 +5,7 @@ import { InputGroup } from './InputGroup';
 import { BrandLogo } from '../BrandLogo';
 import { ReportActions } from './ReportActions';
 
-type UnitSystem = 'metric' | 'us' | 'other';
+
 
 const ACTIVITY_LEVELS = [
   { label: 'Select Activity Level', value: '', desc: 'Required' },
@@ -25,8 +25,7 @@ const CLIMATE_TYPES = [
 const LBS_TO_KG = 0.45359237;
 
 export const WaterIntakeCalculatorCard: React.FC = () => {
-  const [system, setSystem] = useState<UnitSystem>('metric');
-  const [weightUnitOther, setWeightUnitOther] = useState<'kg' | 'lb'>('kg');
+  const [weightUnit, setWeightUnit] = useState<'kg' | 'lb'>('kg');
   const [weight, setWeight] = useState<string>('');
   const [name, setName] = useState<string>('');
   const [age, setAge] = useState<string>('');
@@ -52,8 +51,11 @@ export const WaterIntakeCalculatorCard: React.FC = () => {
         if (state.gender !== undefined) setGender(state.gender);
         if (state.activity !== undefined) setActivity(state.activity);
         if (state.climate !== undefined) setClimate(state.climate);
-        if (state.system !== undefined) setSystem(state.system);
-        if (state.weightUnitOther !== undefined) setWeightUnitOther(state.weightUnitOther);
+        if (state.weightUnit !== undefined) {
+          setWeightUnit(state.weightUnit);
+        } else if (state.system === 'us' || state.weightUnitOther === 'lb') {
+          setWeightUnit('lb');
+        }
 
         // Clear state after restoration to prevent stale persistence
         sessionStorage.removeItem('water_intake_calculator_state');
@@ -95,19 +97,13 @@ export const WaterIntakeCalculatorCard: React.FC = () => {
     }
 
     if (weight.trim() !== '') {
-       let weightKg = parseFloat(weight);
-       if (isNaN(weightKg)) return { ...defaultResult, isInvalidInput: true };
+       let weightVal = parseFloat(weight);
+       if (isNaN(weightVal)) return { ...defaultResult, isInvalidInput: true };
        
-       if (system === 'metric') {
-          if (weightKg < 17 || weightKg > 635) return { ...defaultResult, isInvalidInput: true };
-       } else if (system === 'us') {
-          if (weightKg < 37 || weightKg > 1400) return { ...defaultResult, isInvalidInput: true };
+       if (weightUnit === 'kg') {
+          if (weightVal < 17 || weightVal > 635) return { ...defaultResult, isInvalidInput: true };
        } else {
-          if (weightUnitOther === 'kg') {
-             if (weightKg < 17 || weightKg > 635) return { ...defaultResult, isInvalidInput: true };
-          } else {
-             if (weightKg < 37 || weightKg > 1400) return { ...defaultResult, isInvalidInput: true };
-          }
+          if (weightVal < 37 || weightVal > 1400) return { ...defaultResult, isInvalidInput: true };
        }
     }
 
@@ -117,8 +113,7 @@ export const WaterIntakeCalculatorCard: React.FC = () => {
 
     let weightKg = parseFloat(weight);
 
-    if (system === 'us') weightKg = weightKg * LBS_TO_KG;
-    else if (system === 'other' && weightUnitOther === 'lb') weightKg = weightKg * LBS_TO_KG;
+    if (weightUnit === 'lb') weightKg = weightKg * LBS_TO_KG;
 
     // Daily Water Intake = Weight (kg) × 35 ml
     let goalMl = weightKg * 35;
@@ -156,7 +151,7 @@ export const WaterIntakeCalculatorCard: React.FC = () => {
         'Monitor urine color - it should be pale yellow.'
       ]
     };
-  }, [system, weight, weightUnitOther, activity, climate, age]);
+  }, [weightUnit, weight, activity, climate, age]);
 
   const handleExport = async () => {
     if (waterGoal <= 0) return;
@@ -171,7 +166,13 @@ export const WaterIntakeCalculatorCard: React.FC = () => {
       const { generateReportPDF } = await import('../../lib/pdf');
       
       const inputData = {
-        age, gender, weight, activity, climate, system, weightUnitOther
+        age,
+        gender,
+        weight,
+        activity,
+        climate,
+        system: weightUnit === 'lb' ? 'us' : 'metric',
+        weightUnitOther: weightUnit
       };
 
       const resultData = {
@@ -234,24 +235,9 @@ export const WaterIntakeCalculatorCard: React.FC = () => {
             </div>
 
             <div className="space-y-6 lg:space-y-8">
-              <div className="space-y-4">
-                <span className="text-[10px] font-mono font-bold text-mute uppercase tracking-[0.3em] ml-1">Standard</span>
-                <div className="flex p-1 bg-canvas-soft border border-hairline rounded-ui gap-1">
-                  {['us', 'metric', 'other'].map((s) => (
-                    <button 
-                      key={s} 
-                      onClick={() => { setSystem(s as UnitSystem); setWeight(''); }}
-                      className={`flex-1 py-2.5 text-[10px] font-black uppercase tracking-[0.15em] transition-all duration-300 rounded-[4px] ${system === s ? 'bg-canvas text-ink shadow-premium-sm ring-1 ring-hairline' : 'text-mute hover:text-ink hover:bg-canvas/50'}`}
-                    >
-                      {s === 'us' ? 'US Units' : s.charAt(0).toUpperCase() + s.slice(1)}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
               <div className="grid grid-cols-2 gap-3 sm:gap-6 lg:gap-8">
                 <div className="flex flex-col gap-1.5 col-span-2">
-                  <label className="text-[10px] font-mono font-bold text-mute uppercase tracking-widest">Name (PDF Export)</label>
+                  <label className="text-[10px] font-mono font-bold text-mute uppercase tracking-widest">Name</label>
                   <div className="relative">
                     <input
                       type="text"
@@ -292,25 +278,18 @@ export const WaterIntakeCalculatorCard: React.FC = () => {
               </div>
 
               <div className="space-y-6 lg:space-y-8">
-                {system === 'metric' ? (
-                  <InputGroup key="w-kg" id="weight" label="Weight" value={weight} onChange={setWeight} unit="KG" placeholder="80" min={1} max={635} />
-                ) : system === 'us' ? (
-                  <InputGroup key="w-lb" id="weight-lb" label="Weight" value={weight} onChange={setWeight} unit="LB" placeholder="175" min={1} max={1400} />
-                ) : (
-                  <InputGroup 
-                    key="w-other" 
-                    id="weight-other" 
-                    label="Weight" 
-                    value={weight} 
-                    onChange={setWeight} 
-                    unit={weightUnitOther} 
-                    unitOptions={['kg', 'lb']}
-                    onUnitChange={(val) => { setWeightUnitOther(val as any); setWeight(''); }}
-                    placeholder={weightUnitOther === 'kg' ? "80" : "175"} 
-                    min={1} 
-                    max={weightUnitOther === 'kg' ? 635 : 1400} 
-                  />
-                )}
+                <InputGroup 
+                  id="weight" 
+                  label="Weight" 
+                  value={weight} 
+                  onChange={setWeight} 
+                  unit={weightUnit} 
+                  unitOptions={['kg', 'lb']}
+                  onUnitChange={(val) => { setWeightUnit(val as 'kg' | 'lb'); setWeight(''); }}
+                  placeholder={weightUnit === 'kg' ? "80" : "175"} 
+                  min={1} 
+                  max={weightUnit === 'kg' ? 635 : 1400} 
+                />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 lg:gap-8 pt-6 border-t border-hairline/50">
@@ -377,7 +356,7 @@ export const WaterIntakeCalculatorCard: React.FC = () => {
                 isValidName={name.trim().length >= 2}
                 calculatorType="water_intake"
                 inputData={{
-                  name, age, gender, weight, activity, climate, system, weightUnitOther
+                  name, age, gender, weight, activity, climate, weightUnit
                 }}
                 resultData={{
                   waterGoal, hydrationStatus, timings, recommendations

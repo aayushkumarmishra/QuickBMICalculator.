@@ -128,7 +128,7 @@ export const Navbar: React.FC = () => {
       .from('profiles')
       .select('role')
       .eq('id', userId)
-      .single();
+      .maybeSingle();
     setRole(data?.role || 'user');
   };
 
@@ -174,7 +174,12 @@ export const Navbar: React.FC = () => {
       'bmr_calculator_state',
       'calorie_calculator_state',
       'ideal_weight_calculator_state',
-      'water_intake_calculator_state'
+      'water_intake_calculator_state',
+      'body_fat_calculator_state',
+      'lean_body_mass_calculator_state',
+      'protein_intake_calculator_state',
+      'macro_calculator_state',
+      'daily_nutrition_calculator_state'
     ];
     calculatorKeys.forEach(key => sessionStorage.removeItem(key));
 
@@ -237,6 +242,11 @@ export const Navbar: React.FC = () => {
     { name: 'Calorie Calculator', href: '/calorie-calculator/' },
     { name: 'Water Intake Calculator', href: '/water-intake-calculator/' },
     { name: 'Ideal Weight Calculator', href: '/ideal-weight-calculator/' },
+    { name: 'Body Fat Calculator', href: '/body-fat-calculator/' },
+    { name: 'Lean Body Mass Calculator', href: '/lean-body-mass-calculator/' },
+    { name: 'Protein Intake Calculator', href: '/protein-intake-calculator/' },
+    { name: 'Macro Calculator', href: '/macro-calculator/' },
+    { name: 'Daily Nutrition Calculator', href: '/daily-nutrition-calculator/' },
   ];
 
   useEffect(() => {
@@ -250,7 +260,17 @@ export const Navbar: React.FC = () => {
       '/water-intake-calculator',
       '/water-intake-calculator/',
       '/ideal-weight-calculator',
-      '/ideal-weight-calculator/'
+      '/ideal-weight-calculator/',
+      '/body-fat-calculator',
+      '/body-fat-calculator/',
+      '/lean-body-mass-calculator',
+      '/lean-body-mass-calculator/',
+      '/protein-intake-calculator',
+      '/protein-intake-calculator/',
+      '/macro-calculator',
+      '/macro-calculator/',
+      '/daily-nutrition-calculator',
+      '/daily-nutrition-calculator/'
     ];
     
     const isHomePage = currentPage === '/' || currentPage === '';

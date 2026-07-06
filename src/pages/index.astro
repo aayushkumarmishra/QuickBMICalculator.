@@ -33,12 +33,15 @@ const faqSchema = {
 				<div class="absolute top-[15%] left-1/2 -translate-x-1/2 w-[80%] sm:w-[70%] h-[60%] bg-[radial-gradient(circle,rgba(0,112,243,0.04)_0%,transparent_70%)] blur-[120px] sm:blur-[140px] rounded-full dark:opacity-[0.1]"></div>
 			</div>
 
-			<div class="max-w-4xl mx-auto text-center space-y-6 sm:space-y-8 relative z-10">
-				<p class="text-[10px] sm:text-xs font-mono font-bold uppercase tracking-[0.2em] text-mute animate-fade-in">
-					BMI • BMR • Calories • Water Intake • Ideal Weight
-				</p>
+			<div class="w-full max-w-4xl mx-auto text-center space-y-6 sm:space-y-8 relative z-10">
+				<div class="w-full overflow-hidden whitespace-nowrap relative max-w-4xl mx-auto mask-gradient py-1.5 border-y border-hairline/20 animate-fade-in">
+					<div class="animate-marquee-custom flex gap-16 items-center text-[10px] sm:text-xs font-mono font-bold uppercase tracking-[0.2em] text-mute select-none">
+						<span>BMI • BMR • Calories • Water Intake • Ideal Weight • Body Fat • Lean Body Mass • Protein • Macros • Nutrition</span>
+						<span>BMI • BMR • Calories • Water Intake • Ideal Weight • Body Fat • Lean Body Mass • Protein • Macros • Nutrition</span>
+					</div>
+				</div>
 
-				<h1 class="text-[2.5rem] xs:text-[2.75rem] sm:text-5xl md:text-7xl lg:text-8xl xl:text-[9rem] font-black tracking-[-0.06em] leading-[0.9] sm:leading-[0.85] text-ink animate-fade-in">
+				<h1 class="text-[2.25rem] xs:text-[2.75rem] sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl 2xl:text-[9rem] font-black tracking-[-0.03em] sm:tracking-[-0.06em] leading-[1.15] sm:leading-[0.85] text-ink animate-fade-in">
 					Calculate <span class="tracking-normal bg-linear-to-r from-status-healthy to-status-under bg-clip-text text-transparent dark:bg-none dark:text-ink">BMI</span> <br class="hidden sm:block" />
 					& Track Your <br class="hidden sm:block" />
 					<span class="text-mute/60 italic font-medium">Health</span>
@@ -49,7 +52,7 @@ const faqSchema = {
 				</p>
 
 				{/* TRUST ROW - Premium Balanced Density */}
-				<div class="flex flex-wrap justify-center gap-2 sm:gap-4 lg:gap-5 pt-4 sm:pt-6 max-w-5xl mx-auto">
+				<div class="grid grid-cols-2 sm:flex sm:flex-wrap justify-center gap-2 sm:gap-4 lg:gap-5 pt-4 sm:pt-6 max-w-5xl mx-auto w-full px-4 sm:px-0">
 					{[
 						{ label: 'Real-time Results', icon: '⚡' },
 						{ label: 'WHO Standards', icon: '🏥' },
@@ -57,9 +60,9 @@ const faqSchema = {
 						{ label: 'Mobile Optimized', icon: '📱' },
 						{ label: 'Private & Secure', icon: '🔒' }
 					].map((chip) => (
-						<div class="flex-none inline-flex items-center justify-center gap-2 px-4 py-2 sm:px-6 sm:py-3 lg:px-8 rounded-full bg-canvas border border-hairline shadow-premium-sm hover:border-hairline-strong transition-all cursor-default group hover:shadow-premium-md">
-							<span class="text-sm group-hover:scale-110 transition-transform">{chip.icon}</span>
-							<span class="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-ink whitespace-nowrap">{chip.label}</span>
+						<div class="col-span-1 last:col-span-2 flex items-center justify-center gap-1.5 sm:gap-2 px-3 py-2 sm:px-6 sm:py-3 lg:px-8 rounded-full bg-canvas border border-hairline shadow-premium-sm hover:border-hairline-strong transition-all cursor-default group hover:shadow-premium-md">
+							<span class="text-xs sm:text-sm group-hover:scale-110 transition-transform">{chip.icon}</span>
+							<span class="text-[9px] sm:text-xs font-bold uppercase tracking-widest text-ink whitespace-nowrap">{chip.label}</span>
 						</div>
 					))}
 				</div>
@@ -244,8 +247,23 @@ const faqSchema = {
 	<Footer />
 </Layout>
 
-<style>
+<style is:global>
 	.animate-float {
 		animation: float 6s ease-in-out infinite;
+	}
+	@keyframes marquee {
+		0% { transform: translateX(0%); }
+		100% { transform: translateX(-50%); }
+	}
+	.animate-marquee-custom {
+		display: inline-flex;
+		animation: marquee 25s linear infinite;
+	}
+	.animate-marquee-custom:hover {
+		animation-play-state: paused;
+	}
+	.mask-gradient {
+		mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent);
+		-webkit-mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent);
 	}
 </style>
