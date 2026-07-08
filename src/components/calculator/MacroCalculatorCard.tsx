@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { RotateCcw, Activity } from 'lucide-react';
 import { BrandLogo } from '../BrandLogo';
 import { ReportActions } from './ReportActions';
+import { Select } from './Select';
 
 type PresetType = 'balanced' | 'lowcarb' | 'highprotein' | 'keto' | 'custom';
 
@@ -191,10 +192,10 @@ export const MacroCalculatorCard: React.FC = () => {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
     >
-      <div className="grid grid-cols-1 lg:grid-cols-12 items-start min-h-fit">
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)] items-stretch">
         
-        {/* LEFT: Inputs */}
-        <div className="lg:col-span-5 p-6 sm:p-10 lg:p-12 border-b lg:border-b-0 lg:border-r border-hairline bg-canvas relative z-20 h-full overflow-y-auto">
+        {/* LEFT: Command Panel (Inputs) */}
+        <div className="p-6 sm:p-10 lg:p-12 border-b lg:border-b-0 lg:border-r border-hairline bg-canvas relative z-20 h-full overflow-y-auto">
           <div className="flex flex-col gap-6 lg:gap-8">
             <div className="flex items-center justify-between border-b border-hairline pb-8">
               <div className="flex items-center gap-4">
@@ -207,7 +208,7 @@ export const MacroCalculatorCard: React.FC = () => {
                   </div>
                 </div>
               </div>
-              <button onClick={handleResetWithAnimation} className="p-3 bg-canvas-soft border border-hairline hover:bg-surface rounded-xl transition-all text-mute hover:text-ink shadow-premium-sm active:scale-95">
+              <button onClick={handleResetWithAnimation} className={`p-3 bg-canvas-soft border border-hairline hover:bg-surface rounded-xl transition-all text-mute hover:text-ink shadow-premium-sm active:scale-95 ${isResetting ? 'ring-2 ring-primary/40' : ''}`} title="Reset Data">
                 <RotateCcw className={`w-5 h-5 ${isResetting ? 'animate-spin' : ''}`} />
               </button>
             </div>
@@ -248,16 +249,17 @@ export const MacroCalculatorCard: React.FC = () => {
                   />
                 </div>
 
-                <div className="col-span-2 space-y-4 pt-4 border-t border-hairline">
-                  <span className="text-[10px] font-mono font-bold text-mute uppercase tracking-[0.3em] ml-1">Diet Profile</span>
+                <div className="col-span-2 space-y-3 pt-4 border-t border-hairline">
+                  <span className="text-xs font-mono text-mute uppercase tracking-[0.12em] ml-1">Diet Profile Preset</span>
                   <div className="grid grid-cols-2 gap-2">
                     {(['balanced', 'lowcarb', 'highprotein', 'keto', 'custom'] as const).map((type) => (
                       <button
                         key={type}
+                        type="button"
                         onClick={() => setPreset(type)}
-                        className={`py-3 text-[10px] font-black uppercase tracking-[0.1em] transition-all rounded-ui border ${preset === type ? 'bg-ink text-canvas border-ink shadow-premium-sm' : 'bg-canvas text-mute border-hairline hover:text-ink hover:bg-canvas-soft'}`}
+                        className={`py-3 text-[10px] font-mono font-bold uppercase tracking-[0.08em] transition-all rounded-full border focus-ring ${preset === type ? 'bg-ink text-canvas border-ink dark:bg-canvas dark:text-ink shadow-premium-sm' : 'bg-canvas text-mute border-hairline hover:text-ink hover:bg-canvas-soft'}`}
                       >
-                        {type === 'lowcarb' ? 'Low Carb' : type === 'highprotein' ? 'High Protein' : type}
+                        {type === 'lowcarb' ? 'Low Carb' : type === 'highprotein' ? 'High Protein' : type.toUpperCase()}
                       </button>
                     ))}
                   </div>
@@ -325,8 +327,8 @@ export const MacroCalculatorCard: React.FC = () => {
           </div>
         </div>
 
-        {/* RIGHT: Results */}
-        <div className="lg:col-span-7 bg-canvas-soft/40 p-6 sm:p-10 lg:p-12 relative border-t lg:border-t-0 border-hairline h-full overflow-y-auto">
+        {/* RIGHT: Results Panel */}
+        <div className="bg-canvas-soft/40 p-6 sm:p-10 lg:p-12 relative h-full overflow-y-auto">
           <div className="flex flex-col gap-6 lg:gap-8">
             <div className="flex flex-col border-b border-hairline/50 pb-8">
               <div className="flex items-center justify-between mb-8">
@@ -379,37 +381,89 @@ export const MacroCalculatorCard: React.FC = () => {
                 </div>
               ) : (
                 <div className="space-y-8">
-                  {/* Visual Graph Card */}
-                  <div className="bg-canvas border border-hairline rounded-marketing p-6 space-y-6 shadow-premium-lg">
-                    <span className="text-[9px] font-mono font-bold text-mute uppercase tracking-widest block">Daily Calories: {calories} kcal</span>
-                    
-                    {/* Visual Bar Breakdown */}
-                    <div className="h-6 w-full rounded-full overflow-hidden flex bg-hairline shadow-inset">
-                      <div className="bg-amber-400 h-full transition-all duration-500" style={{ width: `${carbsPct}%` }} title={`Carbs: ${carbsPct}%`} />
-                      <div className="bg-emerald-400 h-full transition-all duration-500" style={{ width: `${proteinPct}%` }} title={`Protein: ${proteinPct}%`} />
-                      <div className="bg-red-400 h-full transition-all duration-500" style={{ width: `${fatPct}%` }} title={`Fat: ${fatPct}%`} />
+                  {/* Gauge */}
+                  <div id="macro-gauge-export" className="flex flex-col gap-8 py-8 px-6 sm:py-10 sm:px-8 bg-ink dark:bg-canvas border border-hairline/10 dark:border-hairline rounded-marketing shadow-premium-lg text-canvas dark:text-ink relative overflow-hidden">
+                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 w-full relative z-10">
+                      <div className="flex flex-col items-start min-w-0">
+                        <span className="text-[10px] font-mono font-bold text-canvas-soft/60 dark:text-mute uppercase tracking-[0.35em] mb-2">Daily Calorie Target</span>
+                        <div className="flex items-baseline gap-2">
+                          <span className="text-6xl sm:text-7xl font-black tracking-[-0.03em] text-canvas dark:text-ink leading-none">
+                            {Math.round(parseFloat(calories)).toLocaleString()}
+                          </span>
+                          <span className="text-xs font-mono font-bold text-canvas-soft/50 dark:text-mute/50 uppercase tracking-widest">kcal</span>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col items-start sm:items-end text-left sm:text-right min-w-0">
+                        <span className="text-[10px] font-mono font-bold text-canvas-soft/60 dark:text-mute uppercase tracking-[0.35em] mb-2">Diet Profile</span>
+                        <span className="text-xl sm:text-2xl font-black tracking-tight break-words max-w-full text-canvas dark:text-ink leading-tight">
+                          {preset.toUpperCase()}
+                        </span>
+                      </div>
                     </div>
 
-                    <div className="grid grid-cols-3 gap-4 pt-4 border-t border-hairline">
-                      <div className="space-y-1">
-                        <span className="inline-block w-2.5 h-2.5 rounded bg-amber-400 mr-2" />
-                        <span className="text-[9px] font-mono font-bold text-mute uppercase tracking-widest">Carbohydrates</span>
-                        <p className="text-xl xs:text-2xl font-black text-ink">{Math.round(carbsGrams)}g</p>
-                        <p className="text-[9px] text-mute font-bold">{carbsPct}% ({Math.round(carbsCalories)} kcal)</p>
+                    <div className="relative pt-4">
+                      {/* Visual Bar Breakdown */}
+                      <div className="h-3 w-full rounded-full overflow-hidden flex bg-canvas-soft/20 p-0">
+                        <div className="bg-amber-400 h-full transition-all duration-500" style={{ width: `${carbsPct}%` }} title={`Carbs: ${carbsPct}%`} />
+                        <div className="bg-emerald-400 h-full transition-all duration-500" style={{ width: `${proteinPct}%` }} title={`Protein: ${proteinPct}%`} />
+                        <div className="bg-red-400 h-full transition-all duration-500" style={{ width: `${fatPct}%` }} title={`Fat: ${fatPct}%`} />
                       </div>
-
-                      <div className="space-y-1">
-                        <span className="inline-block w-2.5 h-2.5 rounded bg-emerald-400 mr-2" />
-                        <span className="text-[9px] font-mono font-bold text-mute uppercase tracking-widest">Protein</span>
-                        <p className="text-xl xs:text-2xl font-black text-ink">{Math.round(proteinGrams)}g</p>
-                        <p className="text-[9px] text-mute font-bold">{proteinPct}% ({Math.round(proteinCalories)} kcal)</p>
+                      <div className="flex justify-between mt-2 text-[8px] font-mono text-canvas-soft/50 dark:text-mute/50 uppercase tracking-widest">
+                        <span>Carbs {carbsPct}%</span>
+                        <span>Protein {proteinPct}%</span>
+                        <span>Fats {fatPct}%</span>
                       </div>
+                    </div>
+                  </div>
 
-                      <div className="space-y-1">
-                        <span className="inline-block w-2.5 h-2.5 rounded bg-red-400 mr-2" />
-                        <span className="text-[9px] font-mono font-bold text-mute uppercase tracking-widest">Fats</span>
-                        <p className="text-xl xs:text-2xl font-black text-ink">{Math.round(fatGrams)}g</p>
-                        <p className="text-[9px] text-mute font-bold">{fatPct}% ({Math.round(fatCalories)} kcal)</p>
+                  {/* 3-Cell Grid of Secondary Metrics */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {/* Protein */}
+                    <div className="bg-surface-2 p-5 border border-hairline rounded-ui group hover:border-hairline-strong transition-all flex flex-col justify-between">
+                      <div>
+                        <div className="flex items-center gap-1.5 mb-3">
+                          <span className="inline-block w-2 h-2 rounded bg-emerald-400" />
+                          <div className="text-[9px] font-mono font-bold text-mute uppercase tracking-[0.2em]">Protein</div>
+                        </div>
+                        <div className="text-xl sm:text-2xl font-mono font-bold text-ink tracking-tight mb-2">
+                          {Math.round(proteinGrams)}g
+                        </div>
+                      </div>
+                      <div className="w-full">
+                        <div className="text-[8px] font-mono text-mute uppercase tracking-wider">{Math.round(proteinCalories)} kcal ({proteinPct}%)</div>
+                      </div>
+                    </div>
+
+                    {/* Carbs */}
+                    <div className="bg-surface-2 p-5 border border-hairline rounded-ui group hover:border-hairline-strong transition-all flex flex-col justify-between">
+                      <div>
+                        <div className="flex items-center gap-1.5 mb-3">
+                          <span className="inline-block w-2 h-2 rounded bg-amber-400" />
+                          <div className="text-[9px] font-mono font-bold text-mute uppercase tracking-[0.2em]">Carbohydrates</div>
+                        </div>
+                        <div className="text-xl sm:text-2xl font-mono font-bold text-ink tracking-tight mb-2">
+                          {Math.round(carbsGrams)}g
+                        </div>
+                      </div>
+                      <div className="w-full">
+                        <div className="text-[8px] font-mono text-mute uppercase tracking-wider">{Math.round(carbsCalories)} kcal ({carbsPct}%)</div>
+                      </div>
+                    </div>
+
+                    {/* Fats */}
+                    <div className="bg-surface-2 p-5 border border-hairline rounded-ui group hover:border-hairline-strong transition-all flex flex-col justify-between">
+                      <div>
+                        <div className="flex items-center gap-1.5 mb-3">
+                          <span className="inline-block w-2 h-2 rounded bg-red-400" />
+                          <div className="text-[9px] font-mono font-bold text-mute uppercase tracking-[0.2em]">Dietary Fats</div>
+                        </div>
+                        <div className="text-xl sm:text-2xl font-mono font-bold text-ink tracking-tight mb-2">
+                          {Math.round(fatGrams)}g
+                        </div>
+                      </div>
+                      <div className="w-full">
+                        <div className="text-[8px] font-mono text-mute uppercase tracking-wider">{Math.round(fatCalories)} kcal ({fatPct}%)</div>
                       </div>
                     </div>
                   </div>

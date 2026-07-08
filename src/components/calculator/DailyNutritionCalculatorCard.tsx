@@ -4,6 +4,7 @@ import { RotateCcw, Activity, ChevronDown } from 'lucide-react';
 import { InputGroup } from './InputGroup';
 import { BrandLogo } from '../BrandLogo';
 import { ReportActions } from './ReportActions';
+import { Select } from './Select';
 
 type UnitSystem = 'metric' | 'us' | 'other';
 type Gender = 'male' | 'female' | '';
@@ -240,10 +241,10 @@ export const DailyNutritionCalculatorCard: React.FC = () => {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
     >
-      <div className="grid grid-cols-1 lg:grid-cols-12 items-start min-h-fit">
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)] items-stretch">
         
-        {/* LEFT: Inputs */}
-        <div className="lg:col-span-5 p-6 sm:p-10 lg:p-12 border-b lg:border-b-0 lg:border-r border-hairline bg-canvas relative z-20 h-full overflow-y-auto">
+        {/* LEFT: Command Panel (Inputs) */}
+        <div className="p-6 sm:p-10 lg:p-12 border-b lg:border-b-0 lg:border-r border-hairline bg-canvas relative z-20 h-full overflow-y-auto">
           <div className="flex flex-col gap-6 lg:gap-8">
             <div className="flex items-center justify-between border-b border-hairline pb-8">
               <div className="flex items-center gap-4">
@@ -252,11 +253,11 @@ export const DailyNutritionCalculatorCard: React.FC = () => {
                   <h2 className="text-2xl font-black tracking-tighter text-ink leading-none mb-2">Nutrition</h2>
                   <div className="flex items-center gap-2 text-[10px] font-mono font-bold text-mute uppercase tracking-widest">
                     <span className="w-2 h-2 rounded-full bg-status-healthy animate-pulse"></span>
-                    Caloric Blueprint
+                    Daily Targets
                   </div>
                 </div>
               </div>
-              <button onClick={handleResetWithAnimation} className="p-3 bg-canvas-soft border border-hairline hover:bg-surface rounded-xl transition-all text-mute hover:text-ink shadow-premium-sm active:scale-95">
+              <button onClick={handleResetWithAnimation} className={`p-3 bg-canvas-soft border border-hairline hover:bg-surface rounded-xl transition-all text-mute hover:text-ink shadow-premium-sm active:scale-95 ${isResetting ? 'ring-2 ring-primary/40' : ''}`} title="Reset Data">
                 <RotateCcw className={`w-5 h-5 ${isResetting ? 'animate-spin' : ''}`} />
               </button>
             </div>
@@ -264,14 +265,15 @@ export const DailyNutritionCalculatorCard: React.FC = () => {
             <div className="space-y-6 lg:space-y-8">
               <div className="space-y-4">
                 <span className="text-[10px] font-mono font-bold text-mute uppercase tracking-[0.3em] ml-1">Standard</span>
-                <div className="flex p-1 bg-canvas-soft border border-hairline rounded-ui gap-1">
+                <div className="flex p-1 bg-surface-2 border border-hairline rounded-full gap-1">
                   {['us', 'metric', 'other'].map((s) => (
                     <button 
                       key={s} 
+                      type="button"
                       onClick={() => { setSystem(s as UnitSystem); handleReset(); }}
-                      className={`flex-1 py-2.5 text-[10px] font-black uppercase tracking-[0.15em] transition-all duration-300 rounded-[4px] ${system === s ? 'bg-canvas text-ink shadow-premium-sm ring-1 ring-hairline' : 'text-mute hover:text-ink hover:bg-canvas/50'}`}
+                      className={`flex-1 py-2.5 text-[10px] font-mono font-bold uppercase tracking-[0.08em] transition-all duration-300 rounded-full focus-ring ${system === s ? 'bg-ink text-canvas dark:bg-canvas dark:text-ink shadow-premium-sm' : 'text-mute hover:text-ink'}`}
                     >
-                      {s === 'us' ? 'US Units' : s.charAt(0).toUpperCase() + s.slice(1)}
+                      {s === 'us' ? 'US' : s.toUpperCase()}
                     </button>
                   ))}
                 </div>
@@ -303,14 +305,15 @@ export const DailyNutritionCalculatorCard: React.FC = () => {
                 
                 <div className="flex flex-col gap-3">
                   <span className="text-[10px] font-mono font-bold text-mute uppercase tracking-widest">Gender</span>
-                  <div className="flex p-1 bg-canvas-soft border border-hairline rounded-ui h-14 gap-1">
+                  <div className="flex p-1 bg-surface-2 border border-hairline rounded-full gap-1">
                     {['male', 'female'].map((g) => (
                       <button 
                         key={g} 
+                        type="button"
                         onClick={() => setGender(g as Gender)}
-                        className={`flex-1 rounded-[4px] text-[10px] font-black uppercase tracking-[0.15em] transition-all duration-300 ${gender === g ? 'bg-ink text-canvas shadow-premium-md' : 'text-mute hover:text-ink hover:bg-canvas/50'}`}
+                        className={`flex-1 py-2.5 text-[10px] font-mono font-bold uppercase tracking-[0.08em] transition-all duration-300 rounded-full focus-ring ${gender === g ? 'bg-ink text-canvas dark:bg-canvas dark:text-ink shadow-premium-sm' : 'text-mute hover:text-ink'}`}
                       >
-                        {g}
+                        {g.toUpperCase()}
                       </button>
                     ))}
                   </div>
@@ -338,19 +341,13 @@ export const DailyNutritionCalculatorCard: React.FC = () => {
                             <InputGroup id="feet" label="Height" value={feet} onChange={setFeet} unit="FT" placeholder="5" min={3} max={8} />
                             <InputGroup id="inches" label="Height (In)" value={inches} onChange={setInches} unit="IN" placeholder="8" min={0} max={11} />
                           </div>
-                          <div className="flex justify-end">
-                            <div className="relative flex items-center">
-                              <select
-                                value={heightUnitOther}
-                                onChange={(e) => { setHeightUnitOther(e.target.value as any); setHeight(''); setFeet(''); setInches(''); }}
-                                className="appearance-none bg-canvas-soft pl-2 pr-6 py-1 rounded border border-hairline text-[9px] font-mono font-bold text-mute uppercase tracking-widest focus:outline-none focus:border-ink focus:text-ink transition-colors cursor-pointer hover:bg-surface"
-                              >
-                                {['cm', 'm', 'ft+in', 'in'].map(opt => (
-                                  <option key={opt} value={opt}>{opt}</option>
-                                ))}
-                              </select>
-                              <ChevronDown className="absolute right-1.5 w-2.5 h-2.5 text-mute pointer-events-none" />
-                            </div>
+                          <div className="flex justify-end w-full">
+                            <Select
+                              value={heightUnitOther}
+                              onChange={(val) => { setHeightUnitOther(val as any); setHeight(''); setFeet(''); setInches(''); }}
+                              options={['cm', 'm', 'ft+in', 'in'].map(opt => ({ value: opt, label: opt.toUpperCase() }))}
+                              label="Height Unit"
+                            />
                           </div>
                         </div>
                       ) : (
@@ -383,9 +380,9 @@ export const DailyNutritionCalculatorCard: React.FC = () => {
                   )}
                 </div>
 
-                <div className="col-span-2 space-y-4">
-                  <span className="text-[10px] font-mono font-bold text-mute uppercase tracking-[0.3em] ml-1">Goal</span>
-                  <div className="flex p-1 bg-canvas-soft border border-hairline rounded-ui gap-1">
+                <div className="col-span-2 space-y-3">
+                  <span className="text-xs font-mono text-mute uppercase tracking-[0.12em] ml-1">Goal</span>
+                  <div className="flex p-1 bg-surface-2 border border-hairline rounded-full gap-1">
                     {[
                       { value: 'loss', label: 'Loss' },
                       { value: 'maintenance', label: 'Maintain' },
@@ -393,19 +390,20 @@ export const DailyNutritionCalculatorCard: React.FC = () => {
                     ].map((item) => (
                       <button 
                         key={item.value} 
+                        type="button"
                         onClick={() => setGoal(item.value as Goal)}
-                        className={`flex-1 py-2.5 text-[10px] font-black uppercase tracking-[0.15em] transition-all duration-300 rounded-[4px] ${goal === item.value ? 'bg-ink text-canvas shadow-premium-md' : 'text-mute hover:text-ink hover:bg-canvas/50'}`}
+                        className={`flex-1 py-2.5 text-[10px] font-mono font-bold uppercase tracking-[0.08em] transition-all duration-300 rounded-full focus-ring ${goal === item.value ? 'bg-ink text-canvas dark:bg-canvas dark:text-ink shadow-premium-sm' : 'text-mute hover:text-ink'}`}
                       >
-                        {item.label}
+                        {item.label.toUpperCase()}
                       </button>
                     ))}
                   </div>
                 </div>
 
                 {goal !== 'maintenance' && goal !== '' && (
-                  <div className="col-span-2 space-y-4">
-                    <span className="text-[10px] font-mono font-bold text-mute uppercase tracking-[0.3em] ml-1">Weekly Target Rate</span>
-                    <div className="flex p-1 bg-canvas-soft border border-hairline rounded-ui gap-1">
+                  <div className="col-span-2 space-y-3">
+                    <span className="text-xs font-mono text-mute uppercase tracking-[0.12em] ml-1">Weekly Target Rate</span>
+                    <div className="flex p-1 bg-surface-2 border border-hairline rounded-full gap-1">
                       {[
                         { value: '0.25', label: (system === 'metric' || (system === 'other' && weightUnitOther === 'kg')) ? '0.25 kg' : '0.5 lb' },
                         { value: '0.5', label: (system === 'metric' || (system === 'other' && weightUnitOther === 'kg')) ? '0.50 kg' : '1.0 lb' },
@@ -413,32 +411,29 @@ export const DailyNutritionCalculatorCard: React.FC = () => {
                       ].map((item) => (
                         <button 
                           key={item.value} 
+                          type="button"
                           onClick={() => setRate(item.value as Rate)}
-                          className={`flex-1 py-2.5 text-[10px] font-black uppercase tracking-[0.15em] transition-all duration-300 rounded-[4px] ${rate === item.value ? 'bg-ink text-canvas shadow-premium-md' : 'text-mute hover:text-ink hover:bg-canvas/50'}`}
+                          className={`flex-1 py-2.5 text-[10px] font-mono font-bold uppercase tracking-[0.08em] transition-all duration-300 rounded-full focus-ring ${rate === item.value ? 'bg-ink text-canvas dark:bg-canvas dark:text-ink shadow-premium-sm' : 'text-mute hover:text-ink'}`}
                         >
-                          {item.label}
+                          {item.label.toUpperCase()}
                         </button>
                       ))}
                     </div>
                   </div>
                 )}
 
-                <div className="col-span-2 space-y-4">
-                  <span className="text-[10px] font-mono font-bold text-mute uppercase tracking-[0.3em] ml-1">Physical Activity</span>
-                  <div className="relative group">
-                    <select 
-                      value={activity}
-                      onChange={(e) => setActivity(e.target.value)}
-                      className="w-full bg-canvas-soft border border-hairline rounded-ui h-14 px-5 pr-10 text-[11px] font-black uppercase tracking-widest text-ink focus:outline-none appearance-none cursor-pointer hover:border-hairline-strong transition-all shadow-inset"
-                    >
-                      {ACTIVITY_LEVELS.map((level) => (
-                        <option key={level.value} value={level.value} className="bg-canvas text-ink font-sans text-sm font-medium">
-                          {level.label.toUpperCase()} - {level.desc}
-                        </option>
-                      ))}
-                    </select>
-                    <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-mute pointer-events-none group-hover:text-ink transition-colors" />
-                  </div>
+                <div className="col-span-2 space-y-3">
+                  <span className="text-xs font-mono text-mute uppercase tracking-[0.12em] ml-1">Physical Activity</span>
+                  <Select 
+                    value={activity}
+                    onChange={setActivity}
+                    options={ACTIVITY_LEVELS.map(level => ({
+                      value: level.value,
+                      label: level.label,
+                      desc: level.desc
+                    }))}
+                    label="Physical Activity"
+                  />
                 </div>
               </div>
             </div>
@@ -446,7 +441,7 @@ export const DailyNutritionCalculatorCard: React.FC = () => {
         </div>
 
         {/* RIGHT: Results */}
-        <div className="lg:col-span-7 bg-canvas-soft/40 p-6 sm:p-10 lg:p-12 relative border-t lg:border-t-0 border-hairline h-full overflow-y-auto">
+        <div className="bg-canvas-soft/40 p-6 sm:p-10 lg:p-12 relative h-full overflow-y-auto">
           <div className="flex flex-col gap-6 lg:gap-8">
             <div className="flex flex-col border-b border-hairline/50 pb-8">
               <div className="flex items-center justify-between mb-8">
@@ -496,42 +491,85 @@ export const DailyNutritionCalculatorCard: React.FC = () => {
               ) : (
                 <div className="space-y-8">
                   {/* Calorie Card */}
-                  <div className="bg-canvas border border-hairline rounded-marketing p-6 space-y-4 shadow-premium-lg relative overflow-hidden">
+                  <div id="nutrition-gauge-export" className="flex flex-col gap-8 py-8 px-6 sm:py-10 sm:px-8 bg-ink dark:bg-canvas border border-hairline/10 dark:border-hairline rounded-marketing shadow-premium-lg text-canvas dark:text-ink relative overflow-hidden">
                     {isFloorTriggered && (
-                      <div className="absolute top-0 inset-x-0 bg-amber-500/10 border-b border-amber-500/20 px-6 py-2 flex items-center justify-between">
-                        <span className="text-[8px] font-mono font-bold text-amber-600 uppercase tracking-wider">⚠ Calorie Safety Floor Applied (Minimum Limit)</span>
+                      <div className="absolute top-0 inset-x-0 bg-amber-500/10 border-b border-amber-500/20 px-6 py-2 flex items-center justify-between z-20">
+                        <span className="text-[8px] font-mono font-bold text-amber-500 uppercase tracking-wider">⚠ Calorie Safety Floor Applied (Minimum Limit)</span>
                       </div>
                     )}
-                    <div className="flex justify-between items-end pt-4">
-                      <div>
-                        <span className="text-[9px] font-mono font-bold text-mute uppercase tracking-widest mb-1 block">Recommended Target Calories</span>
-                        <p className="text-5xl font-black text-ink">{Math.round(targetCalories)} <span className="text-lg font-bold text-mute">kcal/day</span></p>
+                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 w-full relative z-10 pt-4">
+                      <div className="flex flex-col items-start min-w-0">
+                        <span className="text-[10px] font-mono font-bold text-canvas-soft/60 dark:text-mute uppercase tracking-[0.35em] mb-2">Recommended Target Calories</span>
+                        <div className="flex items-baseline gap-2">
+                          <span className="text-6xl sm:text-7xl font-black tracking-[-0.03em] text-canvas dark:text-ink leading-none">
+                            {Math.round(targetCalories).toLocaleString()}
+                          </span>
+                          <span className="text-xs font-mono font-bold text-canvas-soft/50 dark:text-mute/50 uppercase tracking-widest">kcal/day</span>
+                        </div>
                       </div>
-                      <div className="text-right">
-                        <span className="text-[9px] font-mono font-bold text-mute uppercase tracking-widest mb-1 block">TDEE (Maintenance)</span>
-                        <span className="text-lg font-black text-ink">{Math.round(tdee)} kcal</span>
+
+                      <div className="flex flex-col items-start sm:items-end text-left sm:text-right min-w-0">
+                        <span className="text-[10px] font-mono font-bold text-canvas-soft/60 dark:text-mute uppercase tracking-[0.35em] mb-2">TDEE (Maintenance)</span>
+                        <span className="text-xl sm:text-2xl font-black tracking-tight text-canvas dark:text-ink leading-tight">
+                          {Math.round(tdee).toLocaleString()} kcal
+                        </span>
                       </div>
                     </div>
                   </div>
 
-                  {/* Summary Grid */}
-                  <div className="grid grid-cols-3 gap-4">
-                    <div className="bg-canvas border border-hairline rounded-ui p-4 space-y-1">
-                      <span className="text-[9px] font-mono font-bold text-mute uppercase tracking-widest block opacity-60">Protein</span>
-                      <p className="text-xl font-black text-ink">{Math.round(proteinGrams)}g</p>
-                      <span className="text-[8px] font-mono text-mute">{Math.round(proteinGrams * 4)} kcal (30%)</span>
+                  {/* 2x2 Grid of Secondary Metrics */}
+                  <div className="grid grid-cols-2 gap-4">
+                    {/* Metric 1: Protein */}
+                    <div className="bg-surface-2 p-5 border border-hairline rounded-ui group hover:border-hairline-strong transition-all flex flex-col justify-between">
+                      <div>
+                        <div className="text-[9px] font-mono font-bold text-mute uppercase tracking-[0.2em] mb-3">Protein Target</div>
+                        <div className="text-xl sm:text-2xl font-mono font-bold text-ink tracking-tight mb-2">
+                          {Math.round(proteinGrams)}g
+                        </div>
+                      </div>
+                      <div className="w-full">
+                        <div className="text-[8px] font-mono text-mute uppercase tracking-wider">{Math.round(proteinGrams * 4)} kcal (30%)</div>
+                      </div>
                     </div>
 
-                    <div className="bg-canvas border border-hairline rounded-ui p-4 space-y-1">
-                      <span className="text-[9px] font-mono font-bold text-mute uppercase tracking-widest block opacity-60">Carbohydrates</span>
-                      <p className="text-xl font-black text-ink">{Math.round(carbsGrams)}g</p>
-                      <span className="text-[8px] font-mono text-mute">{Math.round(carbsGrams * 4)} kcal (40%)</span>
+                    {/* Metric 2: Carbohydrates */}
+                    <div className="bg-surface-2 p-5 border border-hairline rounded-ui group hover:border-hairline-strong transition-all flex flex-col justify-between">
+                      <div>
+                        <div className="text-[9px] font-mono font-bold text-mute uppercase tracking-[0.2em] mb-3">Carbohydrates</div>
+                        <div className="text-xl sm:text-2xl font-mono font-bold text-ink tracking-tight mb-2">
+                          {Math.round(carbsGrams)}g
+                        </div>
+                      </div>
+                      <div className="w-full">
+                        <div className="text-[8px] font-mono text-mute uppercase tracking-wider">{Math.round(carbsGrams * 4)} kcal (40%)</div>
+                      </div>
                     </div>
 
-                    <div className="bg-canvas border border-hairline rounded-ui p-4 space-y-1">
-                      <span className="text-[9px] font-mono font-bold text-mute uppercase tracking-widest block opacity-60">Fats</span>
-                      <p className="text-xl font-black text-ink">{Math.round(fatGrams)}g</p>
-                      <span className="text-[8px] font-mono text-mute">{Math.round(fatGrams * 9)} kcal (30%)</span>
+                    {/* Metric 3: Fats */}
+                    <div className="bg-surface-2 p-5 border border-hairline rounded-ui group hover:border-hairline-strong transition-all flex flex-col justify-between">
+                      <div>
+                        <div className="text-[9px] font-mono font-bold text-mute uppercase tracking-[0.2em] mb-3">Dietary Fats</div>
+                        <div className="text-xl sm:text-2xl font-mono font-bold text-ink tracking-tight mb-2">
+                          {Math.round(fatGrams)}g
+                        </div>
+                      </div>
+                      <div className="w-full">
+                        <div className="text-[8px] font-mono text-mute uppercase tracking-wider">{Math.round(fatGrams * 9)} kcal (30%)</div>
+                      </div>
+                    </div>
+
+                    {/* Metric 4: TDEE */}
+                    <div className="bg-surface-2 p-5 border border-hairline rounded-ui group hover:border-hairline-strong transition-all flex flex-col justify-between">
+                      <div>
+                        <div className="text-[9px] font-mono font-bold text-mute uppercase tracking-[0.2em] mb-3">Active Expenditure</div>
+                        <div className="text-xl sm:text-2xl font-mono font-bold text-ink tracking-tight mb-2">
+                          {Math.round(tdee).toLocaleString()}
+                          <span className="text-[10px] font-sans font-medium text-mute ml-1">KCAL</span>
+                        </div>
+                      </div>
+                      <div className="w-full">
+                        <div className="text-[8px] font-mono text-mute uppercase tracking-wider">TDEE / Maintenance</div>
+                      </div>
                     </div>
                   </div>
 

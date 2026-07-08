@@ -4,6 +4,7 @@ import { RotateCcw, Download, Check, Activity, ChevronDown, Target, AlertCircle,
 import { InputGroup } from './InputGroup';
 import { BrandLogo } from '../BrandLogo';
 import { ReportActions } from './ReportActions';
+import { Select } from './Select';
 
 type UnitSystem = 'metric' | 'us' | 'other';
 
@@ -213,10 +214,10 @@ export const IdealWeightCalculatorCard: React.FC = () => {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
     >
-      <div className="grid grid-cols-1 lg:grid-cols-12 items-start min-h-fit">
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)] items-stretch">
         
         {/* LEFT: Command Panel (Inputs) */}
-        <div className="lg:col-span-5 p-6 sm:p-10 lg:p-12 border-b lg:border-b-0 lg:border-r border-hairline bg-canvas relative z-20 h-full overflow-y-auto">
+        <div className="p-6 sm:p-10 lg:p-12 border-b lg:border-b-0 lg:border-r border-hairline bg-canvas relative z-20 h-full overflow-y-auto">
           <div className="flex flex-col gap-6 lg:gap-8">
             <div className="flex items-center justify-between border-b border-hairline pb-8">
               <div className="flex items-center gap-4">
@@ -225,26 +226,27 @@ export const IdealWeightCalculatorCard: React.FC = () => {
                   <h2 className="text-2xl font-black tracking-tighter text-ink leading-none mb-2">Ideal Weight</h2>
                   <div className="flex items-center gap-2 text-[10px] font-mono font-bold text-mute uppercase tracking-widest">
                     <span className="w-2 h-2 rounded-full bg-status-healthy animate-pulse"></span>
-                    Height-to-Weight Logic
+                    Devine Index
                   </div>
                 </div>
               </div>
-              <button onClick={handleResetWithAnimation} className={`p-3 bg-canvas-soft border border-hairline hover:bg-surface rounded-xl transition-all text-mute hover:text-ink shadow-premium-sm active:scale-95 ${isResetting ? 'ring-2 ring-primary/40 shadow-[0_0_15px_rgba(99,102,241,0.5)]' : ''}`} title="Reset Data">
-                <RotateCcw className={`w-5 h-5 transition-transform ${isResetting ? 'animate-spin' : ''}`} />
+              <button onClick={handleResetWithAnimation} className={`p-3 bg-canvas-soft border border-hairline hover:bg-surface rounded-xl transition-all text-mute hover:text-ink shadow-premium-sm active:scale-95 ${isResetting ? 'ring-2 ring-primary/40' : ''}`} title="Reset Data">
+                <RotateCcw className={`w-5 h-5 ${isResetting ? 'animate-spin' : ''}`} />
               </button>
             </div>
 
             <div className="space-y-6 lg:space-y-8">
               <div className="space-y-4">
                 <span className="text-[10px] font-mono font-bold text-mute uppercase tracking-[0.3em] ml-1">Standard</span>
-                <div className="flex p-1 bg-canvas-soft border border-hairline rounded-ui gap-1">
+                <div className="flex p-1 bg-surface-2 border border-hairline rounded-full gap-1">
                   {['us', 'metric', 'other'].map((s) => (
                     <button 
                       key={s} 
+                      type="button"
                       onClick={() => { setSystem(s as UnitSystem); setWeight(''); }}
-                      className={`flex-1 py-2.5 text-[10px] font-black uppercase tracking-[0.15em] transition-all duration-300 rounded-[4px] ${system === s ? 'bg-canvas text-ink shadow-premium-sm ring-1 ring-hairline' : 'text-mute hover:text-ink hover:bg-canvas/50'}`}
+                      className={`flex-1 py-2.5 text-[10px] font-mono font-bold uppercase tracking-[0.08em] transition-all duration-300 rounded-full focus-ring ${system === s ? 'bg-ink text-canvas dark:bg-canvas dark:text-ink shadow-premium-sm' : 'text-mute hover:text-ink'}`}
                     >
-                      {s === 'us' ? 'US Units' : s.charAt(0).toUpperCase() + s.slice(1)}
+                      {s === 'us' ? 'US' : s.toUpperCase()}
                     </button>
                   ))}
                 </div>
@@ -269,7 +271,7 @@ export const IdealWeightCalculatorCard: React.FC = () => {
                       }}
                       placeholder="YOUR NAME"
                       maxLength={50}
-                      className="w-full bg-canvas border border-hairline dark:border-white/[0.08] rounded-ui h-14 px-5 text-xl font-bold tracking-tighter text-ink dark:text-[#f5f5f5] transition-all duration-300 placeholder:text-mute/20 dark:placeholder:text-mute/40 focus:outline-none focus:ring-[6px] focus:ring-primary/[0.03] focus:border-ink dark:focus:border-white/20 shadow-premium-sm hover:border-hairline-strong dark:hover:border-white/15 focus:bg-canvas uppercase"
+                      className="w-full bg-canvas border border-hairline rounded-ui h-14 px-5 text-xl font-bold tracking-tighter text-ink dark:text-[#f5f5f5] transition-all duration-300 placeholder:text-mute/20 dark:placeholder:text-mute/40 focus:outline-none focus:ring-[6px] focus:ring-primary/[0.03] focus:border-ink dark:focus:border-white/20 shadow-premium-sm hover:border-hairline-strong focus:bg-canvas uppercase"
                     />
                   </div>
                   {nameError && <p className="text-red-500 text-[10px] font-mono font-bold">{nameError}</p>}
@@ -278,14 +280,15 @@ export const IdealWeightCalculatorCard: React.FC = () => {
                 <InputGroup id="ideal-weight-age" label="Age" value={age} onChange={setAge} unit="YRS" placeholder="25" min={18} max={120} step="1" />
                 <div className="flex flex-col gap-3">
                   <span className="text-[10px] font-mono font-bold text-mute uppercase tracking-[0.3em] ml-1">Gender</span>
-                  <div className="flex p-1 bg-canvas-soft border border-hairline rounded-ui h-14 gap-1">
+                  <div className="flex p-1 bg-surface-2 border border-hairline rounded-full gap-1">
                     {['male', 'female'].map((g) => (
                       <button 
                         key={g} 
+                        type="button"
                         onClick={() => setGender(g as 'male' | 'female')}
-                        className={`flex-1 rounded-[4px] text-[10px] font-black uppercase tracking-[0.15em] transition-all duration-300 ${gender === g ? 'bg-ink text-canvas shadow-premium-md' : 'text-mute hover:text-ink hover:bg-canvas/50'}`}
+                        className={`flex-1 py-2.5 text-[10px] font-mono font-bold uppercase tracking-[0.08em] transition-all duration-300 rounded-full focus-ring ${gender === g ? 'bg-ink text-canvas dark:bg-canvas dark:text-ink shadow-premium-sm' : 'text-mute hover:text-ink'}`}
                       >
-                        {g}
+                        {g.toUpperCase()}
                       </button>
                     ))}
                   </div>
@@ -314,20 +317,14 @@ export const IdealWeightCalculatorCard: React.FC = () => {
                           <InputGroup key="h-ft-other" id="feet-other" label="Height" value={feet} onChange={setFeet} unit="FT" placeholder="5" min={1} max={8} step="1" />
                           <InputGroup key="h-in-other" id="inches-other" label="Inches" value={inches} onChange={setInches} unit="IN" placeholder="8" min={0} max={11} step="1" />
                         </div>
-                        <div className="flex justify-end">
-                           <div className="relative flex items-center">
-                              <select
-                                value={heightUnitOther}
-                                onChange={(e) => { setHeightUnitOther(e.target.value as any); setHeight(''); setFeet(''); setInches(''); }}
-                                className="appearance-none bg-canvas-soft pl-2 pr-6 py-1 rounded border border-hairline text-[9px] font-mono font-bold text-mute uppercase tracking-widest focus:outline-none focus:border-ink focus:text-ink transition-colors cursor-pointer hover:bg-surface"
-                              >
-                                {['cm', 'm', 'ft+in', 'in'].map(opt => (
-                                  <option key={opt} value={opt}>{opt}</option>
-                                ))}
-                              </select>
-                              <ChevronDown className="absolute right-1.5 w-2.5 h-2.5 text-mute pointer-events-none" />
-                            </div>
-                        </div>
+                          <div className="flex justify-end w-full">
+                            <Select
+                              value={heightUnitOther}
+                              onChange={(val) => { setHeightUnitOther(val as any); setHeight(''); setFeet(''); setInches(''); }}
+                              options={['cm', 'm', 'ft+in', 'in'].map(opt => ({ value: opt, label: opt.toUpperCase() }))}
+                              label="Height Unit"
+                            />
+                          </div>
                       </div>
                     ) : (
                       <InputGroup 
@@ -365,8 +362,8 @@ export const IdealWeightCalculatorCard: React.FC = () => {
           </div>
         </div>
 
-        {/* RIGHT: Intelligence Panel (Results) */}
-        <div className="lg:col-span-7 bg-canvas-soft/40 p-6 sm:p-10 lg:p-12 relative border-t lg:border-t-0 border-hairline h-full overflow-y-auto">
+        {/* RIGHT: Results Panel */}
+        <div className="bg-canvas-soft/40 p-6 sm:p-10 lg:p-12 relative h-full overflow-y-auto">
           <div className="flex flex-col gap-6 lg:gap-8">
             <div className="flex flex-col border-b border-hairline/50 pb-8">
               <div className="flex items-center justify-between mb-8">
@@ -419,79 +416,90 @@ export const IdealWeightCalculatorCard: React.FC = () => {
               ) : (
                 <>
               {/* HERO RESULT: IDEAL WEIGHT */}
-              <div id="ideal-weight-hero-export" className="flex flex-col gap-8 py-8 px-6 sm:py-10 sm:px-8 bg-canvas border border-hairline rounded-marketing shadow-premium-lg relative overflow-hidden">
-                <div className={`absolute top-0 right-0 w-64 h-64 opacity-5 blur-[100px] rounded-full -mr-32 -mt-32 transition-colors duration-1000 ${!isFaded ? statusColor.replace('text-', 'bg-') : 'bg-mute'}`}></div>
+              <div id="ideal-weight-hero-export" className="flex flex-col gap-8 py-8 px-6 sm:py-10 sm:px-8 bg-ink dark:bg-canvas border border-hairline/10 dark:border-hairline rounded-marketing shadow-premium-lg text-canvas dark:text-ink relative overflow-hidden">
+                <div className={`absolute top-0 right-0 w-64 h-64 opacity-10 dark:opacity-5 blur-[100px] rounded-full -mr-32 -mt-32 transition-colors duration-1000 ${!isFaded ? statusColor.replace('text-', 'bg-') : 'bg-mute'}`}></div>
                 
-                <div className="flex flex-col sm:flex-row justify-between items-center gap-6 sm:gap-8 relative z-10">
-                  <div className="flex flex-col items-center sm:items-start text-center sm:text-left">
-                    <span className="text-[10px] sm:text-[11px] font-mono font-bold text-mute uppercase tracking-[0.3em] mb-2">Ideal Weight Estimate</span>
-                    <div className="flex items-baseline gap-2 sm:gap-3">
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 w-full relative z-10">
+                  <div className="flex flex-col items-start min-w-0">
+                    <span className="text-[10px] font-mono font-bold text-canvas-soft/60 dark:text-mute uppercase tracking-[0.35em] mb-2">Ideal Weight Estimate</span>
+                    <div className="flex items-baseline gap-2">
                       <motion.span 
-                        className="text-5xl xs:text-6xl sm:text-8xl font-black tracking-[-0.08em] text-ink"
+                        className="text-6xl sm:text-7xl font-black tracking-[-0.03em] text-canvas dark:text-ink leading-none"
                         initial={false}
                         animate={{ scale: idealWeight > 0 ? [1, 1.02, 1] : 1 }}
                         transition={{ duration: 0.4 }}
                       >
                         {idealWeight > 0 ? idealWeight.toFixed(1) : '--'}
                       </motion.span>
-                      <span className="text-lg sm:text-xl font-bold text-mute/60 tracking-tighter">kg</span>
+                      <span className="text-xs font-mono font-bold text-canvas-soft/50 dark:text-mute/50 uppercase tracking-widest">kg</span>
                     </div>
                     {idealWeight > 0 && (
-                      <span className="text-sm sm:text-base font-bold text-mute/60 tracking-tighter mt-1">
+                      <span className="text-[10px] font-mono font-bold text-canvas-soft/40 dark:text-mute/45 uppercase tracking-widest mt-1.5 block">
                         ~ {(idealWeight / LBS_TO_KG).toFixed(1)} lb
                       </span>
                     )}
                   </div>
 
-                  <div className="h-16 w-px bg-hairline hidden sm:block"></div>
-
-                  <div className="text-center sm:text-right">
-                    <span className="text-[10px] sm:text-[11px] font-mono font-bold text-mute uppercase tracking-[0.3em] mb-2 sm:mb-3 block">Analysis</span>
-                    <div className={`text-xl xs:text-2xl sm:text-3xl font-black tracking-tight ${statusColor}`}>
-                      {isFaded ? 'Awaiting Data' : (comparison.status === 'healthy' ? 'Healthy' : comparison.status === 'over' ? 'Above Range' : 'Below Range')}
+                  <div className="flex flex-col items-start sm:items-end text-left sm:text-right min-w-0">
+                    <span className="text-[10px] font-mono font-bold text-canvas-soft/60 dark:text-mute uppercase tracking-[0.35em] mb-2">Analysis</span>
+                    <div className={`text-xl sm:text-2xl font-black tracking-tight break-words max-w-full ${statusColor}`}>
+                      {isFaded ? 'Awaiting Data' : (comparison.status === 'healthy' ? 'Healthy Weight' : comparison.status === 'over' ? 'Above Range' : 'Below Range')}
                     </div>
                     {idealWeight > 0 && (
-                      <div className="mt-2 inline-flex items-center gap-2 px-3 py-1 rounded-full bg-canvas border border-hairline shadow-premium-sm">
-                         <div className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full ${statusColor.replace('text-', 'bg-')} animate-pulse`}></div>
-                         <span className="text-[9px] sm:text-[10px] font-mono font-bold uppercase text-ink">Live Calculation</span>
+                      <div className="mt-2.5 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-canvas/10 border border-canvas/20 shadow-premium-sm dark:bg-ink/10 dark:border-ink/20">
+                         <div className={`w-1.5 h-1.5 rounded-full ${statusColor.replace('text-', 'bg-')} animate-pulse`}></div>
+                         <span className="text-[9px] font-mono font-bold uppercase text-canvas dark:text-ink">Live Calculation</span>
                       </div>
                     )}
                   </div>
                 </div>
               </div>
 
-              {/* SUPPORTING METRICS */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-5">
-                <div className="card glass border-hairline p-6 sm:p-8 flex flex-col justify-between min-h-[140px] sm:min-h-[160px] group hover:border-hairline-strong transition-all">
-                  <div className="flex justify-between items-start mb-4 sm:mb-6">
-                    <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-ink text-canvas flex items-center justify-center shadow-premium-md group-hover:scale-110 transition-transform">
-                      <Target className="w-4 h-4 sm:w-5 sm:h-5" />
-                    </div>
-                    <div className="text-[9px] sm:text-[10px] font-mono font-bold text-mute uppercase tracking-[0.3em] bg-canvas-soft px-2 sm:px-3 py-1 sm:py-1.5 rounded-full border border-hairline">Healthy Range</div>
-                  </div>
+              {/* Supporting Metrics: 3-Cell Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {/* Cell 1: Current Weight */}
+                <div className="bg-surface-2 p-5 border border-hairline rounded-ui group hover:border-hairline-strong transition-all flex flex-col justify-between">
                   <div>
-                    <div className="flex items-baseline gap-1.5 sm:gap-2 mb-1">
-                      <span className="text-xl sm:text-2xl font-black tracking-tight text-ink">
-                        {isFaded ? '--' : `${healthyRange.low.toFixed(1)} - ${healthyRange.high.toFixed(1)}`}
+                    <div className="text-[9px] font-mono font-bold text-mute uppercase tracking-[0.2em] mb-3">Current Weight</div>
+                    <div className="text-xl sm:text-2xl font-mono font-bold text-ink tracking-tight mb-2">
+                      {isFaded ? '--' : parseFloat(weight).toFixed(1)}
+                      <span className="text-[10px] font-sans font-medium text-mute ml-1">
+                        {system === 'metric' ? 'KG' : system === 'us' ? 'LB' : weightUnitOther.toUpperCase()}
                       </span>
-                      <span className="text-[10px] sm:text-xs font-bold text-mute uppercase font-mono tracking-widest">{isFaded ? '' : 'kg'}</span>
                     </div>
-                    <p className="text-body text-[9px] sm:text-[10px] font-bold uppercase tracking-wider opacity-60">BMI 18.5 - 24.9 Range</p>
+                  </div>
+                  <div className="w-full">
+                    <div className="text-[8px] font-mono text-mute uppercase tracking-wider">User Input baseline</div>
                   </div>
                 </div>
 
-                <div className="card glass border-hairline p-6 sm:p-8 flex flex-col justify-between min-h-[140px] sm:min-h-[160px] group hover:border-hairline-strong transition-all">
-                  <div className="flex justify-between items-start mb-4 sm:mb-6">
-                    <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-primary/5 text-status-healthy flex items-center justify-center border border-status-healthy/20 group-hover:scale-110 transition-transform">
-                      <Info className="w-4 h-4 sm:w-5 sm:h-5" />
-                    </div>
-                    <div className="text-[9px] sm:text-[10px] font-mono font-bold text-mute uppercase tracking-[0.3em] bg-canvas-soft px-2 sm:px-3 py-1 sm:py-1.5 rounded-full border border-hairline">Comparison</div>
-                  </div>
+                {/* Cell 2: Comparison vs. Range */}
+                <div className="bg-surface-2 p-5 border border-hairline rounded-ui group hover:border-hairline-strong transition-all flex flex-col justify-between">
                   <div>
-                    <div className="text-base sm:text-lg font-black tracking-tight text-ink leading-tight mb-1">
+                    <div className="text-[9px] font-mono font-bold text-mute uppercase tracking-[0.2em] mb-3">Vs. Healthy Range</div>
+                    <div className="text-sm font-mono font-bold text-ink tracking-tight mb-2 leading-snug">
                       {isFaded ? '--' : comparison.text}
                     </div>
-                    <p className="text-body text-[9px] sm:text-[10px] font-bold uppercase tracking-wider opacity-60">Vs. Healthy Range</p>
+                  </div>
+                  <div className="w-full">
+                    <div className="text-[8px] font-mono text-mute uppercase tracking-wider">Standard Range comparison</div>
+                  </div>
+                </div>
+
+                {/* Cell 3: Daily Water Intake */}
+                <div className="bg-surface-2 p-5 border border-hairline rounded-ui group hover:border-hairline-strong transition-all flex flex-col justify-between">
+                  <div>
+                    <div className="text-[9px] font-mono font-bold text-mute uppercase tracking-[0.2em] mb-3">Daily Water Intake</div>
+                    <div className="text-xl sm:text-2xl font-mono font-bold text-ink tracking-tight mb-2">
+                      {isFaded ? '--' : waterIntake.toFixed(1)}
+                      <span className="text-[10px] font-sans font-medium text-mute ml-1">L</span>
+                    </div>
+                  </div>
+                  <div className="w-full">
+                    <div className="h-1 w-full bg-hairline rounded-full overflow-hidden mb-1">
+                      <div className="h-full bg-status-under rounded-full transition-all duration-1000" style={{ width: isFaded ? '0%' : Math.min((waterIntake / 4) * 100, 100) + '%' }} />
+                    </div>
+                    <div className="text-[8px] font-mono text-mute uppercase tracking-wider">Weight x 35ml</div>
                   </div>
                 </div>
               </div>
@@ -504,12 +512,11 @@ export const IdealWeightCalculatorCard: React.FC = () => {
                     animate={{ opacity: 1, y: 0 }}
                     className="space-y-6 lg:space-y-8"
                   >
-                    <div className="card glass border border-status-healthy/30 p-6 sm:p-8">
+                    <div className="card bg-canvas border border-hairline p-6 sm:p-8 rounded-ui">
                       <div className="flex items-center justify-between mb-4 sm:mb-5">
                         <div className="text-[9px] sm:text-[10px] font-mono font-bold text-mute uppercase tracking-[0.4em]">
                           Next Steps
                         </div>
-                        <span className="text-xs font-black text-status-healthy">v</span>
                       </div>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
                         {recommendations.map((tip, i) => (
@@ -518,31 +525,6 @@ export const IdealWeightCalculatorCard: React.FC = () => {
                             <p className="text-[11px] sm:text-xs font-medium text-ink/80 leading-relaxed">{tip}</p>
                           </div>
                         ))}
-                      </div>
-                    </div>
-
-                    <div className="card glass border-hairline p-6 sm:p-8">
-                      <div className="flex items-center justify-between mb-4 sm:mb-5">
-                        <div className="text-[9px] sm:text-[10px] font-mono font-bold text-mute uppercase tracking-[0.4em]">
-                          Daily Water Intake
-                        </div>
-                        <div className="text-[9px] font-mono font-bold text-mute uppercase tracking-widest bg-canvas-soft px-2 py-1 rounded-full border border-hairline">
-                          Weight x 35ml
-                        </div>
-                      </div>
-                      <div className="flex items-baseline gap-2 mb-4 sm:mb-5">
-                        <span className="text-3xl sm:text-4xl font-black tracking-tight text-ink">
-                          {waterIntake.toFixed(1)}
-                        </span>
-                        <span className="text-[10px] sm:text-xs font-bold text-mute uppercase font-mono tracking-widest">
-                          L / DAY
-                        </span>
-                      </div>
-                      <div className="h-1.5 w-full bg-hairline rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-status-under rounded-full transition-all duration-1000"
-                          style={{ width: Math.min((waterIntake / 4) * 100, 100) + '%' }}
-                        />
                       </div>
                     </div>
                   </motion.div>

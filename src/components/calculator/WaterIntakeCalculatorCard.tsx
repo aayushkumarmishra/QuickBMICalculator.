@@ -4,6 +4,7 @@ import { RotateCcw, Download, Check, Activity, ChevronDown, Target, Droplets, Su
 import { InputGroup } from './InputGroup';
 import { BrandLogo } from '../BrandLogo';
 import { ReportActions } from './ReportActions';
+import { Select } from './Select';
 
 
 
@@ -212,25 +213,24 @@ export const WaterIntakeCalculatorCard: React.FC = () => {
       className="card max-w-6xl mx-auto overflow-hidden relative p-0 shadow-premium-xl border-hairline/50 dark:bg-canvas"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-    >
-      <div className="grid grid-cols-1 lg:grid-cols-12 items-start min-h-fit">
+    >      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)] items-stretch">
         
         {/* LEFT: Command Panel (Inputs) */}
-        <div className="lg:col-span-5 p-6 sm:p-10 lg:p-12 border-b lg:border-b-0 lg:border-r border-hairline bg-canvas relative z-20 h-full overflow-y-auto">
+        <div className="p-6 sm:p-10 lg:p-12 border-b lg:border-b-0 lg:border-r border-hairline bg-canvas relative z-20 h-full overflow-y-auto">
           <div className="flex flex-col gap-6 lg:gap-8">
             <div className="flex items-center justify-between border-b border-hairline pb-8">
               <div className="flex items-center gap-4">
                 <BrandLogo className="w-12 h-12" variant="ink" />
                 <div>
-                  <h2 className="text-2xl font-black tracking-tighter text-ink leading-none mb-2">Hydration Engine</h2>
+                  <h2 className="text-2xl font-black tracking-tighter text-ink leading-none mb-2">Water Intake</h2>
                   <div className="flex items-center gap-2 text-[10px] font-mono font-bold text-mute uppercase tracking-widest">
                     <span className="w-2 h-2 rounded-full bg-status-healthy animate-pulse"></span>
-                    Live Calculation
+                    Hydration Goal
                   </div>
                 </div>
               </div>
-              <button onClick={handleResetWithAnimation} className={`p-3 bg-canvas-soft border border-hairline hover:bg-surface rounded-xl transition-all text-mute hover:text-ink shadow-premium-sm active:scale-95 ${isResetting ? 'ring-2 ring-primary/40 shadow-[0_0_15px_rgba(99,102,241,0.5)]' : ''}`} title="Reset Data">
-                <RotateCcw className={`w-5 h-5 transition-transform ${isResetting ? 'animate-spin' : ''}`} />
+              <button onClick={handleResetWithAnimation} className={`p-3 bg-canvas-soft border border-hairline hover:bg-surface rounded-xl transition-all text-mute hover:text-ink shadow-premium-sm active:scale-95 ${isResetting ? 'ring-2 ring-primary/40' : ''}`} title="Reset Data">
+                <RotateCcw className={`w-5 h-5 ${isResetting ? 'animate-spin' : ''}`} />
               </button>
             </div>
 
@@ -254,7 +254,7 @@ export const WaterIntakeCalculatorCard: React.FC = () => {
                       }}
                       placeholder="YOUR NAME"
                       maxLength={50}
-                      className="w-full bg-canvas border border-hairline dark:border-white/[0.08] rounded-ui h-14 px-5 text-xl font-bold tracking-tighter text-ink dark:text-[#f5f5f5] transition-all duration-300 placeholder:text-mute/20 dark:placeholder:text-mute/40 focus:outline-none focus:ring-[6px] focus:ring-primary/[0.03] focus:border-ink dark:focus:border-white/20 shadow-premium-sm hover:border-hairline-strong dark:hover:border-white/15 focus:bg-canvas uppercase"
+                      className="w-full bg-canvas border border-hairline rounded-ui h-14 px-5 text-xl font-bold tracking-tighter text-ink dark:text-[#f5f5f5] transition-all duration-300 placeholder:text-mute/20 dark:placeholder:text-mute/40 focus:outline-none focus:ring-[6px] focus:ring-primary/[0.03] focus:border-ink dark:focus:border-white/20 shadow-premium-sm hover:border-hairline-strong focus:bg-canvas uppercase"
                     />
                   </div>
                   {nameError && <p className="text-red-500 text-[10px] font-mono font-bold">{nameError}</p>}
@@ -263,14 +263,15 @@ export const WaterIntakeCalculatorCard: React.FC = () => {
                 <InputGroup id="water-age" label="Age" value={age} onChange={setAge} unit="YRS" placeholder="25" min={1} max={120} step="1" />
                 <div className="flex flex-col gap-3">
                   <span className="text-[10px] font-mono font-bold text-mute uppercase tracking-[0.3em] ml-1">Gender</span>
-                  <div className="flex p-1 bg-canvas-soft border border-hairline rounded-ui h-14 gap-1">
+                  <div className="flex p-1 bg-surface-2 border border-hairline rounded-full gap-1">
                     {['male', 'female'].map((g) => (
                       <button 
                         key={g} 
+                        type="button"
                         onClick={() => setGender(g as 'male' | 'female')}
-                        className={`flex-1 rounded-[4px] text-[10px] font-black uppercase tracking-[0.15em] transition-all duration-300 ${gender === g ? 'bg-ink text-canvas shadow-premium-md' : 'text-mute hover:text-ink hover:bg-canvas/50'}`}
+                        className={`flex-1 py-2.5 text-[10px] font-mono font-bold uppercase tracking-[0.08em] transition-all duration-300 rounded-full focus-ring ${gender === g ? 'bg-ink text-canvas dark:bg-canvas dark:text-ink shadow-premium-sm' : 'text-mute hover:text-ink'}`}
                       >
-                        {g}
+                        {g.toUpperCase()}
                       </button>
                     ))}
                   </div>
@@ -293,48 +294,40 @@ export const WaterIntakeCalculatorCard: React.FC = () => {
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 lg:gap-8 pt-6 border-t border-hairline/50">
-                <div className="space-y-4">
-                  <span className="text-[10px] font-mono font-bold text-mute uppercase tracking-[0.3em] ml-1">Activity Level</span>
-                  <div className="relative group">
-                    <select 
-                      value={activity}
-                      onChange={(e) => setActivity(e.target.value)}
-                      className="w-full bg-canvas-soft border border-hairline rounded-ui h-14 px-5 pr-10 text-[11px] font-black uppercase tracking-widest text-ink focus:outline-none appearance-none cursor-pointer hover:border-hairline-strong transition-all shadow-inset focus:ring-4 focus:ring-primary/5 focus:border-ink"
-                    >
-                      {ACTIVITY_LEVELS.map((level) => (
-                        <option key={level.value} value={level.value} className="bg-canvas text-ink font-sans text-sm font-medium">
-                          {level.label.toUpperCase()}  -  {level.desc}
-                        </option>
-                      ))}
-                    </select>
-                    <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-mute pointer-events-none group-hover:text-ink transition-colors" />
-                  </div>
+                <div className="space-y-3">
+                  <span className="text-xs font-mono text-mute uppercase tracking-[0.12em] ml-1">Activity Level</span>
+                  <Select 
+                    value={activity}
+                    onChange={setActivity}
+                    options={ACTIVITY_LEVELS.map(level => ({
+                      value: level.value,
+                      label: level.label,
+                      desc: level.desc
+                    }))}
+                    label="Activity Level"
+                  />
                 </div>
 
-                <div className="space-y-4">
-                  <span className="text-[10px] font-mono font-bold text-mute uppercase tracking-[0.3em] ml-1">Climate</span>
-                  <div className="relative group">
-                    <select 
-                      value={climate}
-                      onChange={(e) => setClimate(e.target.value)}
-                      className="w-full bg-canvas-soft border border-hairline rounded-ui h-14 px-5 pr-10 text-[11px] font-black uppercase tracking-widest text-ink focus:outline-none appearance-none cursor-pointer hover:border-hairline-strong transition-all shadow-inset focus:ring-4 focus:ring-primary/5 focus:border-ink"
-                    >
-                      {CLIMATE_TYPES.map((c) => (
-                        <option key={c.value} value={c.value} className="bg-canvas text-ink font-sans text-sm font-medium">
-                          {c.label.toUpperCase()}  -  {c.desc}
-                        </option>
-                      ))}
-                    </select>
-                    <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-mute pointer-events-none group-hover:text-ink transition-colors" />
-                  </div>
+                <div className="space-y-3">
+                  <span className="text-xs font-mono text-mute uppercase tracking-[0.12em] ml-1">Climate</span>
+                  <Select 
+                    value={climate}
+                    onChange={setClimate}
+                    options={CLIMATE_TYPES.map(c => ({
+                      value: c.value,
+                      label: c.label,
+                      desc: c.desc
+                    }))}
+                    label="Climate"
+                  />
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* RIGHT: Intelligence Panel (Results) */}
-        <div className="lg:col-span-7 bg-canvas-soft/40 p-6 sm:p-10 lg:p-12 relative border-t lg:border-t-0 border-hairline h-full overflow-y-auto">
+        {/* RIGHT: Results Panel */}
+        <div className="bg-canvas-soft/40 p-6 sm:p-10 lg:p-12 relative h-full overflow-y-auto">
           <div className="flex flex-col gap-6 lg:gap-8">
             <div className="flex flex-col border-b border-hairline/50 pb-8">
               <div className="flex items-center justify-between mb-8">
@@ -385,129 +378,136 @@ export const WaterIntakeCalculatorCard: React.FC = () => {
                 </div>
               ) : (
                 <>
-              <div id="water-hero-export" className="flex flex-col gap-8 py-8 px-6 sm:py-10 sm:px-8 bg-canvas border border-hairline rounded-marketing shadow-premium-lg relative overflow-hidden">
-                <div className={`absolute top-0 right-0 w-64 h-64 opacity-5 blur-[100px] rounded-full -mr-32 -mt-32 transition-colors duration-1000 ${!isFaded ? waterGoal < 2.0 ? 'bg-status-under' : waterGoal > 3.5 ? 'bg-status-over' : 'bg-status-healthy' : 'bg-mute'}`}></div>
+              <div id="water-hero-export" className="flex flex-col gap-8 py-8 px-6 sm:py-10 sm:px-8 bg-ink dark:bg-canvas border border-hairline/10 dark:border-hairline rounded-marketing shadow-premium-lg text-canvas dark:text-ink relative overflow-hidden">
+                <div className={`absolute top-0 right-0 w-64 h-64 opacity-10 dark:opacity-5 blur-[100px] rounded-full -mr-32 -mt-32 transition-colors duration-1000 ${!isFaded ? waterGoal < 2.0 ? 'bg-status-under' : waterGoal > 3.5 ? 'bg-status-over' : 'bg-status-healthy' : 'bg-mute'}`}></div>
                 
-                <div className="flex flex-col sm:flex-row justify-between items-center gap-6 sm:gap-8 relative z-10">
-                  <div className="flex flex-col items-center sm:items-start text-center sm:text-left">
-                    <span className="text-[10px] sm:text-[11px] font-mono font-bold text-mute uppercase tracking-[0.3em] mb-2">Daily Intake Goal</span>
-                    <div className="flex items-baseline gap-2 sm:gap-3">
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 w-full relative z-10">
+                  <div className="flex flex-col items-start min-w-0">
+                    <span className="text-[10px] font-mono font-bold text-canvas-soft/60 dark:text-mute uppercase tracking-[0.35em] mb-2">Daily Intake Goal</span>
+                    <div className="flex items-baseline gap-2">
                       <motion.span 
-                        className="text-5xl xs:text-6xl sm:text-8xl font-black tracking-[-0.08em] text-ink"
+                        className="text-6xl sm:text-7xl font-black tracking-[-0.03em] text-canvas dark:text-ink leading-none"
                         animate={{ scale: waterGoal > 0 ? [1, 1.02, 1] : 1 }}
                       >
                         {waterGoal > 0 ? waterGoal.toFixed(1) : '--'}
                       </motion.span>
-                      <span className="text-lg sm:text-xl font-bold text-mute/60 tracking-tighter">Liters</span>
+                      <span className="text-xs font-mono font-bold text-canvas-soft/50 dark:text-mute/50 uppercase tracking-widest">Liters</span>
                     </div>
                   </div>
 
-                  <div className="h-16 w-px bg-hairline hidden sm:block"></div>
-
-                  <div className="text-center sm:text-right">
-                    <span className="text-[10px] sm:text-[11px] font-mono font-bold text-mute uppercase tracking-[0.3em] mb-2 sm:mb-3 block">Hydration Status</span>
-                    <div className={`text-xl xs:text-2xl sm:text-3xl font-black tracking-tight ${!isFaded ? (waterGoal < 2.0 ? 'text-status-under' : waterGoal > 3.5 ? 'text-status-over' : 'text-status-healthy') : 'text-mute'}`}>
+                  <div className="flex flex-col items-start sm:items-end text-left sm:text-right min-w-0">
+                    <span className="text-[10px] font-mono font-bold text-canvas-soft/60 dark:text-mute uppercase tracking-[0.35em] mb-2">Hydration Status</span>
+                    <div className={`text-xl sm:text-2xl font-black tracking-tight break-words max-w-full leading-tight ${!isFaded ? (waterGoal < 2.0 ? 'text-status-under' : waterGoal > 3.5 ? 'text-status-over' : 'text-status-healthy') : 'text-mute'}`}>
                       {hydrationStatus}
                     </div>
                     {waterGoal > 0 && (
-                      <div className="mt-2 inline-flex items-center gap-2 px-3 py-1 rounded-full bg-canvas border border-hairline shadow-premium-sm">
-                         <div className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full ${waterGoal < 2.0 ? 'bg-status-under' : waterGoal > 3.5 ? 'bg-status-over' : 'bg-status-healthy'} animate-pulse`}></div>
-                         <span className="text-[9px] sm:text-[10px] font-mono font-bold uppercase text-ink">Calculated Intake</span>
+                      <div className="mt-2.5 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-canvas/10 border border-canvas/20 shadow-premium-sm dark:bg-ink/10 dark:border-ink/20">
+                         <div className={`w-1.5 h-1.5 rounded-full ${waterGoal < 2.0 ? 'bg-status-under' : waterGoal > 3.5 ? 'bg-status-over' : 'bg-status-healthy'} animate-pulse`}></div>
+                         <span className="text-[9px] font-mono font-bold uppercase text-canvas dark:text-ink">Calculated Intake</span>
                       </div>
                     )}
                   </div>
                 </div>
 
-                <div className="relative pt-8 pb-4">
-                  <div className="flex h-3 sm:h-4 w-full rounded-full overflow-hidden bg-hairline p-1">
-                    <div className="bg-status-under h-full border-r-2 border-canvas rounded-sm opacity-80" style={{ width: '30%' }}></div>
-                    <div className="bg-status-healthy h-full border-r-2 border-canvas rounded-sm opacity-80" style={{ width: '40%' }}></div>
-                    <div className="bg-status-over h-full rounded-sm opacity-80" style={{ width: '30%' }}></div>
+                <div className="relative pt-6 pb-2">
+                  <div className="flex h-2 w-full rounded-full overflow-hidden bg-canvas-soft/20 dark:bg-canvas-soft/10 p-0">
+                    <div className="bg-status-under h-full opacity-80" style={{ width: '30%' }}></div>
+                    <div className="bg-status-healthy h-full opacity-80" style={{ width: '40%' }}></div>
+                    <div className="bg-status-over h-full opacity-80" style={{ width: '30%' }}></div>
                   </div>
                   {!isFaded && (() => {
                     const pct = Math.min(Math.max(((waterGoal - 1) / (5 - 1)) * 100, 0), 100);
                     return (
                       <motion.div 
-                        className="absolute top-0 bottom-0 flex flex-col items-center -ml-px pointer-events-none z-20"
+                        className="absolute top-[18px] bottom-0 flex flex-col items-center -ml-px pointer-events-none z-20"
                         initial={{ left: '0%' }}
                         animate={{ left: `${pct}%` }}
                         transition={{ type: 'spring', stiffness: 80, damping: 15 }}
                       >
-                        <div className="h-[calc(100%-8px)] flex flex-col items-center">
-                          <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-canvas border-2 border-ink shadow-premium-md flex items-center justify-center mb-1">
-                            <div className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full ${waterGoal < 2.0 ? 'bg-status-under' : waterGoal > 3.5 ? 'bg-status-over' : 'bg-status-healthy'} animate-pulse`}></div>
+                        <div className="h-4 flex flex-col items-center">
+                          <div className="w-3.5 h-3.5 rounded-full bg-canvas border-2 border-ink shadow-premium-md flex items-center justify-center">
+                            <div className={`w-1 h-1 rounded-full ${waterGoal < 2.0 ? 'bg-status-under' : waterGoal > 3.5 ? 'bg-status-over' : 'bg-status-healthy'} animate-pulse`}></div>
                           </div>
-                          <div className="w-1 h-full bg-ink/20" />
                         </div>
                       </motion.div>
                     );
                   })()}
-                  <div className="grid grid-cols-3 mt-6 gap-1 sm:gap-2">
+                  <div className="grid grid-cols-3 mt-4 gap-2">
                     {[
-                      { label: 'Low', range: '< 2.2L' },
-                      { label: 'Normal', range: '2.2 - 3.8L' },
-                      { label: 'High', range: '> 3.8L' }
+                      { label: 'Low Intake', range: '< 2.2L' },
+                      { label: 'Normal Target', range: '2.2 - 3.8L' },
+                      { label: 'High Hydration', range: '> 3.8L' }
                     ].map((zone, i) => (
                       <div key={i} className="flex flex-col items-center sm:items-start text-center sm:text-left overflow-hidden">
-                        <span className="text-[7px] sm:text-[9px] font-mono font-bold text-ink uppercase tracking-widest mb-1 leading-tight">{zone.label}</span>
-                        <span className="text-[6px] sm:text-[8px] font-mono font-bold text-body leading-tight">{zone.range}</span>
+                        <span className="text-[8px] font-mono font-bold text-canvas-soft/50 dark:text-mute/50 uppercase tracking-widest mb-1 leading-tight">{zone.label}</span>
+                        <span className="text-[9px] font-mono font-bold text-canvas-soft/70 dark:text-mute/70 leading-tight">{zone.range}</span>
                       </div>
                     ))}
                   </div>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
-                <div className="card glass border-hairline p-6 sm:p-8 flex flex-col justify-between min-h-[140px] sm:min-h-[160px] group hover:border-hairline-strong transition-all">
-                  <div className="flex justify-between items-start mb-4 sm:mb-6">
-                    <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-ink text-canvas flex items-center justify-center shadow-premium-md group-hover:scale-110 transition-transform">
-                      <Clock className="w-4 h-4 sm:w-5 sm:h-5" />
-                    </div>
-                    <div className="text-[9px] sm:text-[10px] font-mono font-bold text-mute uppercase tracking-[0.3em] bg-canvas-soft px-2 sm:px-3 py-1 sm:py-1.5 rounded-full border border-hairline">Timing</div>
-                  </div>
+              {/* 4-Cell Timing Grid */}
+              <div className="grid grid-cols-2 gap-4">
+                {/* Cell 1: Morning */}
+                <div className="bg-surface-2 p-5 border border-hairline rounded-ui group hover:border-hairline-strong transition-all flex flex-col justify-between">
                   <div>
-                    <h3 className="text-xl sm:text-2xl font-black tracking-tight mb-1 sm:mb-2 text-ink truncate">Suggested Intake</h3>
-                    <div className="grid grid-cols-2 gap-x-4 gap-y-3 mt-2">
-                      <div className="flex flex-col">
-                        <span className="text-[8px] font-mono font-bold text-mute uppercase tracking-widest">Morning</span>
-                        <span className="text-sm font-bold text-ink">{isFaded ? '--' : timings.morning.toFixed(2)} L</span>
-                      </div>
-                      <div className="flex flex-col">
-                        <span className="text-[8px] font-mono font-bold text-mute uppercase tracking-widest">Afternoon</span>
-                        <span className="text-sm font-bold text-ink">{isFaded ? '--' : timings.afternoon.toFixed(2)} L</span>
-                      </div>
-                      <div className="flex flex-col">
-                        <span className="text-[8px] font-mono font-bold text-mute uppercase tracking-widest">Night</span>
-                        <span className="text-sm font-bold text-ink">{isFaded ? '--' : timings.night.toFixed(2)} L</span>
-                      </div>
-                      <div className="flex flex-col">
-                        <span className="text-[8px] font-mono font-bold text-mute uppercase tracking-widest">Workout</span>
-                        <span className="text-sm font-bold text-ink">{isFaded ? '--' : timings.workout.toFixed(2)} L</span>
-                      </div>
+                    <div className="text-[9px] font-mono font-bold text-mute uppercase tracking-[0.2em] mb-3">Morning Timing</div>
+                    <div className="text-xl sm:text-2xl font-mono font-bold text-ink tracking-tight mb-2">
+                      {isFaded ? '--' : timings.morning.toFixed(2)}
+                      <span className="text-[10px] font-sans font-medium text-mute ml-1">L</span>
                     </div>
+                  </div>
+                  <div className="w-full">
+                    <div className="text-[8px] font-mono text-mute uppercase tracking-wider">Before noon baseline</div>
                   </div>
                 </div>
 
-                <div className="card glass border-hairline p-6 sm:p-8 flex flex-col justify-between min-h-[140px] sm:min-h-[160px] group hover:border-hairline-strong transition-all">
-                  <div className="flex justify-between items-start mb-4 sm:mb-6">
-                    <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-primary/5 text-status-healthy flex items-center justify-center border border-status-healthy/20 group-hover:scale-110 transition-transform">
-                      <Droplets className="w-4 h-4 sm:w-5 sm:h-5" />
-                    </div>
-                    <div className="text-[9px] sm:text-[10px] font-mono font-bold text-mute uppercase tracking-[0.3em] bg-canvas-soft px-2 sm:px-3 py-1 sm:py-1.5 rounded-full border border-hairline">Guidance</div>
-                  </div>
+                {/* Cell 2: Afternoon */}
+                <div className="bg-surface-2 p-5 border border-hairline rounded-ui group hover:border-hairline-strong transition-all flex flex-col justify-between">
                   <div>
-                    <div className="flex items-baseline gap-1.5 sm:gap-2 mb-1">
-                      <span className="text-xl sm:text-2xl font-black tracking-tight text-ink">
-                        {isFaded ? '--' : waterGoal.toFixed(1)}
-                      </span>
-                      <span className="text-[10px] sm:text-xs font-bold text-mute uppercase font-mono tracking-widest">{isFaded ? '' : 'Liters/Day'}</span>
+                    <div className="text-[9px] font-mono font-bold text-mute uppercase tracking-[0.2em] mb-3">Afternoon Intake</div>
+                    <div className="text-xl sm:text-2xl font-mono font-bold text-ink tracking-tight mb-2">
+                      {isFaded ? '--' : timings.afternoon.toFixed(2)}
+                      <span className="text-[10px] font-sans font-medium text-mute ml-1">L</span>
                     </div>
-                    <p className="text-body text-[9px] sm:text-[10px] font-bold uppercase tracking-wider opacity-60">Ideal daily hydration goal</p>
+                  </div>
+                  <div className="w-full">
+                    <div className="text-[8px] font-mono text-mute uppercase tracking-wider">Midday hydration target</div>
+                  </div>
+                </div>
+
+                {/* Cell 3: Night */}
+                <div className="bg-surface-2 p-5 border border-hairline rounded-ui group hover:border-hairline-strong transition-all flex flex-col justify-between">
+                  <div>
+                    <div className="text-[9px] font-mono font-bold text-mute uppercase tracking-[0.2em] mb-3">Night Intake</div>
+                    <div className="text-xl sm:text-2xl font-mono font-bold text-ink tracking-tight mb-2">
+                      {isFaded ? '--' : timings.night.toFixed(2)}
+                      <span className="text-[10px] font-sans font-medium text-mute ml-1">L</span>
+                    </div>
+                  </div>
+                  <div className="w-full">
+                    <div className="text-[8px] font-mono text-mute uppercase tracking-wider">Rest and recover baseline</div>
+                  </div>
+                </div>
+
+                {/* Cell 4: Workout */}
+                <div className="bg-surface-2 p-5 border border-hairline rounded-ui group hover:border-hairline-strong transition-all flex flex-col justify-between">
+                  <div>
+                    <div className="text-[9px] font-mono font-bold text-mute uppercase tracking-[0.2em] mb-3">Workout Intake</div>
+                    <div className="text-xl sm:text-2xl font-mono font-bold text-ink tracking-tight mb-2">
+                      {isFaded ? '--' : timings.workout.toFixed(2)}
+                      <span className="text-[10px] font-sans font-medium text-mute ml-1">L</span>
+                    </div>
+                  </div>
+                  <div className="w-full">
+                    <div className="text-[8px] font-mono text-mute uppercase tracking-wider">Hydration booster timing</div>
                   </div>
                 </div>
               </div>
 
-              <div className="card glass border-hairline p-6 sm:p-8 space-y-6">
+              {/* Recommendations */}
+              <div className="card bg-canvas border border-hairline p-6 sm:p-8 rounded-ui space-y-6">
                 <div className="flex items-center justify-between">
                   <div className="text-[9px] sm:text-[10px] font-mono font-bold text-mute uppercase tracking-[0.4em]">
                     Recommendations

@@ -4,6 +4,7 @@ import { RotateCcw, Activity, ChevronDown, Check, Droplets } from 'lucide-react'
 import { InputGroup } from './InputGroup';
 import { BrandLogo } from '../BrandLogo';
 import { ReportActions } from './ReportActions';
+import { Select } from './Select';
 
 type UnitSystem = 'metric' | 'us' | 'other';
 type Gender = 'male' | 'female' | '';
@@ -281,10 +282,10 @@ export const BodyFatCalculatorCard: React.FC = () => {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
     >
-      <div className="grid grid-cols-1 lg:grid-cols-12 items-start min-h-fit">
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)] items-stretch">
         
         {/* LEFT: Command Panel (Inputs) */}
-        <div className="lg:col-span-5 p-6 sm:p-10 lg:p-12 border-b lg:border-b-0 lg:border-r border-hairline bg-canvas relative z-20 h-full overflow-y-auto">
+        <div className="p-6 sm:p-10 lg:p-12 border-b lg:border-b-0 lg:border-r border-hairline bg-canvas relative z-20 h-full overflow-y-auto">
           <div className="flex flex-col gap-6 lg:gap-8">
             <div className="flex items-center justify-between border-b border-hairline pb-8">
               <div className="flex items-center gap-4">
@@ -305,14 +306,15 @@ export const BodyFatCalculatorCard: React.FC = () => {
             <div className="space-y-6 lg:space-y-8">
               <div className="space-y-4">
                 <span className="text-[10px] font-mono font-bold text-mute uppercase tracking-[0.3em] ml-1">Standard</span>
-                <div className="flex p-1 bg-canvas-soft border border-hairline rounded-ui gap-1">
+                <div className="flex p-1 bg-surface-2 border border-hairline rounded-full gap-1">
                   {['us', 'metric', 'other'].map((s) => (
                     <button 
                       key={s} 
+                      type="button"
                       onClick={() => { setSystem(s as UnitSystem); handleReset(); }}
-                      className={`flex-1 py-2.5 text-[10px] font-black uppercase tracking-[0.15em] transition-all duration-300 rounded-[4px] ${system === s ? 'bg-canvas text-ink shadow-premium-sm ring-1 ring-hairline' : 'text-mute hover:text-ink hover:bg-canvas/50'}`}
+                      className={`flex-1 py-2.5 text-[10px] font-mono font-bold uppercase tracking-[0.08em] transition-all duration-300 rounded-full focus-ring ${system === s ? 'bg-ink text-canvas dark:bg-canvas dark:text-ink shadow-premium-sm' : 'text-mute hover:text-ink'}`}
                     >
-                      {s === 'us' ? 'US Units' : s.charAt(0).toUpperCase() + s.slice(1)}
+                      {s === 'us' ? 'US' : s.toUpperCase()}
                     </button>
                   ))}
                 </div>
@@ -344,14 +346,15 @@ export const BodyFatCalculatorCard: React.FC = () => {
                 
                 <div className="flex flex-col gap-3">
                   <span className="text-[10px] font-mono font-bold text-mute uppercase tracking-widest">Gender</span>
-                  <div className="flex p-1 bg-canvas-soft border border-hairline rounded-ui h-14 gap-1">
+                  <div className="flex p-1 bg-surface-2 border border-hairline rounded-full gap-1">
                     {['male', 'female'].map((g) => (
                       <button 
                         key={g} 
+                        type="button"
                         onClick={() => { setGender(g as Gender); setHips(''); }}
-                        className={`flex-1 rounded-[4px] text-[10px] font-black uppercase tracking-[0.15em] transition-all duration-300 ${gender === g ? 'bg-ink text-canvas shadow-premium-md' : 'text-mute hover:text-ink hover:bg-canvas/50'}`}
+                        className={`flex-1 py-2.5 text-[10px] font-mono font-bold uppercase tracking-[0.08em] transition-all duration-300 rounded-full focus-ring ${gender === g ? 'bg-ink text-canvas dark:bg-canvas dark:text-ink shadow-premium-sm' : 'text-mute hover:text-ink'}`}
                       >
-                        {g}
+                        {g.toUpperCase()}
                       </button>
                     ))}
                   </div>
@@ -379,19 +382,13 @@ export const BodyFatCalculatorCard: React.FC = () => {
                             <InputGroup id="feet" label="Height" value={feet} onChange={setFeet} unit="FT" placeholder="5" min={3} max={8} />
                             <InputGroup id="inches" label="Inches" value={inches} onChange={setInches} unit="IN" placeholder="8" min={0} max={11} />
                           </div>
-                          <div className="flex justify-end">
-                            <div className="relative flex items-center">
-                              <select
-                                value={heightUnitOther}
-                                onChange={(e) => { setHeightUnitOther(e.target.value as any); setHeight(''); setFeet(''); setInches(''); }}
-                                className="appearance-none bg-canvas-soft pl-2 pr-6 py-1 rounded border border-hairline text-[9px] font-mono font-bold text-mute uppercase tracking-widest focus:outline-none focus:border-ink focus:text-ink transition-colors cursor-pointer hover:bg-surface"
-                              >
-                                {['cm', 'm', 'ft+in', 'in'].map(opt => (
-                                  <option key={opt} value={opt}>{opt}</option>
-                                ))}
-                              </select>
-                              <ChevronDown className="absolute right-1.5 w-2.5 h-2.5 text-mute pointer-events-none" />
-                            </div>
+                          <div className="flex justify-end w-full">
+                            <Select
+                              value={heightUnitOther}
+                              onChange={(val) => { setHeightUnitOther(val as any); setHeight(''); setFeet(''); setInches(''); }}
+                              options={['cm', 'm', 'ft+in', 'in'].map(opt => ({ value: opt, label: opt.toUpperCase() }))}
+                              label="Height Unit"
+                            />
                           </div>
                         </div>
                       ) : (
@@ -475,7 +472,7 @@ export const BodyFatCalculatorCard: React.FC = () => {
         </div>
 
         {/* RIGHT: Results Panel */}
-        <div className="lg:col-span-7 bg-canvas-soft/40 p-6 sm:p-10 lg:p-12 relative border-t lg:border-t-0 border-hairline h-full overflow-y-auto">
+        <div className="bg-canvas-soft/40 p-6 sm:p-10 lg:p-12 relative h-full overflow-y-auto">
           <div className="flex flex-col gap-6 lg:gap-8">
             <div className="flex flex-col border-b border-hairline/50 pb-8">
               <div className="flex items-center justify-between mb-8">
@@ -525,17 +522,19 @@ export const BodyFatCalculatorCard: React.FC = () => {
               ) : (
                 <div className="space-y-8">
                   {/* Gauge */}
-                  <div className="flex flex-col gap-6 py-8 px-6 bg-canvas border border-hairline rounded-marketing shadow-premium-lg relative overflow-hidden">
-                    <div className="flex justify-between items-center relative z-10">
-                      <div className="flex flex-col">
-                        <span className="text-[9px] font-mono font-bold text-mute uppercase tracking-[0.2em] mb-1">Body Fat %</span>
-                        <span className="text-5xl sm:text-6xl font-black tracking-tighter text-ink">
-                          {bodyFat.toFixed(1)}%
-                        </span>
+                  <div id="body-fat-gauge-export" className="flex flex-col gap-8 py-8 px-6 sm:py-10 sm:px-8 bg-ink dark:bg-canvas border border-hairline/10 dark:border-hairline rounded-marketing shadow-premium-lg text-canvas dark:text-ink relative overflow-hidden">
+                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 w-full relative z-10">
+                      <div className="flex flex-col items-start min-w-0">
+                        <span className="text-[10px] font-mono font-bold text-canvas-soft/60 dark:text-mute uppercase tracking-[0.35em] mb-2">Body Fat %</span>
+                        <div className="flex items-baseline gap-2">
+                          <span className="text-6xl sm:text-7xl font-black tracking-[-0.03em] text-canvas dark:text-ink leading-none">
+                            {bodyFat.toFixed(1)}%
+                          </span>
+                        </div>
                       </div>
-                      <div className="text-right">
-                        <span className="text-[9px] font-mono font-bold text-mute uppercase tracking-[0.2em] mb-1 block">ACE Category</span>
-                        <span className={`text-xl font-black tracking-tight ${getStatusColor()}`}>
+                      <div className="flex flex-col items-start sm:items-end text-left sm:text-right min-w-0">
+                        <span className="text-[10px] font-mono font-bold text-canvas-soft/60 dark:text-mute uppercase tracking-[0.35em] mb-2">ACE Category</span>
+                        <span className={`text-xl sm:text-2xl font-black tracking-tight break-words max-w-full ${getStatusColor()}`}>
                           {category}
                         </span>
                       </div>
@@ -543,26 +542,26 @@ export const BodyFatCalculatorCard: React.FC = () => {
 
                     <div className="relative pt-6">
                       {/* Bar */}
-                      <div className="flex h-3 w-full rounded-full overflow-hidden bg-hairline">
+                      <div className="flex h-2 sm:h-2.5 w-full rounded-full overflow-hidden bg-canvas-soft/20 dark:bg-canvas-soft/10 p-0">
                         {categories.map((c, i) => (
-                          <div key={i} className={`${c.color} h-full border-r border-canvas opacity-80`} style={{ width: `${100 / categories.length}%` }} />
+                          <div key={i} className={`${c.color} h-full border-r border-canvas dark:border-canvas last:border-r-0 transition-all`} style={{ width: `${100 / categories.length}%` }} />
                         ))}
                       </div>
 
                       {/* Needle */}
                       <motion.div 
-                        className="absolute top-3 bottom-0 flex flex-col items-center -ml-1 pointer-events-none"
+                        className="absolute top-1 bottom-0 flex flex-col items-center -ml-2 pointer-events-none"
                         initial={{ left: '0%' }}
                         animate={{ left: `${getMarkerPosition()}%` }}
                         transition={{ type: 'spring', stiffness: 80, damping: 15 }}
                       >
-                        <div className="w-2.5 h-2.5 rounded-full bg-ink border border-white shadow-premium-md" />
+                        <div className="w-4 h-4 rounded-full bg-canvas border-[1.5px] border-ink dark:border-canvas shadow-premium-md" />
                       </motion.div>
 
                       {/* Scale */}
-                      <div className="flex justify-between text-[8px] font-mono font-bold text-mute mt-3 uppercase tracking-wider">
+                      <div className="flex justify-between text-[8px] font-mono font-bold text-canvas-soft/60 dark:text-mute mt-4 uppercase tracking-wider">
                         {categories.map((c, i) => (
-                          <span key={i} className="text-center">{c.label}<br/>({c.range})</span>
+                          <span key={i} className="text-center w-20 overflow-hidden leading-tight">{c.label}<br/>({c.range})</span>
                         ))}
                       </div>
                     </div>
@@ -570,23 +569,23 @@ export const BodyFatCalculatorCard: React.FC = () => {
 
                   {/* Composition Card Grid */}
                   <div className="grid grid-cols-2 gap-4">
-                    <div className="bg-canvas border border-hairline rounded-ui p-5 space-y-1">
+                    <div className="bg-surface-2 border border-hairline rounded-ui p-5 space-y-1">
                       <span className="text-[9px] font-mono font-bold text-mute uppercase tracking-widest opacity-60">Lean Body Mass</span>
-                      <p className="text-2xl font-black text-ink">
+                      <p className="text-xl sm:text-2xl font-mono font-bold text-ink">
                         {leanMass.toFixed(1)} {system === 'metric' ? 'kg' : 'lb'}
                       </p>
                       <p className="text-[10px] font-semibold text-mute">
-                        {((leanMass / (parseFloat(weight) || 1)) * 100).toFixed(1)}% of total weight
+                        {((leanMass / (parseFloat(weight) || 1)) * 100).toFixed(1)}% of weight
                       </p>
                     </div>
 
-                    <div className="bg-canvas border border-hairline rounded-ui p-5 space-y-1">
+                    <div className="bg-surface-2 border border-hairline rounded-ui p-5 space-y-1">
                       <span className="text-[9px] font-mono font-bold text-mute uppercase tracking-widest opacity-60">Fat Body Mass</span>
-                      <p className="text-2xl font-black text-ink">
+                      <p className="text-xl sm:text-2xl font-mono font-bold text-ink">
                         {fatMass.toFixed(1)} {system === 'metric' ? 'kg' : 'lb'}
                       </p>
                       <p className="text-[10px] font-semibold text-mute">
-                        {bodyFat.toFixed(1)}% of total weight
+                        {bodyFat.toFixed(1)}% of weight
                       </p>
                     </div>
                   </div>

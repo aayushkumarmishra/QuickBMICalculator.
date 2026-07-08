@@ -4,6 +4,7 @@ import { RotateCcw, Activity, ChevronDown } from 'lucide-react';
 import { InputGroup } from './InputGroup';
 import { BrandLogo } from '../BrandLogo';
 import { ReportActions } from './ReportActions';
+import { Select } from './Select';
 
 type Gender = 'male' | 'female' | '';
 type Goal = 'loss' | 'maintenance' | 'gain' | '';
@@ -177,10 +178,10 @@ export const ProteinCalculatorCard: React.FC = () => {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
     >
-      <div className="grid grid-cols-1 lg:grid-cols-12 items-start min-h-fit">
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)] items-stretch">
         
-        {/* LEFT: Inputs */}
-        <div className="lg:col-span-5 p-6 sm:p-10 lg:p-12 border-b lg:border-b-0 lg:border-r border-hairline bg-canvas relative z-20 h-full overflow-y-auto">
+        {/* LEFT: Command Panel (Inputs) */}
+        <div className="p-6 sm:p-10 lg:p-12 border-b lg:border-b-0 lg:border-r border-hairline bg-canvas relative z-20 h-full overflow-y-auto">
           <div className="flex flex-col gap-6 lg:gap-8">
             <div className="flex items-center justify-between border-b border-hairline pb-8">
               <div className="flex items-center gap-4">
@@ -193,7 +194,7 @@ export const ProteinCalculatorCard: React.FC = () => {
                   </div>
                 </div>
               </div>
-              <button onClick={handleResetWithAnimation} className="p-3 bg-canvas-soft border border-hairline hover:bg-surface rounded-xl transition-all text-mute hover:text-ink shadow-premium-sm active:scale-95">
+              <button onClick={handleResetWithAnimation} className={`p-3 bg-canvas-soft border border-hairline hover:bg-surface rounded-xl transition-all text-mute hover:text-ink shadow-premium-sm active:scale-95 ${isResetting ? 'ring-2 ring-primary/40' : ''}`} title="Reset Data">
                 <RotateCcw className={`w-5 h-5 ${isResetting ? 'animate-spin' : ''}`} />
               </button>
             </div>
@@ -225,14 +226,15 @@ export const ProteinCalculatorCard: React.FC = () => {
                 
                 <div className="flex flex-col gap-3">
                   <span className="text-[10px] font-mono font-bold text-mute uppercase tracking-widest">Gender</span>
-                  <div className="flex p-1 bg-canvas-soft border border-hairline rounded-ui h-14 gap-1">
+                  <div className="flex p-1 bg-surface-2 border border-hairline rounded-full gap-1">
                     {['male', 'female'].map((g) => (
                       <button 
                         key={g} 
+                        type="button"
                         onClick={() => setGender(g as Gender)}
-                        className={`flex-1 rounded-[4px] text-[10px] font-black uppercase tracking-[0.15em] transition-all duration-300 ${gender === g ? 'bg-ink text-canvas shadow-premium-md' : 'text-mute hover:text-ink hover:bg-canvas/50'}`}
+                        className={`flex-1 py-2.5 text-[10px] font-mono font-bold uppercase tracking-[0.08em] transition-all duration-300 rounded-full focus-ring ${gender === g ? 'bg-ink text-canvas dark:bg-canvas dark:text-ink shadow-premium-sm' : 'text-mute hover:text-ink'}`}
                       >
-                        {g}
+                        {g.toUpperCase()}
                       </button>
                     ))}
                   </div>
@@ -253,9 +255,9 @@ export const ProteinCalculatorCard: React.FC = () => {
                   />
                 </div>
 
-                <div className="col-span-2 space-y-4">
-                  <span className="text-[10px] font-mono font-bold text-mute uppercase tracking-[0.3em] ml-1">Goal</span>
-                  <div className="flex p-1 bg-canvas-soft border border-hairline rounded-ui gap-1">
+                <div className="col-span-2 space-y-3">
+                  <span className="text-xs font-mono text-mute uppercase tracking-[0.12em] ml-1">Goal</span>
+                  <div className="flex p-1 bg-surface-2 border border-hairline rounded-full gap-1">
                     {[
                       { value: 'loss', label: 'Loss / Cut' },
                       { value: 'maintenance', label: 'Maintain' },
@@ -263,31 +265,28 @@ export const ProteinCalculatorCard: React.FC = () => {
                     ].map((item) => (
                       <button 
                         key={item.value} 
+                        type="button"
                         onClick={() => setGoal(item.value as Goal)}
-                        className={`flex-1 py-2.5 text-[10px] font-black uppercase tracking-[0.15em] transition-all duration-300 rounded-[4px] ${goal === item.value ? 'bg-ink text-canvas shadow-premium-md' : 'text-mute hover:text-ink hover:bg-canvas/50'}`}
+                        className={`flex-1 py-2.5 text-[10px] font-mono font-bold uppercase tracking-[0.08em] transition-all duration-300 rounded-full focus-ring ${goal === item.value ? 'bg-ink text-canvas dark:bg-canvas dark:text-ink shadow-premium-sm' : 'text-mute hover:text-ink'}`}
                       >
-                        {item.label}
+                        {item.label.toUpperCase()}
                       </button>
                     ))}
                   </div>
                 </div>
 
-                <div className="col-span-2 space-y-4">
-                  <span className="text-[10px] font-mono font-bold text-mute uppercase tracking-[0.3em] ml-1">Physical Activity</span>
-                  <div className="relative group">
-                    <select 
-                      value={activity}
-                      onChange={(e) => setActivity(e.target.value)}
-                      className="w-full bg-canvas-soft border border-hairline rounded-ui h-14 px-5 pr-10 text-[11px] font-black uppercase tracking-widest text-ink focus:outline-none appearance-none cursor-pointer hover:border-hairline-strong transition-all shadow-inset"
-                    >
-                      {ACTIVITY_LEVELS.map((level) => (
-                        <option key={level.value} value={level.value} className="bg-canvas text-ink font-sans text-sm font-medium">
-                          {level.label.toUpperCase()} - {level.desc}
-                        </option>
-                      ))}
-                    </select>
-                    <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-mute pointer-events-none group-hover:text-ink transition-colors" />
-                  </div>
+                <div className="col-span-2 space-y-3">
+                  <span className="text-xs font-mono text-mute uppercase tracking-[0.12em] ml-1">Physical Activity</span>
+                  <Select 
+                    value={activity}
+                    onChange={setActivity}
+                    options={ACTIVITY_LEVELS.map(level => ({
+                      value: level.value,
+                      label: level.label,
+                      desc: level.desc
+                    }))}
+                    label="Physical Activity"
+                  />
                 </div>
               </div>
             </div>
@@ -344,34 +343,70 @@ export const ProteinCalculatorCard: React.FC = () => {
                 </div>
               ) : (
                 <div className="space-y-8">
-                  {/* Summary metric card */}
-                  <div className="bg-canvas border border-hairline rounded-marketing p-6 space-y-2 relative overflow-hidden shadow-premium-sm flex items-center justify-between">
-                    <div>
-                      <span className="text-[9px] font-mono font-bold text-mute uppercase tracking-widest mb-1 block">Daily Target</span>
-                      <p className="text-5xl font-black text-ink">{Math.round(proteinGoal)} <span className="text-lg font-bold text-mute">g/day</span></p>
-                    </div>
-                    <div className="text-right">
-                      <span className="text-[9px] font-mono font-bold text-mute uppercase tracking-widest mb-1 block">RDA Multiplier</span>
-                      <span className="inline-flex px-3 py-1 bg-ink text-canvas text-[10px] font-black uppercase tracking-wider rounded-full">
-                        {multiplier.toFixed(2)} g/kg
-                      </span>
+                  {/* Gauge */}
+                  <div id="protein-gauge-export" className="flex flex-col gap-8 py-8 px-6 sm:py-10 sm:px-8 bg-ink dark:bg-canvas border border-hairline/10 dark:border-hairline rounded-marketing shadow-premium-lg text-canvas dark:text-ink relative overflow-hidden">
+                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 w-full relative z-10">
+                      <div className="flex flex-col items-start min-w-0">
+                        <span className="text-[10px] font-mono font-bold text-canvas-soft/60 dark:text-mute uppercase tracking-[0.35em] mb-2">Daily Protein Target</span>
+                        <div className="flex items-baseline gap-2">
+                          <span className="text-6xl sm:text-7xl font-black tracking-[-0.03em] text-canvas dark:text-ink leading-none">
+                            {Math.round(proteinGoal)}
+                          </span>
+                          <span className="text-xs font-mono font-bold text-canvas-soft/50 dark:text-mute/50 uppercase tracking-widest">g/day</span>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col items-start sm:items-end text-left sm:text-right min-w-0">
+                        <span className="text-[10px] font-mono font-bold text-canvas-soft/60 dark:text-mute uppercase tracking-[0.35em] mb-2">RDA Multiplier</span>
+                        <span className="text-xl sm:text-2xl font-black tracking-tight break-words max-w-full text-canvas dark:text-ink leading-tight">
+                          {multiplier.toFixed(2)} g/kg
+                        </span>
+                      </div>
                     </div>
                   </div>
 
-                  {/* Recommendations Ranges */}
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="bg-canvas border border-hairline rounded-ui p-5 space-y-1">
-                      <span className="text-[9px] font-mono font-bold text-mute uppercase tracking-widest opacity-60">Optimal Range</span>
-                      <p className="text-xl font-black text-ink">
-                        {Math.round(proteinRange.min)}–{Math.round(proteinRange.max)} g
-                      </p>
-                      <p className="text-[9px] text-mute font-medium leading-tight mt-1">Flexible daily spectrum depending on training load</p>
+                  {/* 3-Cell Grid of Secondary Metrics */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {/* Range */}
+                    <div className="bg-surface-2 p-5 border border-hairline rounded-ui group hover:border-hairline-strong transition-all flex flex-col justify-between">
+                      <div>
+                        <div className="text-[9px] font-mono font-bold text-mute uppercase tracking-[0.2em] mb-3">Optimal Range</div>
+                        <div className="text-xl sm:text-2xl font-mono font-bold text-ink tracking-tight mb-2">
+                          {Math.round(proteinRange.min)}–{Math.round(proteinRange.max)}
+                          <span className="text-[10px] font-sans font-medium text-mute ml-1">G</span>
+                        </div>
+                      </div>
+                      <div className="w-full">
+                        <div className="text-[8px] font-mono text-mute uppercase tracking-wider">Daily spectrum range</div>
+                      </div>
                     </div>
 
-                    <div className="bg-canvas border border-hairline rounded-ui p-5 space-y-1">
-                      <span className="text-[9px] font-mono font-bold text-mute uppercase tracking-widest opacity-60">Protein Energy</span>
-                      <p className="text-xl font-black text-ink">{Math.round(proteinCalories)} kcal</p>
-                      <p className="text-[9px] text-mute font-medium leading-tight mt-1">Calories derived purely from protein (4 kcal/g)</p>
+                    {/* Calories */}
+                    <div className="bg-surface-2 p-5 border border-hairline rounded-ui group hover:border-hairline-strong transition-all flex flex-col justify-between">
+                      <div>
+                        <div className="text-[9px] font-mono font-bold text-mute uppercase tracking-[0.2em] mb-3">Protein Energy</div>
+                        <div className="text-xl sm:text-2xl font-mono font-bold text-ink tracking-tight mb-2">
+                          {Math.round(proteinCalories)}
+                          <span className="text-[10px] font-sans font-medium text-mute ml-1">KCAL</span>
+                        </div>
+                      </div>
+                      <div className="w-full">
+                        <div className="text-[8px] font-mono text-mute uppercase tracking-wider">4 kcal per gram yield</div>
+                      </div>
+                    </div>
+
+                    {/* Factor */}
+                    <div className="bg-surface-2 p-5 border border-hairline rounded-ui group hover:border-hairline-strong transition-all flex flex-col justify-between">
+                      <div>
+                        <div className="text-[9px] font-mono font-bold text-mute uppercase tracking-[0.2em] mb-3">RDA Factor</div>
+                        <div className="text-xl sm:text-2xl font-mono font-bold text-ink tracking-tight mb-2">
+                          {multiplier.toFixed(2)}
+                          <span className="text-[10px] font-sans font-medium text-mute ml-1">g/kg</span>
+                        </div>
+                      </div>
+                      <div className="w-full">
+                        <div className="text-[8px] font-mono text-mute uppercase tracking-wider">Relative target multiplier</div>
+                      </div>
                     </div>
                   </div>
 
@@ -379,7 +414,7 @@ export const ProteinCalculatorCard: React.FC = () => {
                   <div className="bg-canvas border border-hairline rounded-ui p-6 space-y-3">
                     <h4 className="text-[10px] font-mono font-black text-ink uppercase tracking-widest">Protein Intake Guidelines</h4>
                     <p className="text-xs text-body leading-relaxed font-medium">
-                      Based on your weight and physical goals, your optimal daily protein target is <strong>{Math.round(proteinGoal)} grams</strong>. 
+                      Based on your weight and physical goals, your daily protein target is estimated at <strong>{Math.round(proteinGoal)} grams</strong>. 
                       {goal === 'loss' && " Since your goal is body fat reduction, a slightly elevated protein factor helps prevent the body from utilizing skeletal muscle as fuel, safeguarding metabolic health during calorie deficits."}
                       {goal === 'gain' && " Since your objective is lean mass hypertrophy, ample protein supplies essential amino acids needed to build and repair skeletal muscle fibers activated during physical exercise."}
                       {goal === 'maintenance' && " For weight maintenance, this level of protein keeps your body operating efficiently, supports muscular balance, and keeps satiety levels stable throughout the day."}

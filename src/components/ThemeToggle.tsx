@@ -90,42 +90,38 @@ export const ThemeToggle: React.FC = () => {
     window.dispatchEvent(new CustomEvent('theme-sync', { detail: mode }));
   };
 
-  if (!theme) return <div className="w-[72px] h-9 bg-canvas-soft border border-hairline rounded-pill animate-pulse" />;
+  if (!theme) return <div className="w-[58px] h-8 bg-surface-2 border border-hairline rounded-full animate-pulse" />;
 
   return (
-    <div className="relative flex items-center p-1 bg-canvas-soft border border-hairline rounded-pill shadow-inset group/toggle">
-      {/* Sliding Highlight - Tactile & Premium */}
+    <div className="relative flex items-center p-[3px] bg-surface-2 border border-hairline rounded-full select-none">
+      {/* Sliding Highlight */}
       <motion.div
-        className="absolute h-7 w-[32px] bg-canvas border border-hairline shadow-premium-sm rounded-pill z-0 after:absolute after:inset-0 after:rounded-pill after:shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)] dark:after:shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]"
+        className="absolute h-[26px] w-[26px] bg-surface border border-hairline/10 shadow-premium-sm rounded-full z-0"
         initial={false}
         animate={{
-          x: theme === 'light' ? 0 : 32,
+          x: theme === 'light' ? 0 : 26,
         }}
-        transition={{ type: 'spring', stiffness: 500, damping: 35 }}
+        transition={{ duration: 0.15, ease: 'easeOut' }}
       />
 
       <button
         onClick={() => applyTheme('light', true)}
-        className={`relative z-10 flex items-center justify-center w-8 h-7 rounded-pill transition-all duration-300 group/btn ${
-          theme === 'light' ? 'text-ink' : 'text-mute hover:text-ink'
+        className={`relative z-10 flex items-center justify-center w-[26px] h-[26px] rounded-full transition-colors duration-200 cursor-pointer ${
+          theme === 'light' ? 'text-ink' : 'text-mute hover:text-ink-soft'
         }`}
         aria-label="Light Mode"
       >
-        <Sun className={`w-3.5 h-3.5 transition-all duration-500 ${
-          theme === 'light' ? 'scale-110 rotate-0' : 'scale-75 -rotate-12 opacity-50 group-hover/btn:opacity-100 group-hover/btn:scale-90 group-hover/btn:rotate-0'
-        }`} />
+        <Sun className="w-3.5 h-3.5" />
       </button>
 
       <button
         onClick={() => applyTheme('dark', true)}
-        className={`relative z-10 flex items-center justify-center w-8 h-7 rounded-pill transition-all duration-300 group/btn ${
-          theme === 'dark' ? 'text-ink' : 'text-mute hover:text-ink'
+        className={`relative z-10 flex items-center justify-center w-[26px] h-[26px] rounded-full transition-colors duration-200 cursor-pointer ${
+          theme === 'dark' ? 'text-ink' : 'text-mute hover:text-ink-soft'
         }`}
         aria-label="Dark Mode"
       >
-        <Moon className={`w-3.5 h-3.5 transition-all duration-500 ${
-          theme === 'dark' ? 'scale-110 rotate-0' : 'scale-75 rotate-12 opacity-50 group-hover/btn:opacity-100 group-hover/btn:scale-90 group-hover/btn:rotate-0'
-        }`} />
+        <Moon className="w-3.5 h-3.5" />
       </button>
     </div>
   );
