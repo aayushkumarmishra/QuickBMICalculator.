@@ -6,6 +6,7 @@ import { ResultGauge } from './ResultGauge';
 import { InsightsPanel } from './InsightsPanel';
 import { BrandLogo } from '../BrandLogo';
 import { ReportActions } from './ReportActions';
+import { Select } from './Select';
 
 type UnitSystem = 'metric' | 'us' | 'other';
 type Goal = 'maintenance' | 'loss' | 'gain' | '';
@@ -228,22 +229,129 @@ export const CalculatorCard: React.FC = () => {
     if (bmi <= 0) return;
     setIsExporting(true);
     try {
-      const { generateReportPDF } = await import('../../lib/pdf');
-      
-      const inputData = {
-        age, gender, height, weight, feet, inches, activity, goal, system, heightUnitOther, weightUnitOther
-      };
+      const { generateDataDrivenReport } = await import('../../lib/pdf');
 
-      const resultData = {
-        bmi, category, idealWeightRange, ponderalIndex, bmr, tdee
-      };
+      const heightStr = (() => {
+        if (system === 'us' || (system === 'other' && heightUnitOther === 'ft+in')) {
+          return `${feet || 0}ft ${inches || 0}in`;
+        }
+        if (system === 'metric') return `${height}cm`;
+        if (heightUnitOther === 'm') return `${height}m`;
+        if (heightUnitOther === 'in') return `${height}in`;
+        return height ? `${height}${heightUnitOther || 'cm'}` : '--';
+      })();
 
-      await generateReportPDF({
+      const weightStr = (() => {
+        if (system === 'us') return `${weight} lb`;
+        if (system === 'metric') return `${weight} kg`;
+        return `${weight} ${weightUnitOther || 'kg'}`;
+      })();
+
+      const activityLabel = ACTIVITY_LEVELS.find((a) => a.value === activity)?.label || activity;
+
+      const weightKg = (() => {
+        const w = parseFloat(weight) || 0;
+        if (system === 'metric') return w;
+        if (system === 'us') return w * 0.45359237;
+        return weightUnitOther === 'kg' ? w : w * 0.45359237;
+      })();
+
+      const water = weightKg > 0 ? (weightKg * 0.033).toFixed(1) : '0';
+
+      const bmiPct = Math.min(Math.max(((bmi - 15) / 25) * 100, 0), 100);
+
+      const activityMap: Record<string, { walking: string; steps: string }> = {
+        'Underweight':     { walking: '20-30 min/day', steps: '5,000-7,000 steps/day' },
+        'Normal Weight':   { walking: '30 min/day',    steps: '7,000-8,000 steps/day' },
+        'Overweight':      { walking: '30-45 min/day', steps: '7,000-9,000 steps/day' },
+        'Obesity Class I': { walking: '30-45 min/day', steps: '9,000+ steps/day' },
+        'Obesity Class II':  { walking: '30-45 min/day', steps: '9,000+ steps/day' },
+        'Obesity Class III': { walking: '30-45 min/day', steps: '9,000+ steps/day' },
+      };
+      const actData = activityMap[category] || activityMap['Normal Weight'];
+
+      const recsMap: Record<string, string[]> = {
+        'Underweight':     ['Protein-rich foods', 'Strength training 3x/wk', 'Increase calories', 'Eat 5-6 meals/day'],
+        'Normal Weight':   ['Balanced nutrition', 'Stay active 30 min/day', 'Consistent sleep', 'Stay hydrated'],
+        'Overweight':      ['Walk 30-45 min daily', '7,000-9,000 steps', 'Calorie deficit', 'Reduce processed foods'],
+        'Obesity':         ['Consult specialist', 'Track calories daily', 'Monitor progress', 'Regular activity'],
+      };
+      const recKey = category.includes('Obesity') ? 'Obesity' : category;
+      const recs = recsMap[recKey] || recsMap['Normal Weight'];
+
+      const rangeMin = idealWeightRange?.min?.toFixed(1) || '--';
+      const rangeMax = idealWeightRange?.max?.toFixed(1) || '--';
+      const weightUnit = system === 'us' || (system === 'other' && weightUnitOther === 'lb') ? 'lb' : 'kg';
+
+      await generateDataDrivenReport({
         profileName: name || 'Valued User',
         calculatorType: 'bmi',
-        inputData,
-        resultData,
-        date: new Date().toLocaleDateString()
+        date: new Date().toLocaleDateString(),
+        unitSystem: system.toUpperCase(),
+
+        profileRows: [
+          { label: 'AGE', value: `${age} YRS` },
+          { label: 'GENDER', value: (gender || '--').toUpperCase() },
+          { label: 'ACTIVITY', value: activityLabel.toUpperCase() },
+          { label: 'HEIGHT', value: heightStr },
+          { label: 'WEIGHT', value: weightStr },
+          { label: 'GOAL', value: (goal || 'MAINTENANCE').toUpperCase() },
+        ],
+
+        heroRows: [
+          { label: 'CURRENT BMI', value: bmi.toFixed(1) },
+          { label: 'CLASSIFICATION', value: category || '--' },
+        ],
+
+        barSegments: [
+          { color: [0, 112, 243], widthPct: 14 },
+          { color: [0, 223, 216], widthPct: 26 },
+          { color: [245, 166, 35], widthPct: 20 },
+          { color: [255, 0, 0], widthPct: 40 },
+        ],
+        barMarkerPct: bmiPct,
+        barMinLabel: '15',
+        barMaxLabel: '40+',
+        barLabels: [
+          { text: '18.5', pct: 14, align: 'center' },
+          { text: '25', pct: 40, align: 'center' },
+          { text: '30', pct: 60, align: 'center' },
+        ],
+
+        sections: [
+          {
+            title: 'ENERGY EXPENDITURE PLAN',
+            rows: [
+              { label: 'BMR BASE', value: bmr ? `${Math.round(bmr).toLocaleString()} kcal` : '--' },
+              { label: 'MAINTENANCE', value: tdee ? `${Math.round(tdee).toLocaleString()} kcal` : '--' },
+              { label: 'WEIGHT LOSS', value: tdee ? `${Math.round(tdee - 500).toLocaleString()} kcal` : '--', color: '235, 100, 100' },
+              { label: 'WEIGHT GAIN', value: tdee ? `${Math.round(tdee + 500).toLocaleString()} kcal` : '--', color: '34, 197, 94' },
+            ],
+            columns: 4,
+          },
+          {
+            title: 'ACTIVITY & HYDRATION GUIDE',
+            rows: [
+              { label: 'WALKING', value: actData.walking },
+              { label: 'STEPS / DAY', value: actData.steps },
+              { label: 'WATER INTAKE', value: `${water} L / day` },
+            ],
+            columns: 3,
+          },
+        ],
+
+        splitSection: {
+          leftTitle: 'HEALTHY WEIGHT RANGE',
+          leftRows: [{ label: `Recommended range for your height`, value: `${rangeMin} - ${rangeMax} ${weightUnit}` }],
+          rightTitle: 'ADVANCED ANALYTICS',
+          rightRows: [
+            { label: 'BMI PRIME', value: (bmi / 25).toFixed(2) },
+            { label: 'PONDERAL INDEX', value: ponderalIndex ? ponderalIndex.toFixed(1) : '--' },
+          ],
+        },
+
+        whoTable: true,
+        recommendations: recs,
       });
     } catch (error) {
       console.error('PDF generation failed:', error);
@@ -254,14 +362,14 @@ export const CalculatorCard: React.FC = () => {
 
   return (
     <motion.div 
-      className="card max-w-6xl mx-auto overflow-hidden relative p-0 shadow-premium-xl border-hairline/50 dark:bg-canvas"
+      className="max-w-6xl mx-auto overflow-hidden relative p-0 border border-hairline rounded-marketing shadow-premium-xl dark:bg-canvas"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
     >
-      <div className="grid grid-cols-1 lg:grid-cols-12 items-start min-h-fit">
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)] items-stretch min-h-fit">
         
         {/* LEFT: Command Panel (Inputs) */}
-        <div className="lg:col-span-5 p-6 sm:p-10 lg:p-12 border-b lg:border-b-0 lg:border-r border-hairline bg-canvas relative z-20 h-full overflow-y-auto">
+        <div className="p-6 sm:p-10 lg:p-12 border-b lg:border-b-0 lg:border-r border-hairline bg-canvas relative z-20 h-full overflow-y-auto">
           <div className="flex flex-col gap-6 lg:gap-8">
             <div className="flex items-center justify-between border-b border-hairline pb-8">
               <div className="flex items-center gap-4">
@@ -280,24 +388,25 @@ export const CalculatorCard: React.FC = () => {
             </div>
 
             <div className="space-y-6 lg:space-y-8">
-              <div className="space-y-4">
-                <span className="text-[10px] font-mono font-bold text-mute uppercase tracking-[0.3em] ml-1">Standard</span>
-                <div className="flex p-1 bg-canvas-soft border border-hairline rounded-ui gap-1">
+              <div className="space-y-3">
+                <span className="text-xs font-mono text-mute uppercase tracking-[0.12em] ml-1">Standard</span>
+                <div className="flex p-1 bg-surface-2 border border-hairline rounded-full gap-1">
                   {['us', 'metric', 'other'].map((s) => (
                     <button 
                       key={s} 
+                      type="button"
                       onClick={() => { setSystem(s as UnitSystem); setWeight(''); }}
-                      className={`flex-1 py-2.5 text-[10px] font-black uppercase tracking-[0.15em] transition-all duration-300 rounded-[4px] ${system === s ? 'bg-canvas text-ink shadow-premium-sm ring-1 ring-hairline' : 'text-mute hover:text-ink hover:bg-canvas/50'}`}
+                      className={`flex-1 py-2.5 text-[10px] font-mono font-bold uppercase tracking-[0.08em] transition-all duration-300 rounded-full focus-ring ${system === s ? 'bg-[var(--color-accent)] text-[oklch(16%_0.02_262)] shadow-premium-sm' : 'text-mute hover:text-ink'}`}
                     >
-                      {s === 'us' ? 'US Units' : s.charAt(0).toUpperCase() + s.slice(1)}
+                      {s === 'us' ? 'US UNITS' : s.toUpperCase()}
                     </button>
                   ))}
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3 sm:gap-6 lg:gap-8">
-                <div className="flex flex-col gap-1.5 col-span-2">
-                  <label className="text-[10px] font-mono font-bold text-mute uppercase tracking-widest">Name</label>
+                <div className="flex flex-col gap-2.5 col-span-2">
+                  <label className="text-xs font-mono text-mute uppercase tracking-[0.12em] ml-1">Name</label>
                   <div className="relative">
                     <input
                       type="text"
@@ -314,7 +423,7 @@ export const CalculatorCard: React.FC = () => {
                       }}
                       placeholder="YOUR NAME"
                       maxLength={50}
-                      className="w-full bg-canvas border border-hairline dark:border-white/[0.08] rounded-ui h-14 px-5 text-xl font-bold tracking-tighter text-ink dark:text-[#f5f5f5] transition-all duration-300 placeholder:text-mute/20 dark:placeholder:text-mute/40 focus:outline-none focus:ring-[6px] focus:ring-primary/[0.03] focus:border-ink dark:focus:border-white/20 shadow-premium-sm hover:border-hairline-strong dark:hover:border-white/15 focus:bg-canvas uppercase"
+                      className="w-full bg-canvas border-[1.5px] border-hairline rounded-ui h-14 px-5 text-xl font-bold tracking-tighter text-ink dark:text-[#f5f5f5] transition-all duration-300 placeholder:text-mute/20 dark:placeholder:text-mute/40 focus:outline-none focus:border-accent focus:ring-[3px] focus:ring-accent-wash shadow-premium-sm hover:border-hairline-strong focus:bg-canvas uppercase"
                     />
                   </div>
                   {nameError && <p className="text-red-500 text-[10px] font-mono font-bold">{nameError}</p>}
@@ -322,15 +431,16 @@ export const CalculatorCard: React.FC = () => {
 
                 <InputGroup id="age" label="Age" value={age} onChange={setAge} unit="YRS" placeholder="25" min={18} max={120} step="1" />
                 <div className="flex flex-col gap-3">
-                  <span className="text-[10px] font-mono font-bold text-mute uppercase tracking-[0.3em] ml-1">Gender</span>
-                  <div className="flex p-1 bg-canvas-soft border border-hairline rounded-ui h-14 gap-1">
+                  <span className="text-xs font-mono text-mute uppercase tracking-[0.12em] ml-1">Gender</span>
+                  <div className="flex p-1 bg-surface-2 border border-hairline rounded-full h-14 gap-1">
                     {['male', 'female'].map((g) => (
                       <button 
                         key={g} 
+                        type="button"
                         onClick={() => setGender(g as 'male' | 'female')}
-                        className={`flex-1 rounded-[4px] text-[10px] font-black uppercase tracking-[0.15em] transition-all duration-300 ${gender === g ? 'bg-ink text-canvas shadow-premium-md' : 'text-mute hover:text-ink hover:bg-canvas/50'}`}
+                        className={`flex-1 rounded-full text-[10px] font-mono font-bold uppercase tracking-[0.08em] transition-all duration-300 focus-ring ${gender === g ? 'bg-[var(--color-accent)] text-[oklch(16%_0.02_262)] shadow-premium-sm' : 'text-mute hover:text-ink'}`}
                       >
-                        {g}
+                        {g.toUpperCase()}
                       </button>
                     ))}
                   </div>
@@ -359,19 +469,13 @@ export const CalculatorCard: React.FC = () => {
                           <InputGroup key="h-ft-other" id="feet-other" label="Height" value={feet} onChange={setFeet} unit="FT" placeholder="5" min={1} max={8} step="1" />
                           <InputGroup key="h-in-other" id="inches-other" label="Inches" value={inches} onChange={setInches} unit="IN" placeholder="8" min={0} max={11} step="1" />
                         </div>
-                        <div className="flex justify-end">
-                           <div className="relative flex items-center">
-                              <select
-                                value={heightUnitOther}
-                                onChange={(e) => { setHeightUnitOther(e.target.value as any); setHeight(''); setFeet(''); setInches(''); }}
-                                className="appearance-none bg-canvas-soft pl-2 pr-6 py-1 rounded border border-hairline text-[9px] font-mono font-bold text-mute uppercase tracking-widest focus:outline-none focus:border-ink focus:text-ink transition-colors cursor-pointer hover:bg-surface"
-                              >
-                                {['cm', 'm', 'ft+in', 'in'].map(opt => (
-                                  <option key={opt} value={opt}>{opt}</option>
-                                ))}
-                              </select>
-                              <ChevronDown className="absolute right-1.5 w-2.5 h-2.5 text-mute pointer-events-none" />
-                            </div>
+                        <div className="flex justify-end w-full">
+                          <Select
+                            value={heightUnitOther}
+                            onChange={(val) => { setHeightUnitOther(val as any); setHeight(''); setFeet(''); setInches(''); }}
+                            options={['cm', 'm', 'ft+in', 'in'].map(opt => ({ value: opt, label: opt.toUpperCase() }))}
+                            label="Height Unit"
+                          />
                         </div>
                       </div>
                     ) : (
@@ -408,37 +512,34 @@ export const CalculatorCard: React.FC = () => {
               </div>
 
               <div className="space-y-6 lg:space-y-8 pt-6 border-t border-hairline/50">
-                <div className="space-y-4">
-                  <span className="text-[10px] font-mono font-bold text-mute uppercase tracking-[0.3em] ml-1">Body Goal</span>
-                  <div className="flex p-1 bg-canvas-soft border border-hairline rounded-ui gap-1">
+                <div className="space-y-3">
+                  <span className="text-xs font-mono text-mute uppercase tracking-[0.12em] ml-1">Body Goal</span>
+                  <div className="flex p-1 bg-surface-2 border border-hairline rounded-full gap-1">
                     {['loss', 'maintenance', 'gain'].map((g) => (
                       <button 
                         key={g} 
+                        type="button"
                         onClick={() => setGoal(g as Goal)}
-                        className={`flex-1 py-2.5 text-[10px] font-black uppercase tracking-[0.15em] transition-all duration-300 rounded-[4px] ${goal === g ? 'bg-ink text-canvas shadow-premium-md' : 'text-mute hover:text-ink hover:bg-canvas/50'}`}
+                        className={`flex-1 py-2.5 text-[10px] font-mono font-bold uppercase tracking-[0.08em] transition-all duration-300 rounded-full focus-ring ${goal === g ? 'bg-[var(--color-accent)] text-[oklch(16%_0.02_262)] shadow-premium-sm' : 'text-mute hover:text-ink'}`}
                       >
-                        {g}
+                        {g.toUpperCase()}
                       </button>
                     ))}
                   </div>
                 </div>
 
-                <div className="space-y-4">
-                  <span className="text-[10px] font-mono font-bold text-mute uppercase tracking-[0.3em] ml-1">Physical Activity</span>
-                  <div className="relative group">
-                    <select 
-                      value={activity}
-                      onChange={(e) => setActivity(e.target.value)}
-                      className="w-full bg-canvas-soft border border-hairline rounded-ui h-14 px-5 pr-10 text-[11px] font-black uppercase tracking-widest text-ink focus:outline-none appearance-none cursor-pointer hover:border-hairline-strong transition-all shadow-inset focus:ring-4 focus:ring-primary/5 focus:border-ink"
-                    >
-                      {ACTIVITY_LEVELS.map((level) => (
-                        <option key={level.value} value={level.value} className="bg-canvas text-ink font-sans text-sm font-medium">
-                          {level.label.toUpperCase()} - {level.desc}
-                        </option>
-                      ))}
-                    </select>
-                    <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-mute pointer-events-none group-hover:text-ink transition-colors" />
-                  </div>
+                <div className="space-y-3">
+                  <span className="text-xs font-mono text-mute uppercase tracking-[0.12em] ml-1">Physical Activity</span>
+                  <Select 
+                    value={activity}
+                    onChange={setActivity}
+                    options={ACTIVITY_LEVELS.map(level => ({
+                      value: level.value,
+                      label: level.label,
+                      desc: level.desc
+                    }))}
+                    label="Physical Activity"
+                  />
                 </div>
               </div>
             </div>
@@ -446,7 +547,7 @@ export const CalculatorCard: React.FC = () => {
         </div>
 
         {/* RIGHT: Intelligence Panel (Results) */}
-        <div className="lg:col-span-7 bg-canvas-soft/40 p-6 sm:p-10 lg:p-12 relative border-t lg:border-t-0 border-hairline h-full overflow-y-auto">
+        <div className="bg-canvas-soft/40 p-6 sm:p-10 lg:p-12 relative h-full overflow-y-auto">
           <div className="flex flex-col gap-6 lg:gap-8">
             <div className="flex flex-col border-b border-hairline/50 pb-8">
               <div className="flex items-center justify-between mb-8">

@@ -55,38 +55,35 @@ const ProfileDropdown: React.FC<{ user: SupabaseUser; handleLogout: () => void; 
         {isOpen && (
           <motion.div
             key="profile-dropdown-content"
-            initial={{ opacity: 0, scale: 0.95, y: 10 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 10 }}
-            transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 6 }}
+            transition={{ duration: 0.15, ease: 'easeOut' }}
             className={`absolute top-full right-0 mt-3 ${
               isMobile ? 'w-[240px]' : 'w-[300px]'
-            } bg-canvas/60 backdrop-blur-2xl border border-hairline rounded-[2.5rem] shadow-premium-2xl overflow-hidden z-[100] origin-top-right`}
+            } bg-surface border border-hairline rounded-ui shadow-premium-lg overflow-hidden z-[100]`}
           >
-            <div className="p-8 border-b border-hairline/50 relative flex items-center gap-5 bg-gradient-to-br from-canvas/50 to-transparent">
-              <div className="w-12 h-12 rounded-full bg-ink flex items-center justify-center font-black text-canvas text-[12px] shadow-premium-md">
+            <div className="p-4 border-b border-hairline flex items-center gap-3">
+              <div className="w-10 h-10 shrink-0 rounded-full bg-ink flex items-center justify-center font-black text-canvas text-sm shadow-premium-sm">
                 {getFirstLetter()}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-[15px] font-black text-ink truncate leading-tight mb-1">
+                <p className="text-sm font-bold text-ink truncate max-w-[180px]">
                   {user?.user_metadata?.full_name || 'Premium User'}
                 </p>
-                <p className="text-[10px] font-bold text-mute truncate opacity-60 tracking-[0.1em] uppercase">
+                <p className="font-mono text-mute text-xs truncate">
                   {user?.email || ''}
                 </p>
               </div>
             </div>
-            
-            <div className="p-2.5">
+
+            <div className="p-2">
               <button
                 onClick={handleLogout}
-                className="w-full flex items-center justify-between px-6 py-5 text-[10px] font-black uppercase tracking-[0.25em] text-mute hover:text-red-500 hover:bg-red-500/5 rounded-[1.5rem] transition-all group"
+                className="w-full flex items-center gap-3 px-3 py-2 text-sm text-ink-soft hover:text-ink hover:bg-surface-2 rounded-ui focus-ring transition-colors"
               >
-                <span className="flex items-center gap-4">
-                  <LogOut className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
-                  Sign Out
-                </span>
-                <div className="w-1.5 h-1.5 rounded-full bg-red-500 opacity-0 group-hover:opacity-100 transition-opacity shadow-[0_0_8px_rgba(239,68,68,0.5)]" />
+                <LogOut className="w-4 h-4 shrink-0" />
+                <span>Sign Out</span>
               </button>
             </div>
           </motion.div>
@@ -101,6 +98,7 @@ export const Navbar: React.FC = () => {
   const [isVisible, setIsVisible] = useState(true);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isToolsOpen, setIsToolsOpen] = useState(false);
+  const [isMobileToolsOpen, setIsMobileToolsOpen] = useState(false);
   const [user, setUser] = useState<SupabaseUser | null>(null);
   const [role, setRole] = useState<string | null>(null);
   const [isMounted, setIsMounted] = useState(false);
@@ -128,7 +126,7 @@ export const Navbar: React.FC = () => {
       .from('profiles')
       .select('role')
       .eq('id', userId)
-      .single();
+      .maybeSingle();
     setRole(data?.role || 'user');
   };
 
@@ -174,7 +172,12 @@ export const Navbar: React.FC = () => {
       'bmr_calculator_state',
       'calorie_calculator_state',
       'ideal_weight_calculator_state',
-      'water_intake_calculator_state'
+      'water_intake_calculator_state',
+      'body_fat_calculator_state',
+      'lean_body_mass_calculator_state',
+      'protein_intake_calculator_state',
+      'macro_calculator_state',
+      'daily_nutrition_calculator_state'
     ];
     calculatorKeys.forEach(key => sessionStorage.removeItem(key));
 
@@ -237,6 +240,11 @@ export const Navbar: React.FC = () => {
     { name: 'Calorie Calculator', href: '/calorie-calculator/' },
     { name: 'Water Intake Calculator', href: '/water-intake-calculator/' },
     { name: 'Ideal Weight Calculator', href: '/ideal-weight-calculator/' },
+    { name: 'Body Fat Calculator', href: '/body-fat-calculator/' },
+    { name: 'Lean Body Mass Calculator', href: '/lean-body-mass-calculator/' },
+    { name: 'Protein Intake Calculator', href: '/protein-intake-calculator/' },
+    { name: 'Macro Calculator', href: '/macro-calculator/' },
+    { name: 'Daily Nutrition Calculator', href: '/daily-nutrition-calculator/' },
   ];
 
   useEffect(() => {
@@ -250,7 +258,17 @@ export const Navbar: React.FC = () => {
       '/water-intake-calculator',
       '/water-intake-calculator/',
       '/ideal-weight-calculator',
-      '/ideal-weight-calculator/'
+      '/ideal-weight-calculator/',
+      '/body-fat-calculator',
+      '/body-fat-calculator/',
+      '/lean-body-mass-calculator',
+      '/lean-body-mass-calculator/',
+      '/protein-intake-calculator',
+      '/protein-intake-calculator/',
+      '/macro-calculator',
+      '/macro-calculator/',
+      '/daily-nutrition-calculator',
+      '/daily-nutrition-calculator/'
     ];
     
     const isHomePage = currentPage === '/' || currentPage === '';
@@ -281,149 +299,134 @@ export const Navbar: React.FC = () => {
         opacity: isVisible ? 1 : 0
       }}
       transition={{ 
-        duration: 0.5, 
+        duration: 0.35, 
         ease: [0.16, 1, 0.3, 1] 
       }}
       style={{ zIndex: isModalOpen ? -1 : 50 }}
-      className={`h-20 sticky top-0 left-0 right-0 z-50 flex items-center transition-all duration-700 ${
-        isScrolled 
-          ? 'bg-canvas/60 backdrop-blur-2xl shadow-[0_10px_30px_-10px_rgba(0,0,0,0.1)]' 
-          : 'bg-transparent'
-      }`}
+      className="sticky top-0 left-0 right-0 z-50 flex items-center h-[68px] bg-canvas/80 backdrop-blur-[14px] backdrop-saturate-[1.2] border-b border-hairline transition-all duration-500"
     >
-      <div className="max-w-7xl mx-auto px-6 w-full flex items-center justify-between">
-        <a href={isAdmin ? "/admin" : "/"} className="flex items-center gap-2.5 group relative z-50">
-          <div className="relative">
-            <BrandLogo className="w-8 h-8 transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3" />
-            <div className="absolute inset-0 bg-primary/10 blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-full" />
+      <div className="max-w-[1180px] mx-auto px-5 w-full flex items-center h-full">
+        {/* Left: Brand Logo & Wordmark */}
+        <a href={isAdmin ? "/admin" : "/"} className="flex items-center gap-2.5 group z-50 shrink-0">
+          <div className="w-[34px] h-[34px] rounded-[10px] bg-ink text-canvas flex items-center justify-center font-bold text-lg select-none transition-transform duration-300 group-hover:scale-105 active:scale-95">
+            B
           </div>
-          <span className="font-bold text-xl tracking-tighter text-ink leading-none">QuickBMI</span>
+          <span className="font-bold tracking-[-0.03em] text-ink text-lg leading-none">QuickBMICalculator</span>
         </a>
         
-        {/* Desktop Navigation - Premium & Spaced */}
-        <div className="hidden lg:flex items-center gap-6 xl:gap-8">
-          <div className="flex items-center gap-6 xl:gap-8">
-            {primaryLinks.map((item) => (
-              <a 
-                key={item.name}
-                href={item.href} 
-                className="text-[13px] font-bold text-mute hover:text-ink transition-all duration-300 relative group flex items-center"
-              >
-                <span className="relative z-10">{item.name}</span>
-                <span className="absolute -bottom-1 left-0 w-0 h-[1.5px] bg-ink/80 transition-all duration-500 cubic-bezier(0.16, 1, 0.3, 1) group-hover:w-full" />
-              </a>
-            ))}
+        {/* Center: Links (Desktop) */}
+        <div className="hidden lg:flex items-center gap-6 xl:gap-8 ml-8">
+          {primaryLinks.map((item) => (
+            <a 
+              key={item.name}
+              href={item.href} 
+              className="text-sm font-medium text-ink-soft hover:text-ink transition-colors relative flex items-center"
+            >
+              {item.name}
+            </a>
+          ))}
 
-            {/* Tools Dropdown - Hide for Admin */}
-            {!isAdmin && (
-              <div 
-                className="relative group"
-                onMouseEnter={() => setIsToolsOpen(true)}
-                onMouseLeave={() => setIsToolsOpen(false)}
+          {/* Tools Dropdown - Hide for Admin */}
+          {!isAdmin && (
+            <div 
+              className="relative group"
+              onMouseEnter={() => setIsToolsOpen(true)}
+              onMouseLeave={() => setIsToolsOpen(false)}
+            >
+              <button 
+                className={`text-sm font-medium transition-colors flex items-center gap-1 cursor-pointer ${
+                  isToolsOpen ? 'text-ink' : 'text-ink-soft hover:text-ink'
+                }`}
               >
-                <button 
-                  className={`text-[13px] font-bold transition-all duration-300 flex items-center gap-1 ${
-                    isToolsOpen ? 'text-ink' : 'text-mute hover:text-ink'
-                  }`}
-                >
-                  Tools
-                  <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-300 ${isToolsOpen ? 'rotate-180' : ''}`} />
-                </button>
-                
-                <AnimatePresence>
-                  {isToolsOpen && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: 10 }}
-                      transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-                      className="absolute top-full left-1/2 -translate-x-1/2 mt-4 w-56 bg-canvas border border-hairline rounded-2xl shadow-premium-xl overflow-hidden py-2"
-                    >
-                      <div className="absolute inset-x-0 -top-4 h-4 bg-transparent" />
-                      {toolLinks.map((tool) => (
-                        <a 
-                          key={tool.name}
-                          href={tool.href}
-                          className="block px-5 py-3 text-[13px] font-bold text-mute hover:text-ink hover:bg-canvas-soft transition-colors first:pt-4 last:pb-4"
-                        >
-                          {tool.name}
-                        </a>
-                      ))}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-            )}
-
-            {tertiaryLinks.map((item) => (
-              <a 
-                key={item.name}
-                href={item.href} 
-                className="text-[13px] font-bold text-mute hover:text-ink transition-all duration-300 relative group flex items-center"
-              >
-                <span className="relative z-10">{item.name}</span>
-                <span className="absolute -bottom-1 left-0 w-0 h-[1.5px] bg-ink/80 transition-all duration-500 cubic-bezier(0.16, 1, 0.3, 1) group-hover:w-full" />
-              </a>
-            ))}
-
-            {secondaryLinks.map((item) => (
-              <a 
-                key={item.name}
-                href={item.href} 
-                className="text-[13px] font-bold text-mute hover:text-ink transition-all duration-300 relative group flex items-center"
-              >
-                <span className="relative z-10">{item.name}</span>
-                <span className="absolute -bottom-1 left-0 w-0 h-[1.5px] bg-ink/80 transition-all duration-500 cubic-bezier(0.16, 1, 0.3, 1) group-hover:w-full" />
-              </a>
-            ))}
-
-            {isMounted && user && authenticatedLinks.map((item) => (
-              <a 
-                key={item.name}
-                href={item.href} 
-                className="text-[13px] font-bold text-mute hover:text-ink transition-all duration-300 relative group flex items-center"
-              >
-                <span className="relative z-10">{item.name}</span>
-                <span className="absolute -bottom-1 left-0 w-0 h-[1.5px] bg-ink/80 transition-all duration-500 cubic-bezier(0.16, 1, 0.3, 1) group-hover:w-full" />
-              </a>
-            ))}
-          </div>
-          
-          <div className="flex items-center gap-4 xl:gap-5">
-            <ThemeToggle />
-            {!isAdmin && (
-              <a 
-                href={calcHref} 
-                className="relative px-5 xl:px-6 py-2.5 bg-ink text-canvas rounded-pill text-[10px] font-black uppercase tracking-[0.15em] transition-all duration-500 hover:scale-[1.04] active:scale-[0.96] shadow-premium-md hover:shadow-premium-xl group overflow-hidden whitespace-nowrap"
-              >
-                <span className="relative z-10">Calculate</span>
-                <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                <div className="absolute bottom-0 left-0 right-0 h-[1px] bg-white/20 opacity-30" />
-              </a>
-            )}
-
-            {isMounted ? (
-              user ? (
-                <ProfileDropdown user={user} handleLogout={handleLogout} />
-              ) : (
-                <a href="/login" className="text-[13px] font-bold text-mute hover:text-ink transition-colors px-1">Sign In</a>
-              )
-            ) : (
-              <div className="w-8 h-8 rounded-full bg-canvas-soft animate-pulse" />
-            )}
-          </div>
-        </div>
-
-        {/* Mobile Toggle & Auth */}
-        <div className="flex items-center gap-2 lg:hidden relative z-50">
-          <ThemeToggle />
-          {isMounted && user && (
-            <ProfileDropdown user={user} handleLogout={handleLogout} isMobile={true} />
+                Tools
+                <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-300 ${isToolsOpen ? 'rotate-180' : ''}`} />
+              </button>
+              
+              <AnimatePresence>
+                {isToolsOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 8 }}
+                    transition={{ duration: 0.15, ease: 'easeOut' }}
+                    className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-52 bg-canvas border border-hairline rounded-[12px] shadow-premium-xl overflow-hidden py-1.5 z-[100]"
+                  >
+                    <div className="absolute inset-x-0 -top-4 h-4 bg-transparent" />
+                    {toolLinks.map((tool) => (
+                      <a 
+                        key={tool.name}
+                        href={tool.href}
+                        className="block px-4 py-2 text-sm font-medium text-ink-soft hover:text-ink hover:bg-surface-2 transition-colors"
+                      >
+                        {tool.name}
+                      </a>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           )}
 
+          {tertiaryLinks.map((item) => (
+            <a 
+              key={item.name}
+              href={item.href} 
+              className="text-sm font-medium text-ink-soft hover:text-ink transition-colors relative flex items-center"
+            >
+              {item.name}
+            </a>
+          ))}
+
+          {secondaryLinks.map((item) => (
+            <a 
+              key={item.name}
+              href={item.href} 
+              className="text-sm font-medium text-ink-soft hover:text-ink transition-colors relative flex items-center"
+            >
+              {item.name}
+            </a>
+          ))}
+
+          {isMounted && user && authenticatedLinks.map((item) => (
+            <a 
+              key={item.name}
+              href={item.href} 
+              className="text-sm font-medium text-ink-soft hover:text-ink transition-colors relative flex items-center"
+            >
+              {item.name}
+            </a>
+          ))}
+        </div>
+
+        {/* Right Panel (Desktop) */}
+        <div className="hidden lg:flex items-center gap-4 ml-auto">
+          <ThemeToggle />
+
+          {!isAdmin && (
+            <a 
+              href={calcHref} 
+              className="bg-ink text-canvas rounded-full px-5 py-2.5 text-sm font-semibold hover:-translate-y-px transition-all duration-300 focus-ring cursor-pointer flex items-center justify-center shadow-premium-sm hover:shadow-premium-md shrink-0"
+            >
+              Calculate
+            </a>
+          )}
+
+          {isMounted ? (
+            user ? (
+              <ProfileDropdown user={user} handleLogout={handleLogout} />
+            ) : (
+              <a href="/login" className="text-sm font-medium text-ink-soft hover:text-ink transition-colors px-1">Sign In</a>
+            )
+          ) : (
+            <div className="w-14 h-5 bg-surface-2 rounded animate-pulse" />
+          )}
+        </div>
+
+        {/* Mobile Toggle & Auth (Mobile only, <lg) */}
+        <div className="flex items-center gap-4 lg:hidden ml-auto relative z-50">
           <button 
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="p-2.5 text-ink transition-all hover:bg-canvas-soft rounded-xl relative active:scale-90"
+            className="p-1.5 text-ink transition-all hover:bg-canvas-soft rounded-lg relative active:scale-95 cursor-pointer"
             aria-label="Toggle Menu"
           >
             {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -436,99 +439,170 @@ export const Navbar: React.FC = () => {
         {isMobileMenuOpen && (
           <motion.div
             key="mobile-menu-overlay"
-            initial={{ opacity: 0, y: -20 }}
+            initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.3, ease: 'easeInOut' }}
-            className="absolute top-0 left-0 w-full h-[100dvh] bg-canvas pt-24 px-6 lg:hidden z-40 overflow-y-auto"
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.18, ease: 'easeOut' }}
+            className="absolute top-0 left-0 w-full h-[100dvh] bg-surface lg:hidden z-40 overflow-hidden shadow-premium-lg"
           >
-            <div className="flex flex-col gap-7 pb-12">
-              {primaryLinks.map((item) => (
-                <a 
-                  key={item.name}
-                  href={item.href} 
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="text-2xl font-bold text-ink hover:text-mute transition-colors"
-                >
-                  {item.name}
+            <div className="flex flex-col h-full">
+              {/* Sticky Header */}
+              <div className="shrink-0 bg-surface border-b border-hairline px-5 py-4 flex items-center justify-between">
+                <a href={isAdmin ? "/admin" : "/"} onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-2.5">
+                  <div className="w-[34px] h-[34px] rounded-[10px] bg-ink text-canvas flex items-center justify-center font-bold text-lg select-none">B</div>
+                  <span className="font-bold tracking-[-0.03em] text-ink text-lg leading-none">QuickBMICalculator</span>
                 </a>
-              ))}
-              
-              {!isAdmin && (
-                <div className="flex flex-col gap-4 pl-5 border-l-2 border-hairline/60 my-2">
-                  <span className="text-[11px] uppercase tracking-[0.2em] text-mute font-black mb-1">Tools</span>
-                  {toolLinks.map((tool) => (
-                    <a 
-                      key={tool.name}
-                      href={tool.href}
-                      onClick={() => setIsMobileMenuOpen(false)}
-                      className="text-xl font-bold text-mute hover:text-ink transition-colors"
-                    >
-                      {tool.name}
-                    </a>
-                  ))}
+                <div className="flex items-center gap-3">
+                  <ThemeToggle />
+                  <button
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="p-1.5 text-ink transition-all hover:bg-surface-2 rounded-lg relative active:scale-95 cursor-pointer"
+                    aria-label="Close Menu"
+                  >
+                    <X className="w-6 h-6" />
+                  </button>
                 </div>
-              )}
+              </div>
 
-              {tertiaryLinks.map((item) => (
-                <a 
-                  key={item.name}
-                  href={item.href} 
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="text-2xl font-bold text-ink hover:text-mute transition-colors"
-                >
-                  {item.name}
-                </a>
-              ))}
+              {/* Scrollable Body */}
+              <div className="flex-1 overflow-y-auto px-5 py-5 space-y-0.5">
+                {/* Signed-in Profile Block */}
+                {user && (
+                  <div className="flex items-center gap-3 pb-4 mb-3 border-b border-hairline">
+                    <div className="w-11 h-11 rounded-[10px] bg-ink flex items-center justify-center font-black text-canvas text-sm shrink-0">
+                      {String(user?.user_metadata?.full_name || user?.email || 'U').charAt(0).toUpperCase() || 'U'}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-bold text-ink truncate max-w-[180px]">{user?.user_metadata?.full_name || 'Premium User'}</p>
+                      <p className="font-mono text-xs text-mute truncate max-w-[180px]">{user?.email || ''}</p>
+                    </div>
+                  </div>
+                )}
 
-              {secondaryLinks.map((item) => (
-                <a 
-                  key={item.name}
-                  href={item.href} 
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="text-2xl font-bold text-ink hover:text-mute transition-colors"
-                >
-                  {item.name}
-                </a>
-              ))}
+                {/* Nav Links */}
+                {primaryLinks.map((item) => (
+                  <a
+                    key={item.name}
+                    href={item.href}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="flex items-center w-full px-4 py-3 text-sm font-semibold text-ink rounded-xl hover:bg-surface-2 transition-colors"
+                  >
+                    {item.name}
+                  </a>
+                ))}
 
-              {user && authenticatedLinks.map((item) => (
-                <a 
-                  key={item.name}
-                  href={item.href} 
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="text-2xl font-bold text-ink hover:text-mute transition-colors"
-                >
-                  {item.name}
-                </a>
-              ))}
-              
-              <div className="pt-6 border-t border-hairline flex flex-col gap-4">
-                {!user && (
-                  <div className="grid grid-cols-2 gap-4">
-                    <a 
-                      href="/login" 
+                {/* Tools Accordion */}
+                {!isAdmin && (
+                  <div>
+                    <button
+                      onClick={() => setIsMobileToolsOpen(!isMobileToolsOpen)}
+                      className="flex items-center justify-between w-full px-4 py-3 text-sm font-semibold text-ink rounded-xl hover:bg-surface-2 transition-colors cursor-pointer"
+                    >
+                      <span>Tools</span>
+                      <ChevronDown
+                        className={`w-4 h-4 text-mute transition-transform duration-300 ease-out ${
+                          isMobileToolsOpen ? 'rotate-180' : ''
+                        }`}
+                      />
+                    </button>
+                    <div
+                      className="grid transition-all duration-300 ease-out"
+                      style={{
+                        gridTemplateRows: isMobileToolsOpen ? '1fr' : '0fr',
+                        opacity: isMobileToolsOpen ? 1 : 0,
+                      }}
+                    >
+                      <div className="overflow-hidden">
+                        <div className="pt-1 pb-2 pl-4 space-y-0.5">
+                          {toolLinks.map((tool) => (
+                            <a
+                              key={tool.name}
+                              href={tool.href}
+                              onClick={() => setIsMobileMenuOpen(false)}
+                              className="flex items-center w-full px-4 py-2.5 text-sm font-medium text-mute hover:text-ink rounded-xl hover:bg-surface-2 transition-colors min-h-[44px]"
+                            >
+                              {tool.name}
+                            </a>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Tertiary Links */}
+                {tertiaryLinks.map((item) => (
+                  <a
+                    key={item.name}
+                    href={item.href}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="flex items-center w-full px-4 py-3 text-sm font-semibold text-ink rounded-xl hover:bg-surface-2 transition-colors"
+                  >
+                    {item.name}
+                  </a>
+                ))}
+
+                {/* Secondary Links */}
+                {secondaryLinks.map((item) => (
+                  <a
+                    key={item.name}
+                    href={item.href}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="flex items-center w-full px-4 py-3 text-sm font-semibold text-ink rounded-xl hover:bg-surface-2 transition-colors"
+                  >
+                    {item.name}
+                  </a>
+                ))}
+
+                {/* Authenticated Links */}
+                {user && authenticatedLinks.map((item) => (
+                  <a
+                    key={item.name}
+                    href={item.href}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="flex items-center w-full px-4 py-3 text-sm font-semibold text-ink rounded-xl hover:bg-surface-2 transition-colors"
+                  >
+                    {item.name}
+                  </a>
+                ))}
+              </div>
+
+              {/* Sticky Footer */}
+              <div className="shrink-0 bg-surface border-t border-hairline px-5 py-4 space-y-3">
+                {user ? (
+                  <button
+                    onClick={() => { handleLogout(); setIsMobileMenuOpen(false); }}
+                    className="flex items-center gap-3 w-full px-4 py-3 text-sm font-semibold text-red-500 dark:text-red-400 rounded-xl hover:bg-surface-2 transition-colors cursor-pointer"
+                  >
+                    <LogOut className="w-4 h-4 shrink-0" />
+                    <span>Sign Out</span>
+                  </button>
+                ) : (
+                  <div className="flex gap-3">
+                    <a
+                      href="/login"
                       onClick={() => setIsMobileMenuOpen(false)}
-                      className="py-4 border border-hairline text-ink rounded-pill text-center font-bold text-sm uppercase tracking-widest"
+                      className="flex-1 py-3 border border-hairline text-ink rounded-full text-center font-semibold text-sm hover:bg-surface-2 transition-colors"
                     >
                       Sign In
                     </a>
-                    <a 
-                      href="/signup" 
+                    <a
+                      href="/signup"
                       onClick={() => setIsMobileMenuOpen(false)}
-                      className="py-4 bg-canvas-soft border border-hairline text-ink rounded-pill text-center font-bold text-sm uppercase tracking-widest"
+                      className="flex-1 py-3 bg-accent text-white rounded-full text-center font-semibold text-sm hover:opacity-90 transition-opacity"
                     >
                       Join Free
                     </a>
                   </div>
                 )}
                 {!isAdmin && (
-                  <a 
-                    href={calcHref} 
+                  <a
+                    href={calcHref}
                     onClick={() => setIsMobileMenuOpen(false)}
-                    className="w-full py-4 bg-ink text-canvas rounded-pill text-center font-bold text-sm uppercase tracking-widest block shadow-premium-lg"
+                    className="flex items-center justify-center gap-2 w-full py-3.5 bg-ink text-canvas rounded-full text-[11px] font-mono font-bold uppercase tracking-[0.16em] hover:-translate-y-px transition-all duration-300"
                   >
                     Calculate Now
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
                   </a>
                 )}
               </div>

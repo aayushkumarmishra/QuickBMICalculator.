@@ -106,7 +106,7 @@ export const TrackerView: React.FC = () => {
   return (
     <div className="w-full">
       <TrackerHero 
-        title={<>My <span className="tracking-normal bg-linear-to-r from-status-healthy to-status-under bg-clip-text text-transparent dark:bg-none dark:text-ink">Tracker</span></>}
+        title={<>My <span className="tracking-normal text-gradient-status">Tracker</span></>}
         description="Monitor health progress for yourself and your loved ones in one unified dashboard."
         rightContent={profiles.length > 0 && (
           <a 

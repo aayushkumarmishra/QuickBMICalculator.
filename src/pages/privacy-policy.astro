@@ -2,15 +2,17 @@
 import Layout from '../layouts/Layout.astro';
 import { Navbar } from '../components/Navbar';
 import Footer from '../components/Footer.astro';
+import HeroBackdrop from '../components/HeroBackdrop.astro';
 
-const title = "Privacy Policy - QuickBMI";
+const title = "Privacy Policy - QuickBMICalculator";
 const description = "Learn how QuickBMI handles your data. We prioritize your privacy with local-first processing and zero data tracking.";
 ---
 
 <Layout title={title} description={description}>
 	<Navbar client:load />
 
-	<main class="pt-32 pb-20 px-6">
+	<main class="pt-32 pb-20 px-6 relative overflow-hidden">
+		<HeroBackdrop />
 		<article class="max-w-3xl mx-auto space-y-12">
 			<header class="space-y-4">
 				<h1 class="text-4xl sm:text-6xl font-black tracking-tighter text-ink leading-none">Privacy Policy</h1>
@@ -21,7 +23,7 @@ const description = "Learn how QuickBMI handles your data. We prioritize your pr
 				<div class="space-y-4">
 					<h2 class="text-2xl font-black tracking-tight text-ink">1. Our Commitment to Privacy</h2>
 					<p class="text-body leading-relaxed font-medium opacity-80">
-						At QuickBMI, we believe that your health data is your own. Our platform is designed with a "privacy-first" architecture. We do not store, track, or share your personal health metrics on any server.
+						At QuickBMICalculator, we believe that your health data is your own. Our platform is designed with a "privacy-first" architecture. We do not store, track, or share your personal health metrics on any server.
 					</p>
 				</div>
 

@@ -1,0 +1,79 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { Navbar } from '../components/Navbar';
+import Footer from '../components/Footer.astro';
+import HeroCalculator from '../components/HeroCalculator.astro';
+import { LeanBodyMassCalculatorCard } from '../components/calculator/LeanBodyMassCalculatorCard';
+import { FAQAccordion } from '../components/FAQAccordion';
+import { leanBodyMassFaqs } from '../data/faq';
+
+const faqSchema = {
+	"@type": "FAQPage",
+	"@id": `${Astro.url.href}#faq`,
+	"mainEntity": leanBodyMassFaqs.map(faq => ({
+		"@type": "Question",
+		"name": faq.q,
+		"acceptedAnswer": {
+			"@type": "Answer",
+			"text": faq.a
+		}
+	}))
+};
+---
+
+<Layout 
+  title="Lean Body Mass Calculator - LBM Boer James Hume | QuickBMICalculator"
+  description="Calculate your Lean Body Mass (LBM) online using Boer, James, and Hume formulas. Includes body fat percentage override adjustments."
+  appName="Lean Body Mass Calculator"
+  extraSchema={[faqSchema]}
+>
+  <Navbar client:load />
+
+  <main class="flex-grow">
+    <HeroCalculator
+      subtitle="Find your Lean Body Mass (LBM) and fat-free weight split using standard equations or body fat overrides."
+      badgeTag="Boer · James · Hume"
+      badgeLine="Three validated formulas"
+    >
+      <span class="text-accent">Lean</span> Mass Calculator
+    </HeroCalculator>
+
+    <section id="calculator" class="relative z-20 px-4 sm:px-6 pt-4 sm:pt-8 lg:pt-10 pb-16 sm:pb-24">
+      <LeanBodyMassCalculatorCard client:load />
+    </section>
+
+    <section class="py-16 lg:py-20 px-6 bg-canvas-soft border-y border-hairline">
+      <div class="max-w-4xl mx-auto space-y-6">
+        <h2 class="text-3xl sm:text-4xl font-black tracking-tighter text-ink">What is Lean Body Mass (LBM)?</h2>
+        <p class="text-body leading-relaxed font-medium opacity-80 text-base">
+          <strong>Lean Body Mass (LBM)</strong> represents the total weight of your body minus your fat storage weight. It consists of muscles, skeletal bones, organs, connective tissue, and cellular water.
+        </p>
+        <p class="text-body leading-relaxed font-medium opacity-80 text-base">
+          This calculator uses the **Boer**, **James**, and **Hume** formulas to estimate your lean mass based on height, weight, gender, and age. If you already know your body fat percentage, you can override the formulas by selecting it on the slider for a precise, direct calculation.
+        </p>
+      </div>
+    </section>
+
+    <section id="faq" class="py-16 lg:py-20 px-6 bg-canvas relative z-10 border-b border-hairline">
+      <div class="max-w-4xl mx-auto">
+        <div class="text-center mb-12 lg:mb-14">
+          <h2 class="text-4xl sm:text-6xl font-black tracking-tighter mb-6 sm:mb-8 text-ink leading-none">Questions about LBM</h2>
+          <p class="text-lg sm:text-xl text-body max-w-2xl mx-auto tracking-tight font-medium opacity-60">Everything you need to know about calculating and tracking Lean Body Mass.</p>
+        </div>
+        
+        <FAQAccordion client:visible faqs={leanBodyMassFaqs} />
+      </div>
+    </section>
+
+    <section class="py-16 lg:py-20 px-6 bg-canvas border-b border-hairline">
+      <div class="max-w-4xl mx-auto text-center">
+        <p class="text-sm text-mute font-medium">
+          Want to find your body fat percentage? Try our 
+          <a href="/body-fat-calculator/" class="text-ink font-bold underline underline-offset-2 hover:text-status-healthy transition-colors">Body Fat Calculator</a>
+        </p>
+      </div>
+    </section>
+  </main>
+
+  <Footer />
+</Layout>

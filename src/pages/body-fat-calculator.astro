@@ -1,0 +1,79 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { Navbar } from '../components/Navbar';
+import Footer from '../components/Footer.astro';
+import HeroCalculator from '../components/HeroCalculator.astro';
+import { BodyFatCalculatorCard } from '../components/calculator/BodyFatCalculatorCard';
+import { FAQAccordion } from '../components/FAQAccordion';
+import { bodyFatFaqs } from '../data/faq';
+
+const faqSchema = {
+	"@type": "FAQPage",
+	"@id": `${Astro.url.href}#faq`,
+	"mainEntity": bodyFatFaqs.map(faq => ({
+		"@type": "Question",
+		"name": faq.q,
+		"acceptedAnswer": {
+			"@type": "Answer",
+			"text": faq.a
+		}
+	}))
+};
+---
+
+<Layout 
+  title="Body Fat Calculator - US Navy Method | QuickBMICalculator"
+  description="Estimate your body fat percentage online using the scientifically validated US Navy circumference method. Learn your fat mass and lean mass totals."
+  appName="Body Fat Calculator"
+  extraSchema={[faqSchema]}
+>
+  <Navbar client:load />
+
+  <main class="flex-grow">
+    <HeroCalculator
+      subtitle="Determine your body fat percentage and body composition using circumference measurements and the official US Navy method."
+      badgeTag="U.S. Navy Method"
+      badgeLine="Circumference-based formula"
+    >
+      <span class="text-accent">Body</span> Fat Calculator
+    </HeroCalculator>
+
+    <section id="calculator" class="relative z-20 px-4 sm:px-6 pt-4 sm:pt-8 lg:pt-10 pb-16 sm:pb-24">
+      <BodyFatCalculatorCard client:load />
+    </section>
+
+    <section class="py-16 lg:py-20 px-6 bg-canvas-soft border-y border-hairline">
+      <div class="max-w-4xl mx-auto space-y-6">
+        <h2 class="text-3xl sm:text-4xl font-black tracking-tighter text-ink">What is the US Navy Body Fat Method?</h2>
+        <p class="text-body leading-relaxed font-medium opacity-80 text-base">
+          The <strong>US Navy Body Fat formula</strong> was developed by the Naval Health Research Center (NHRC) to estimate body fat percentage using simple circumference metrics: neck, waist (abdomen), and hips (for women), alongside height.
+        </p>
+        <p class="text-body leading-relaxed font-medium opacity-80 text-base">
+          Rather than relying solely on total weight (like BMI), body fat percentage differentiates between lean tissue (muscles, organs, water) and adipose fat tissue. Keeping track of body fat helps monitor physical conditioning, muscle maintenance, and fat loss progress accurately.
+        </p>
+      </div>
+    </section>
+
+    <section id="faq" class="py-16 lg:py-20 px-6 bg-canvas relative z-10 border-b border-hairline">
+      <div class="max-w-4xl mx-auto">
+        <div class="text-center mb-12 lg:mb-14">
+          <h2 class="text-4xl sm:text-6xl font-black tracking-tighter mb-6 sm:mb-8 text-ink leading-none">Questions about Body Fat</h2>
+          <p class="text-lg sm:text-xl text-body max-w-2xl mx-auto tracking-tight font-medium opacity-60">Everything you need to know about calculating and tracking body fat percentage.</p>
+        </div>
+        
+        <FAQAccordion client:visible faqs={bodyFatFaqs} />
+      </div>
+    </section>
+
+    <section class="py-16 lg:py-20 px-6 bg-canvas border-b border-hairline">
+      <div class="max-w-4xl mx-auto text-center">
+        <p class="text-sm text-mute font-medium">
+          Looking to calculate your ideal weight? Try our 
+          <a href="/ideal-weight-calculator/" class="text-ink font-bold underline underline-offset-2 hover:text-status-healthy transition-colors">Ideal Weight Calculator</a>
+        </p>
+      </div>
+    </section>
+  </main>
+
+  <Footer />
+</Layout>

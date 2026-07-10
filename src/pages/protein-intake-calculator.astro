@@ -1,0 +1,79 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { Navbar } from '../components/Navbar';
+import Footer from '../components/Footer.astro';
+import HeroCalculator from '../components/HeroCalculator.astro';
+import { ProteinCalculatorCard } from '../components/calculator/ProteinCalculatorCard';
+import { FAQAccordion } from '../components/FAQAccordion';
+import { proteinFaqs } from '../data/faq';
+
+const faqSchema = {
+	"@type": "FAQPage",
+	"@id": `${Astro.url.href}#faq`,
+	"mainEntity": proteinFaqs.map(faq => ({
+		"@type": "Question",
+		"name": faq.q,
+		"acceptedAnswer": {
+			"@type": "Answer",
+			"text": faq.a
+		}
+	}))
+};
+---
+
+<Layout 
+  title="Protein Intake Calculator - Daily Protein Targets | QuickBMICalculator"
+  description="Calculate your daily recommended protein intake based on weight, activity, and goals. Perfect for muscle building and cutting."
+  appName="Protein Intake Calculator"
+  extraSchema={[faqSchema]}
+>
+  <Navbar client:load />
+
+  <main class="flex-grow">
+    <HeroCalculator
+      subtitle="Determine your optimal daily protein requirements in grams based on activity levels, age, and fitness goals."
+      badgeTag="RDA Guidelines"
+      badgeLine="Evidence-based g/kg intake"
+    >
+      <span class="text-accent">Protein</span> Calculator
+    </HeroCalculator>
+
+    <section id="calculator" class="relative z-20 px-4 sm:px-6 pt-4 sm:pt-8 lg:pt-10 pb-16 sm:pb-24">
+      <ProteinCalculatorCard client:load />
+    </section>
+
+    <section class="py-16 lg:py-20 px-6 bg-canvas-soft border-y border-hairline">
+      <div class="max-w-4xl mx-auto space-y-6">
+        <h2 class="text-3xl sm:text-4xl font-black tracking-tighter text-ink">Why is Protein Intake Important?</h2>
+        <p class="text-body leading-relaxed font-medium opacity-80 text-base">
+          <strong>Protein</strong> is one of the three primary macronutrients your body needs to survive. It serves as the fundamental building block for muscles, skin, hormones, enzymes, and other tissues.
+        </p>
+        <p class="text-body leading-relaxed font-medium opacity-80 text-base">
+          This calculator helps you customize your daily intake beyond basic survival requirements. By adjusting factors for exercise frequency and targets (such as fat loss or muscle gain), it estimates the ideal grams of protein needed to optimize recovery, maintain lean body mass, and enhance satiety.
+        </p>
+      </div>
+    </section>
+
+    <section id="faq" class="py-16 lg:py-20 px-6 bg-canvas relative z-10 border-b border-hairline">
+      <div class="max-w-4xl mx-auto">
+        <div class="text-center mb-12 lg:mb-14">
+          <h2 class="text-4xl sm:text-6xl font-black tracking-tighter mb-6 sm:mb-8 text-ink leading-none">Questions about Protein</h2>
+          <p class="text-lg sm:text-xl text-body max-w-2xl mx-auto tracking-tight font-medium opacity-60">Everything you need to know about calculating and tracking daily protein intake.</p>
+        </div>
+        
+        <FAQAccordion client:visible faqs={proteinFaqs} />
+      </div>
+    </section>
+
+    <section class="py-16 lg:py-20 px-6 bg-canvas border-b border-hairline">
+      <div class="max-w-4xl mx-auto text-center">
+        <p class="text-sm text-mute font-medium">
+          Need to balance your overall diet? Try our 
+          <a href="/macro-calculator/" class="text-ink font-bold underline underline-offset-2 hover:text-status-healthy transition-colors">Macronutrient Calculator</a>
+        </p>
+      </div>
+    </section>
+  </main>
+
+  <Footer />
+</Layout>

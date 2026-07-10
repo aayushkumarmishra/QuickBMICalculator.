@@ -10,7 +10,7 @@ interface ReportActionsProps {
   isExporting: boolean;
   hasResult: boolean;
   isValidName: boolean;
-  calculatorType: 'bmi' | 'bmr' | 'calorie' | 'ideal_weight' | 'water_intake';
+  calculatorType: 'bmi' | 'bmr' | 'calorie' | 'ideal_weight' | 'water_intake' | 'body_fat' | 'lean_body_mass' | 'macro' | 'protein_intake' | 'daily_nutrition';
   inputData: any;
   resultData: any;
 }
@@ -104,7 +104,7 @@ export const ReportActions: React.FC<ReportActionsProps> = ({
           <button
             onClick={handleAuthRedirect}
             disabled={isDisabled}
-            className="w-full h-14 bg-ink text-canvas rounded-xl font-black text-xs uppercase tracking-[0.2em] shadow-premium-lg hover:shadow-premium-xl transition-all active:scale-[0.98] flex items-center justify-center gap-3 group disabled:opacity-50 disabled:cursor-not-allowed overflow-hidden relative"
+            className="w-full h-12 bg-ink text-canvas dark:bg-canvas dark:text-ink rounded-full font-mono uppercase tracking-[0.08em] text-xs shadow-premium-md hover:-translate-y-0.5 active:translate-y-0 transition-all flex items-center justify-center gap-3 group disabled:opacity-50 disabled:cursor-not-allowed focus-ring overflow-hidden relative"
           >
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
             <Sparkles className="w-4 h-4 text-primary animate-pulse" />
@@ -119,14 +119,14 @@ export const ReportActions: React.FC<ReportActionsProps> = ({
           <button
             onClick={() => handleAction('download')}
             disabled={isExporting || isDisabled}
-            className="flex-1 h-14 bg-ink text-canvas rounded-xl font-bold text-xs uppercase tracking-widest shadow-premium-lg hover:shadow-premium-xl transition-all active:scale-[0.98] flex items-center justify-center gap-2 group disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full sm:flex-1 h-12 bg-ink text-canvas dark:bg-canvas dark:text-ink rounded-full font-mono uppercase tracking-[0.08em] text-xs shadow-premium-md hover:-translate-y-0.5 active:translate-y-0 transition-all flex items-center justify-center gap-2 group disabled:opacity-50 disabled:cursor-not-allowed focus-ring"
           >
             {isExporting ? (
               <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1 }}>
                 <RotateCcw className="w-4 h-4" />
               </motion.div>
             ) : (
-              <Download className="w-4 h-4 text-canvas/60 group-hover:text-canvas transition-colors" />
+              <Download className="w-4 h-4 text-canvas/60 group-hover:text-canvas dark:text-ink/60 dark:group-hover:text-ink transition-colors" />
             )}
             <span>{isExporting ? 'Downloading...' : 'Download PDF'}</span>
           </button>
@@ -134,7 +134,7 @@ export const ReportActions: React.FC<ReportActionsProps> = ({
           <button
             onClick={() => handleAction('save')}
             disabled={isDisabled}
-            className="flex-1 h-14 bg-canvas border border-hairline text-ink rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-canvas-soft transition-all active:scale-[0.98] flex items-center justify-center gap-2 group disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full sm:flex-1 h-12 bg-surface-2 border-[1.5px] border-hairline text-ink rounded-full font-mono uppercase tracking-[0.08em] text-xs hover:border-hairline-strong hover:bg-surface transition-all hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-2 group disabled:opacity-50 disabled:cursor-not-allowed focus-ring"
           >
             <Save className="w-4 h-4 text-mute group-hover:text-ink transition-colors" />
             <span>Save to Tracker</span>

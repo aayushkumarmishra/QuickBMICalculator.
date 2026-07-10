@@ -4,6 +4,7 @@ import { RotateCcw, Download, Check, Activity, ChevronDown, Target, AlertCircle,
 import { InputGroup } from './InputGroup';
 import { BrandLogo } from '../BrandLogo';
 import { ReportActions } from './ReportActions';
+import { Select } from './Select';
 
 type UnitSystem = 'metric' | 'us' | 'other';
 type Goal = 'maintenance' | 'loss' | 'gain' | '';
@@ -206,22 +207,83 @@ export const CalorieCalculatorCard: React.FC = () => {
 
     setIsExporting(true);
     try {
-      const { generateReportPDF } = await import('../../lib/pdf');
-      
-      const inputData = {
-        age, gender, height, weight, feet, inches, activity, goal, system, heightUnitOther, weightUnitOther
-      };
+      const { generateDataDrivenReport } = await import('../../lib/pdf');
 
-      const resultData = {
-        bmr, tdee, targetCalories, caloriesByGoal, recommendations
-      };
+      const heightStr = (() => {
+        if (system === 'us' || (system === 'other' && heightUnitOther === 'ft+in')) {
+          return `${feet || 0}ft ${inches || 0}in`;
+        }
+        if (system === 'metric') return `${height}cm`;
+        if (heightUnitOther === 'm') return `${height}m`;
+        if (heightUnitOther === 'in') return `${height}in`;
+        return height ? `${height}${heightUnitOther || 'cm'}` : '--';
+      })();
 
-      await generateReportPDF({
+      const weightStr = (() => {
+        if (system === 'us') return `${weight} lb`;
+        if (system === 'metric') return `${weight} kg`;
+        return `${weight} ${weightUnitOther || 'kg'}`;
+      })();
+
+      const activityLabel = ACTIVITY_LEVELS.find((a) => a.value === activity)?.label || activity;
+
+      const markerPct = goal === 'loss' ? 16.5 : goal === 'gain' ? 83.5 : 50;
+
+      await generateDataDrivenReport({
         profileName: trimmedName,
         calculatorType: 'calorie',
-        inputData,
-        resultData,
-        date: new Date().toLocaleDateString()
+        date: new Date().toLocaleDateString(),
+        unitSystem: system.toUpperCase(),
+
+        profileRows: [
+          { label: 'AGE', value: `${age} YRS` },
+          { label: 'GENDER', value: (gender || '--').toUpperCase() },
+          { label: 'ACTIVITY', value: activityLabel.toUpperCase() },
+          { label: 'HEIGHT', value: heightStr },
+          { label: 'WEIGHT', value: weightStr },
+          { label: 'GOAL', value: (goal || 'MAINTENANCE').toUpperCase() },
+        ],
+
+        heroRows: [
+          { label: 'TARGET DAILY CALORIES', value: `${Math.round(targetCalories).toLocaleString()} kcal` },
+          { label: 'SELECTED GOAL', value: (goal || 'MAINTENANCE').toUpperCase() },
+        ],
+
+        barSegments: [
+          { color: [0, 112, 243], widthPct: 33.3 },
+          { color: [0, 223, 216], widthPct: 33.3 },
+          { color: [245, 166, 35], widthPct: 33.4 },
+        ],
+        barMarkerPct: markerPct,
+        barLabels: [
+          { text: 'FAT LOSS', pct: 0, align: 'left' },
+          { text: 'MAINTENANCE', pct: 33.3, align: 'left' },
+          { text: 'WEIGHT GAIN', pct: 66.6, align: 'left' },
+        ],
+
+        sections: [
+          {
+            title: 'ENERGY EXPENDITURE PLAN',
+            rows: [
+              { label: 'BMR BASE', value: `${Math.round(bmr).toLocaleString()} kcal` },
+              { label: 'MAINTENANCE', value: `${Math.round(tdee).toLocaleString()} kcal` },
+              { label: 'WEIGHT LOSS', value: `${Math.round(caloriesByGoal.loss).toLocaleString()} kcal`, color: '235, 100, 100' },
+              { label: 'WEIGHT GAIN', value: `${Math.round(caloriesByGoal.gain).toLocaleString()} kcal`, color: '34, 197, 94' },
+            ],
+            columns: 4,
+          },
+          {
+            title: 'ACTIVITY & HYDRATION GUIDE',
+            rows: [
+              { label: 'WALKING', value: suggestedActivity.walking },
+              { label: 'STEPS / DAY', value: suggestedActivity.steps },
+              { label: 'WATER INTAKE', value: `${waterIntake.toFixed(1)} L / day` },
+            ],
+            columns: 3,
+          },
+        ],
+
+        recommendations,
       });
     } catch (error) {
       console.error('PDF generation failed:', error);
@@ -256,10 +318,10 @@ export const CalorieCalculatorCard: React.FC = () => {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
     >
-      <div className="grid grid-cols-1 lg:grid-cols-12 items-start min-h-fit">
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)] items-stretch">
         
         {/* LEFT: Command Panel (Inputs) */}
-        <div className="lg:col-span-5 p-6 sm:p-10 lg:p-12 border-b lg:border-b-0 lg:border-r border-hairline bg-canvas relative z-20 h-full overflow-y-auto">
+        <div className="p-6 sm:p-10 lg:p-12 border-b lg:border-b-0 lg:border-r border-hairline bg-canvas relative z-20 h-full overflow-y-auto">
           <div className="flex flex-col gap-6 lg:gap-8">
             <div className="flex items-center justify-between border-b border-hairline pb-8">
               <div className="flex items-center gap-4">
@@ -280,14 +342,15 @@ export const CalorieCalculatorCard: React.FC = () => {
             <div className="space-y-6 lg:space-y-8">
               <div className="space-y-4">
                 <span className="text-[10px] font-mono font-bold text-mute uppercase tracking-[0.3em] ml-1">Standard</span>
-                <div className="flex p-1 bg-canvas-soft border border-hairline rounded-ui gap-1">
+                <div className="flex p-1 bg-surface-2 border border-hairline rounded-full gap-1">
                   {['us', 'metric', 'other'].map((s) => (
                     <button 
                       key={s} 
+                      type="button"
                       onClick={() => { setSystem(s as UnitSystem); setWeight(''); }}
-                      className={`flex-1 py-2.5 text-[10px] font-black uppercase tracking-[0.15em] transition-all duration-300 rounded-[4px] ${system === s ? 'bg-canvas text-ink shadow-premium-sm ring-1 ring-hairline' : 'text-mute hover:text-ink hover:bg-canvas/50'}`}
+                      className={`flex-1 py-2.5 text-[10px] font-mono font-bold uppercase tracking-[0.08em] transition-all duration-300 rounded-full focus-ring ${system === s ? 'bg-[var(--color-accent)] text-[oklch(16%_0.02_262)] shadow-premium-sm' : 'text-mute hover:text-ink'}`}
                     >
-                      {s === 'us' ? 'US Units' : s.charAt(0).toUpperCase() + s.slice(1)}
+                      {s === 'us' ? 'US' : s.toUpperCase()}
                     </button>
                   ))}
                 </div>
@@ -295,7 +358,7 @@ export const CalorieCalculatorCard: React.FC = () => {
 
               <div className="grid grid-cols-2 gap-3 sm:gap-6 lg:gap-8">
                 <div className="flex flex-col gap-1.5 col-span-2">
-                  <label className="text-[10px] font-mono font-bold text-mute uppercase tracking-widest">Name (PDF Export)</label>
+                  <label className="text-[10px] font-mono font-bold text-mute uppercase tracking-widest">Name</label>
                   <div className="relative">
                     <input
                       type="text"
@@ -312,7 +375,7 @@ export const CalorieCalculatorCard: React.FC = () => {
                       }}
                       placeholder="YOUR NAME"
                       maxLength={50}
-                      className="w-full bg-canvas border border-hairline dark:border-white/[0.08] rounded-ui h-14 px-5 text-xl font-bold tracking-tighter text-ink dark:text-[#f5f5f5] transition-all duration-300 placeholder:text-mute/20 dark:placeholder:text-mute/40 focus:outline-none focus:ring-[6px] focus:ring-primary/[0.03] focus:border-ink dark:focus:border-white/20 shadow-premium-sm hover:border-hairline-strong dark:hover:border-white/15 focus:bg-canvas uppercase"
+                      className="w-full bg-canvas border border-hairline rounded-ui h-14 px-5 text-xl font-bold tracking-tighter text-ink dark:text-[#f5f5f5] transition-all duration-300 placeholder:text-mute/20 dark:placeholder:text-mute/40 focus:outline-none focus:ring-[6px] focus:ring-primary/[0.03] focus:border-ink dark:focus:border-white/20 shadow-premium-sm hover:border-hairline-strong focus:bg-canvas uppercase"
                     />
                   </div>
                   {nameError && <p className="text-red-500 text-[10px] font-mono font-bold">{nameError}</p>}
@@ -321,14 +384,15 @@ export const CalorieCalculatorCard: React.FC = () => {
                 <InputGroup id="calorie-age" label="Age" value={age} onChange={setAge} unit="YRS" placeholder="25" min={18} max={120} step="1" />
                 <div className="flex flex-col gap-3">
                   <span className="text-[10px] font-mono font-bold text-mute uppercase tracking-[0.3em] ml-1">Gender</span>
-                  <div className="flex p-1 bg-canvas-soft border border-hairline rounded-ui h-14 gap-1">
+                  <div className="flex p-1 bg-surface-2 border border-hairline rounded-full gap-1">
                     {['male', 'female'].map((g) => (
                       <button 
                         key={g} 
+                        type="button"
                         onClick={() => setGender(g as 'male' | 'female')}
-                        className={`flex-1 rounded-[4px] text-[10px] font-black uppercase tracking-[0.15em] transition-all duration-300 ${gender === g ? 'bg-ink text-canvas shadow-premium-md' : 'text-mute hover:text-ink hover:bg-canvas/50'}`}
+                        className={`flex-1 py-2.5 text-[10px] font-mono font-bold uppercase tracking-[0.08em] transition-all duration-300 rounded-full focus-ring ${gender === g ? 'bg-[var(--color-accent)] text-[oklch(16%_0.02_262)] shadow-premium-sm' : 'text-mute hover:text-ink'}`}
                       >
-                        {g}
+                        {g.toUpperCase()}
                       </button>
                     ))}
                   </div>
@@ -357,21 +421,14 @@ export const CalorieCalculatorCard: React.FC = () => {
                           <InputGroup key="h-ft-other" id="feet-other" label="Height" value={feet} onChange={setFeet} unit="FT" placeholder="5" min={1} max={8} step="1" />
                           <InputGroup key="h-in-other" id="inches-other" label="Inches" value={inches} onChange={setInches} unit="IN" placeholder="8" min={0} max={11} step="1" />
                         </div>
-                        <div className="flex justify-end">
-                           <div className="relative flex items-center">
-                              <select
-                                value={heightUnitOther}
-                                onChange={(e) => { setHeightUnitOther(e.target.value as any); setHeight(''); setFeet(''); setInches(''); }}
-                                className="appearance-none bg-canvas-soft pl-2 pr-6 py-1 rounded border border-hairline text-[9px] font-mono font-bold text-mute uppercase tracking-widest focus:outline-none focus:border-ink focus:text-ink transition-colors cursor-pointer hover:bg-surface"
-                              >
-                                {['cm', 'm', 'ft+in', 'in'].map(opt => (
-                                  <option key={opt} value={opt}>{opt}</option>
-                                ))}
-                              </select>
-                              <ChevronDown className="absolute right-1.5 w-2.5 h-2.5 text-mute pointer-events-none" />
-                            </div>
-                        </div>
-                      </div>
+                          <div className="flex justify-end w-full">
+                            <Select
+                              value={heightUnitOther}
+                              onChange={(val) => { setHeightUnitOther(val as any); setHeight(''); setFeet(''); setInches(''); }}
+                              options={['cm', 'm', 'ft+in', 'in'].map(opt => ({ value: opt, label: opt.toUpperCase() }))}
+                              label="Height Unit"
+                            />
+                          </div></div>
                     ) : (
                       <InputGroup 
                         key="h-other" 
@@ -406,37 +463,34 @@ export const CalorieCalculatorCard: React.FC = () => {
               </div>
 
               <div className="space-y-6 lg:space-y-8 pt-6 border-t border-hairline/50">
-                <div className="space-y-4">
-                  <span className="text-[10px] font-mono font-bold text-mute uppercase tracking-[0.3em] ml-1">Body Goal</span>
-                  <div className="flex p-1 bg-canvas-soft border border-hairline rounded-ui gap-1">
+                <div className="space-y-3">
+                  <span className="text-xs font-mono text-mute uppercase tracking-[0.12em] ml-1">Body Goal</span>
+                  <div className="flex p-1 bg-surface-2 border border-hairline rounded-full gap-1">
                     {['loss', 'maintenance', 'gain'].map((g) => (
                       <button 
                         key={g} 
+                        type="button"
                         onClick={() => setGoal(g as Goal)}
-                        className={`flex-1 py-2.5 text-[10px] font-black uppercase tracking-[0.15em] transition-all duration-300 rounded-[4px] ${goal === g ? 'bg-ink text-canvas shadow-premium-md' : 'text-mute hover:text-ink hover:bg-canvas/50'}`}
+                        className={`flex-1 py-2.5 text-[10px] font-mono font-bold uppercase tracking-[0.08em] transition-all duration-300 rounded-full focus-ring ${goal === g ? 'bg-[var(--color-accent)] text-[oklch(16%_0.02_262)] shadow-premium-sm' : 'text-mute hover:text-ink'}`}
                       >
-                        {g}
+                        {g.toUpperCase()}
                       </button>
                     ))}
                   </div>
                 </div>
 
-                <div className="space-y-4">
-                  <span className="text-[10px] font-mono font-bold text-mute uppercase tracking-[0.3em] ml-1">Physical Activity</span>
-                  <div className="relative group">
-                    <select 
-                      value={activity}
-                      onChange={(e) => setActivity(e.target.value)}
-                      className="w-full bg-canvas-soft border border-hairline rounded-ui h-14 px-5 pr-10 text-[11px] font-black uppercase tracking-widest text-ink focus:outline-none appearance-none cursor-pointer hover:border-hairline-strong transition-all shadow-inset focus:ring-4 focus:ring-primary/5 focus:border-ink"
-                    >
-                      {ACTIVITY_LEVELS.map((level) => (
-                        <option key={level.value} value={level.value} className="bg-canvas text-ink font-sans text-sm font-medium">
-                          {level.label.toUpperCase()}  -  {level.desc}
-                        </option>
-                      ))}
-                    </select>
-                    <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-mute pointer-events-none group-hover:text-ink transition-colors" />
-                  </div>
+                <div className="space-y-3">
+                  <span className="text-xs font-mono text-mute uppercase tracking-[0.12em] ml-1">Physical Activity</span>
+                  <Select 
+                    value={activity}
+                    onChange={setActivity}
+                    options={ACTIVITY_LEVELS.map(level => ({
+                      value: level.value,
+                      label: level.label,
+                      desc: level.desc
+                    }))}
+                    label="Physical Activity"
+                  />
                 </div>
               </div>
             </div>
@@ -444,7 +498,7 @@ export const CalorieCalculatorCard: React.FC = () => {
         </div>
 
         {/* RIGHT: Intelligence Panel (Results) */}
-        <div className="lg:col-span-7 bg-canvas-soft/40 p-6 sm:p-10 lg:p-12 relative border-t lg:border-t-0 border-hairline h-full overflow-y-auto">
+        <div className="bg-canvas-soft/40 p-6 sm:p-10 lg:p-12 relative h-full overflow-y-auto">
           <div className="flex flex-col gap-6 lg:gap-8">
             <div className="flex flex-col border-b border-hairline/50 pb-8">
               <div className="flex items-center justify-between mb-8">
@@ -498,101 +552,126 @@ export const CalorieCalculatorCard: React.FC = () => {
               ) : (
                 <>
               {/* HERO RESULT: TARGET CALORIES */}
-              <div id="calorie-hero-export" className="flex flex-col gap-8 py-8 px-6 sm:py-10 sm:px-8 bg-canvas border border-hairline rounded-marketing shadow-premium-lg relative overflow-hidden">
-                <div className={`absolute top-0 right-0 w-64 h-64 opacity-5 blur-[100px] rounded-full -mr-32 -mt-32 transition-colors duration-1000 ${!isFaded ? statusColor.replace('text-', 'bg-') : 'bg-mute'}`}></div>
+              <div id="calorie-hero-export" className="flex flex-col gap-8 py-8 px-6 sm:py-10 sm:px-8 bg-ink dark:bg-canvas border border-hairline/10 dark:border-hairline rounded-marketing shadow-premium-lg text-canvas dark:text-ink relative overflow-hidden">
+                <div className={`absolute top-0 right-0 w-64 h-64 opacity-10 dark:opacity-5 blur-[100px] rounded-full -mr-32 -mt-32 transition-colors duration-1000 ${!isFaded ? statusColor.replace('text-', 'bg-') : 'bg-mute'}`}></div>
                 
-                <div className="flex flex-col sm:flex-row justify-between items-center gap-6 sm:gap-8 relative z-10">
-                  <div className="flex flex-col items-center sm:items-start text-center sm:text-left">
-                    <span className="text-[10px] sm:text-[11px] font-mono font-bold text-mute uppercase tracking-[0.3em] mb-2">Target Daily Calories</span>
-                    <div className="flex items-baseline gap-2 sm:gap-3">
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 w-full relative z-10">
+                  <div className="flex flex-col items-start min-w-0">
+                    <span className="text-[10px] font-mono font-bold text-canvas-soft/60 dark:text-mute uppercase tracking-[0.35em] mb-2">Target Daily Calories</span>
+                    <div className="flex items-baseline gap-2">
                       <motion.span 
-                        className="text-5xl xs:text-6xl sm:text-8xl font-black tracking-[-0.08em] text-ink"
+                        className="text-6xl sm:text-7xl font-black tracking-[-0.03em] text-canvas dark:text-ink leading-none"
                         initial={false}
                         animate={{ scale: targetCalories > 0 ? [1, 1.02, 1] : 1 }}
                         transition={{ duration: 0.4 }}
                       >
                         {targetCalories > 0 ? Math.round(targetCalories).toLocaleString() : '--'}
                       </motion.span>
-                      <span className="text-lg sm:text-xl font-bold text-mute/60 tracking-tighter">kcal</span>
+                      <span className="text-xs font-mono font-bold text-canvas-soft/50 dark:text-mute/50 uppercase tracking-widest">kcal</span>
                     </div>
                   </div>
 
-                  <div className="h-16 w-px bg-hairline hidden sm:block"></div>
-
-                  <div className="text-center sm:text-right">
-                    <span className="text-[10px] sm:text-[11px] font-mono font-bold text-mute uppercase tracking-[0.3em] mb-2 sm:mb-3 block">Goal Strategy</span>
-                    <div className={`text-xl xs:text-2xl sm:text-3xl font-black tracking-tight ${statusColor}`}>
+                  <div className="flex flex-col items-start sm:items-end text-left sm:text-right min-w-0">
+                    <span className="text-[10px] font-mono font-bold text-canvas-soft/60 dark:text-mute uppercase tracking-[0.35em] mb-2">Goal Strategy</span>
+                    <div className={`text-xl sm:text-2xl font-black tracking-tight break-words max-w-full ${statusColor}`}>
                       {isFaded ? 'Awaiting Data' : (goal || 'Maintenance').charAt(0).toUpperCase() + (goal || 'Maintenance').slice(1)}
                     </div>
                     {targetCalories > 0 && (
-                      <div className="mt-2 inline-flex items-center gap-2 px-3 py-1 rounded-full bg-canvas border border-hairline shadow-premium-sm">
-                         <div className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full ${statusColor.replace('text-', 'bg-')} animate-pulse`}></div>
-                         <span className="text-[9px] sm:text-[10px] font-mono font-bold uppercase text-ink">Live Calculation</span>
+                      <div className="mt-2.5 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-canvas/10 border border-canvas/20 shadow-premium-sm dark:bg-ink/10 dark:border-ink/20">
+                         <div className={`w-1.5 h-1.5 rounded-full ${statusColor.replace('text-', 'bg-')} animate-pulse`}></div>
+                         <span className="text-[9px] font-mono font-bold uppercase text-canvas dark:text-ink">Live Calculation</span>
                       </div>
                     )}
                   </div>
                 </div>
               </div>
 
-              {/* SUPPORTING METRICS */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-5">
-                <div className="card glass border-hairline p-6 sm:p-8 flex flex-col justify-between min-h-[140px] sm:min-h-[160px] group hover:border-hairline-strong transition-all">
-                  <div className="flex justify-between items-start mb-4 sm:mb-6">
-                    <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-ink text-canvas flex items-center justify-center shadow-premium-md group-hover:scale-110 transition-transform">
-                      <Activity className="w-4 h-4 sm:w-5 sm:h-5" />
-                    </div>
-                    <div className="text-[9px] sm:text-[10px] font-mono font-bold text-mute uppercase tracking-[0.3em] bg-canvas-soft px-2 sm:px-3 py-1 sm:py-1.5 rounded-full border border-hairline">BMR</div>
-                  </div>
+              {/* 2x2 Grid of Secondary Metrics */}
+              <div className="grid grid-cols-2 gap-4">
+                {/* Metric 1: Steps */}
+                <div className="bg-surface-2 p-5 border border-hairline rounded-ui group hover:border-hairline-strong transition-all flex flex-col justify-between">
                   <div>
-                    <div className="flex items-baseline gap-1.5 sm:gap-2 mb-1">
-                      <span className="text-xl sm:text-2xl font-black tracking-tight text-ink">
-                        {isFaded ? '--' : Math.round(bmr).toLocaleString()}
-                      </span>
-                      <span className="text-[10px] sm:text-xs font-bold text-mute uppercase font-mono tracking-widest">{isFaded ? '' : 'kcal'}</span>
+                    <div className="text-[9px] font-mono font-bold text-mute uppercase tracking-[0.2em] mb-3">Daily Steps</div>
+                    <div className="text-xl sm:text-2xl font-mono font-bold text-ink tracking-tight mb-2">
+                      {isFaded ? '--' : suggestedActivity.steps}
                     </div>
-                    <p className="text-body text-[9px] sm:text-[10px] font-bold uppercase tracking-wider opacity-60">Basal Metabolic Rate</p>
+                  </div>
+                  <div className="w-full">
+                    <div className="h-1 w-full bg-hairline rounded-full overflow-hidden mb-1">
+                      <div className="h-full bg-status-healthy rounded-full transition-all duration-1000" style={{ width: isFaded ? '0%' : `${suggestedActivity.progress}%` }} />
+                    </div>
+                    <div className="text-[8px] font-mono text-mute uppercase tracking-wider">Target Activity</div>
                   </div>
                 </div>
 
-                <div className="card glass border-hairline p-6 sm:p-8 flex flex-col justify-between min-h-[140px] sm:min-h-[160px] group hover:border-hairline-strong transition-all">
-                  <div className="flex justify-between items-start mb-4 sm:mb-6">
-                    <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-primary/5 text-status-healthy flex items-center justify-center border border-status-healthy/20 group-hover:scale-110 transition-transform">
-                      <Target className="w-4 h-4 sm:w-5 sm:h-5" />
-                    </div>
-                    <div className="text-[9px] sm:text-[10px] font-mono font-bold text-mute uppercase tracking-[0.3em] bg-canvas-soft px-2 sm:px-3 py-1 sm:py-1.5 rounded-full border border-hairline">TDEE</div>
-                  </div>
+                {/* Metric 2: Walking */}
+                <div className="bg-surface-2 p-5 border border-hairline rounded-ui group hover:border-hairline-strong transition-all flex flex-col justify-between">
                   <div>
-                    <div className="flex items-baseline gap-1.5 sm:gap-2 mb-1">
-                      <span className="text-xl sm:text-2xl font-black tracking-tight text-ink">
-                        {isFaded ? '--' : Math.round(tdee).toLocaleString()}
-                      </span>
-                      <span className="text-[10px] sm:text-xs font-bold text-mute uppercase font-mono tracking-widest">{isFaded ? '' : 'kcal'}</span>
+                    <div className="text-[9px] font-mono font-bold text-mute uppercase tracking-[0.2em] mb-3">Daily Walking</div>
+                    <div className="text-xl sm:text-2xl font-mono font-bold text-ink tracking-tight mb-2">
+                      {isFaded ? '--' : suggestedActivity.walking}
                     </div>
-                    <p className="text-body text-[9px] sm:text-[10px] font-bold uppercase tracking-wider opacity-60">Total Daily Energy Expenditure</p>
+                  </div>
+                  <div className="w-full">
+                    <div className="text-[8px] font-mono text-mute uppercase tracking-wider">Recommended Duration</div>
+                  </div>
+                </div>
+
+                {/* Metric 3: Basal Metabolism (BMR) */}
+                <div className="bg-surface-2 p-5 border border-hairline rounded-ui group hover:border-hairline-strong transition-all flex flex-col justify-between">
+                  <div>
+                    <div className="text-[9px] font-mono font-bold text-mute uppercase tracking-[0.2em] mb-3">Basal Metabolic Rate</div>
+                    <div className="text-xl sm:text-2xl font-mono font-bold text-ink tracking-tight mb-2">
+                      {isFaded ? '--' : Math.round(bmr).toLocaleString()}
+                      <span className="text-[10px] font-sans font-medium text-mute ml-1">KCAL</span>
+                    </div>
+                  </div>
+                  <div className="w-full">
+                    <div className="text-[8px] font-mono text-mute uppercase tracking-wider">Base Resting Energy</div>
+                  </div>
+                </div>
+
+                {/* Metric 4: Daily Water Intake */}
+                <div className="bg-surface-2 p-5 border border-hairline rounded-ui group hover:border-hairline-strong transition-all flex flex-col justify-between">
+                  <div>
+                    <div className="text-[9px] font-mono font-bold text-mute uppercase tracking-[0.2em] mb-3">Daily Water Intake</div>
+                    <div className="text-xl sm:text-2xl font-mono font-bold text-ink tracking-tight mb-2">
+                      {isFaded ? '--' : waterIntake.toFixed(1)}
+                      <span className="text-[10px] font-sans font-medium text-mute ml-1">L</span>
+                    </div>
+                  </div>
+                  <div className="w-full">
+                    <div className="h-1 w-full bg-hairline rounded-full overflow-hidden mb-1">
+                      <div className="h-full bg-status-under rounded-full transition-all duration-1000" style={{ width: isFaded ? '0%' : Math.min((waterIntake / 4) * 100, 100) + '%' }} />
+                    </div>
+                    <div className="text-[8px] font-mono text-mute uppercase tracking-wider">Weight x 35ml</div>
                   </div>
                 </div>
               </div>
 
               {/* DAILY CALORIE GOALS */}
-              <div className="card bg-[#1a1a1a] text-white p-6 sm:p-8 relative overflow-hidden shadow-premium-xl border border-white/10 dark:border-white/10">
+              <div className="card bg-ink dark:bg-canvas text-canvas dark:text-ink p-6 sm:p-8 relative overflow-hidden shadow-premium-xl border border-hairline/10 dark:border-hairline">
+                <div className="absolute top-0 right-0 p-6 sm:p-8 opacity-10 pointer-events-none">
+                  <BrandLogo className="w-16 h-16 sm:w-24 sm:h-24" variant="canvas" />
+                </div>
                 <div className="relative z-10 flex flex-col gap-5 sm:gap-6">
                   <div className="text-left">
-                    <div className="text-[9px] sm:text-[10px] font-mono font-bold text-white/60 uppercase tracking-[0.4em] mb-4">Daily Calorie Strategy</div>
+                    <div className="text-[9px] sm:text-[10px] font-mono font-bold text-canvas-soft/60 dark:text-mute uppercase tracking-[0.4em] mb-4">Daily Calorie Strategy</div>
                     <div className="grid grid-cols-3 gap-2 sm:gap-4 -mx-2">
-                      <div className={`flex flex-col gap-1 p-2 rounded-ui transition-all duration-300 ${goal === 'maintenance' || !goal ? 'bg-white/10 ring-1 ring-white/20' : 'opacity-60'}`}>
-                        <div className="text-[8px] sm:text-[9px] font-mono font-bold text-white/50 uppercase tracking-widest">Maintain</div>
-                        <div className="text-lg sm:text-2xl font-black tracking-tight text-white">{isFaded ? '--' : Math.round(caloriesByGoal.maintenance).toLocaleString()}</div>
-                        <div className="text-[8px] font-mono text-white/40 uppercase tracking-widest">kcal</div>
+                      <div className={`flex flex-col gap-1 p-2 rounded-ui transition-all duration-300 ${goal === 'maintenance' || !goal ? 'bg-canvas/10 ring-1 ring-canvas/20 dark:bg-ink/10 dark:ring-ink/20' : 'opacity-60'}`}>
+                        <div className="text-[8px] sm:text-[9px] font-mono font-bold text-canvas-soft/50 dark:text-mute/50 uppercase tracking-widest">Maintain</div>
+                        <div className="text-lg sm:text-2xl font-mono font-bold tracking-tight text-canvas dark:text-ink">{isFaded ? '--' : Math.round(caloriesByGoal.maintenance).toLocaleString()}</div>
+                        <div className="text-[8px] font-mono text-canvas-soft/45 dark:text-mute/40 uppercase tracking-widest">kcal</div>
                       </div>
-                      <div className={`flex flex-col gap-1 p-2 rounded-ui transition-all duration-300 ${goal === 'loss' ? 'bg-white/10 ring-1 ring-white/20' : 'opacity-60'}`}>
-                        <div className="text-[8px] sm:text-[9px] font-mono font-bold text-white/50 uppercase tracking-widest">Fat Loss</div>
-                        <div className="text-lg sm:text-2xl font-black tracking-tight text-red-400">{isFaded ? '--' : Math.round(caloriesByGoal.loss).toLocaleString()}</div>
-                        <div className="text-[8px] font-mono text-white/40 uppercase tracking-widest">kcal</div>
+                      <div className={`flex flex-col gap-1 p-2 rounded-ui transition-all duration-300 ${goal === 'loss' ? 'bg-canvas/10 ring-1 ring-canvas/20 dark:bg-ink/10 dark:ring-ink/20' : 'opacity-60'}`}>
+                        <div className="text-[8px] sm:text-[9px] font-mono font-bold text-canvas-soft/50 dark:text-mute/50 uppercase tracking-widest">Fat Loss</div>
+                        <div className="text-lg sm:text-2xl font-mono font-bold tracking-tight text-status-over">{isFaded ? '--' : Math.round(caloriesByGoal.loss).toLocaleString()}</div>
+                        <div className="text-[8px] font-mono text-canvas-soft/45 dark:text-mute/40 uppercase tracking-widest">kcal</div>
                       </div>
-                      <div className={`flex flex-col gap-1 p-2 rounded-ui transition-all duration-300 ${goal === 'gain' ? 'bg-white/10 ring-1 ring-white/20' : 'opacity-60'}`}>
-                        <div className="text-[8px] sm:text-[9px] font-mono font-bold text-white/50 uppercase tracking-widest">Weight Gain</div>
-                        <div className="text-lg sm:text-2xl font-black tracking-tight text-green-400">{isFaded ? '--' : Math.round(caloriesByGoal.gain).toLocaleString()}</div>
-                        <div className="text-[8px] font-mono text-white/40 uppercase tracking-widest">kcal</div>
+                      <div className={`flex flex-col gap-1 p-2 rounded-ui transition-all duration-300 ${goal === 'gain' ? 'bg-canvas/10 ring-1 ring-canvas/20 dark:bg-ink/10 dark:ring-ink/20' : 'opacity-60'}`}>
+                        <div className="text-[8px] sm:text-[9px] font-mono font-bold text-canvas-soft/50 dark:text-mute/50 uppercase tracking-widest">Weight Gain</div>
+                        <div className="text-lg sm:text-2xl font-mono font-bold tracking-tight text-status-healthy">{isFaded ? '--' : Math.round(caloriesByGoal.gain).toLocaleString()}</div>
+                        <div className="text-[8px] font-mono text-canvas-soft/45 dark:text-mute/40 uppercase tracking-widest">kcal</div>
                       </div>
                     </div>
                   </div>
@@ -607,12 +686,11 @@ export const CalorieCalculatorCard: React.FC = () => {
                     animate={{ opacity: 1, y: 0 }}
                     className="space-y-6 lg:space-y-8"
                   >
-                    <div className="card glass border border-status-healthy/30 p-6 sm:p-8">
+                    <div className="card bg-canvas border border-hairline p-6 sm:p-8 rounded-ui">
                       <div className="flex items-center justify-between mb-4 sm:mb-5">
                         <div className="text-[9px] sm:text-[10px] font-mono font-bold text-mute uppercase tracking-[0.4em]">
                           Nutrition Tips
                         </div>
-                        <span className="text-xs font-black text-status-healthy">v</span>
                       </div>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
                         {recommendations.map((tip, i) => (
@@ -621,53 +699,6 @@ export const CalorieCalculatorCard: React.FC = () => {
                             <p className="text-[11px] sm:text-xs font-medium text-ink/80 leading-relaxed">{tip}</p>
                           </div>
                         ))}
-                      </div>
-                    </div>
-
-                    <div className="card glass border-hairline p-6 sm:p-8">
-                      <div className="text-[9px] sm:text-[10px] font-mono font-bold text-mute uppercase tracking-[0.4em] mb-4 sm:mb-5">
-                        Suggested Activity
-                      </div>
-                      <div className="grid grid-cols-2 gap-4 sm:gap-6 mb-4 sm:mb-5">
-                        <div>
-                          <div className="text-[8px] sm:text-[9px] font-mono font-bold text-mute uppercase tracking-widest mb-1">Walking</div>
-                          <div className="text-base sm:text-lg font-black tracking-tight text-ink">{suggestedActivity.walking}</div>
-                        </div>
-                        <div>
-                          <div className="text-[8px] sm:text-[9px] font-mono font-bold text-mute uppercase tracking-widest mb-1">Steps / Day</div>
-                          <div className="text-base sm:text-lg font-black tracking-tight text-ink">{suggestedActivity.steps}</div>
-                        </div>
-                      </div>
-                      <div className="h-1.5 w-full bg-hairline rounded-full overflow-hidden">
-                        <div 
-                          className="h-full bg-status-healthy rounded-full transition-all duration-1000" 
-                          style={{ width: `${suggestedActivity.progress}%` }} 
-                        />
-                      </div>
-                    </div>
-
-                    <div className="card glass border-hairline p-6 sm:p-8">
-                      <div className="flex items-center justify-between mb-4 sm:mb-5">
-                        <div className="text-[9px] sm:text-[10px] font-mono font-bold text-mute uppercase tracking-[0.4em]">
-                          Daily Water Intake
-                        </div>
-                        <div className="text-[9px] font-mono font-bold text-mute uppercase tracking-widest bg-canvas-soft px-2 py-1 rounded-full border border-hairline">
-                          Weight x 35ml
-                        </div>
-                      </div>
-                      <div className="flex items-baseline gap-2 mb-4 sm:mb-5">
-                        <span className="text-3xl sm:text-4xl font-black tracking-tight text-ink">
-                          {waterIntake.toFixed(1)}
-                        </span>
-                        <span className="text-[10px] sm:text-xs font-bold text-mute uppercase font-mono tracking-widest">
-                          L / DAY
-                        </span>
-                      </div>
-                      <div className="h-1.5 w-full bg-hairline rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-status-under rounded-full transition-all duration-1000"
-                          style={{ width: Math.min((waterIntake / 4) * 100, 100) + '%' }}
-                        />
                       </div>
                     </div>
                   </motion.div>

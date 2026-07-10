@@ -1,6 +1,8 @@
 ---
 import '../styles/global.css';
 
+const SITE_DESCRIPTION = "Calculate your Body Mass Index (BMI) easily with our free online tool. Supports metric and US units for adults and children, providing helpful health insights.";
+
 interface Props {
 	title?: string;
 	description?: string;
@@ -12,13 +14,13 @@ interface Props {
 }
 
 const { 
-	title = "BMI Calculator - Calculate Body Mass Index Online | QuickBMI",
-	description = "Calculate your Body Mass Index (BMI) easily with our free online tool. Supports metric and US units for adults and children, providing helpful health insights.",
+	title = "BMI Calculator - Calculate Body Mass Index Online | QuickBMICalculator",
+	description = SITE_DESCRIPTION,
 	image = "/og-image.png",
 	ogType = "website",
 	robots = "index, follow",
 	extraSchema = [],
-	appName = "Quick BMI Calculator"
+	appName = "QuickBMICalculator"
 } = Astro.props;
 
 ---
@@ -32,7 +34,7 @@ const {
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<link rel="shortcut icon" href="/favicon.ico" />
 		<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
-		<meta name="apple-mobile-web-app-title" content="QuickBMI" />
+		<meta name="apple-mobile-web-app-title" content="QuickBMICalculator" />
 		<link rel="manifest" href="/site.webmanifest" />
 		<meta name="generator" content={Astro.generator} />
 		<link rel="canonical" href={"https://quickbmicalculator.com" + (Astro.url.pathname.endsWith('/') && Astro.url.pathname !== '/' ? Astro.url.pathname.slice(0, -1) : Astro.url.pathname)} />
@@ -96,11 +98,11 @@ const {
 					"@type": "WebSite",
 					"@id": `${Astro.url.origin}/#website`,
 					"url": Astro.url.origin,
-					"name": "QuickBMI",
-					"description": description,
+					"name": "QuickBMICalculator",
+					"description": SITE_DESCRIPTION,
 					"publisher": {
 						"@type": "Organization",
-						"name": "QuickBMI",
+						"name": "QuickBMICalculator",
 						"url": Astro.url.origin
 					}
 				},

@@ -1,0 +1,79 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { Navbar } from '../components/Navbar';
+import Footer from '../components/Footer.astro';
+import HeroCalculator from '../components/HeroCalculator.astro';
+import { MacroCalculatorCard } from '../components/calculator/MacroCalculatorCard';
+import { FAQAccordion } from '../components/FAQAccordion';
+import { macroFaqs } from '../data/faq';
+
+const faqSchema = {
+	"@type": "FAQPage",
+	"@id": `${Astro.url.href}#faq`,
+	"mainEntity": macroFaqs.map(faq => ({
+		"@type": "Question",
+		"name": faq.q,
+		"acceptedAnswer": {
+			"@type": "Answer",
+			"text": faq.a
+		}
+	}))
+};
+---
+
+<Layout 
+  title="Macronutrient Calculator - Balance Carbs Protein Fat | QuickBMICalculator"
+  description="Calculate your optimal daily macronutrient splits (carbs, protein, fat) in grams. Supports Balanced, Keto, and High Protein splits."
+  appName="Macronutrient Calculator"
+  extraSchema={[faqSchema]}
+>
+  <Navbar client:load />
+
+  <main class="flex-grow">
+    <HeroCalculator
+      subtitle="Divide your daily calorie budget into carbohydrates, protein, and fats to fit your exact diet profile."
+      badgeTag="AMDR Ranges"
+      badgeLine="Dietary reference intake splits"
+    >
+      <span class="text-accent">Macro</span> Calculator
+    </HeroCalculator>
+
+    <section id="calculator" class="relative z-20 px-4 sm:px-6 pt-4 sm:pt-8 lg:pt-10 pb-16 sm:pb-24">
+      <MacroCalculatorCard client:load />
+    </section>
+
+    <section class="py-16 lg:py-20 px-6 bg-canvas-soft border-y border-hairline">
+      <div class="max-w-4xl mx-auto space-y-6">
+        <h2 class="text-3xl sm:text-4xl font-black tracking-tighter text-ink">What is a Macronutrient Split?</h2>
+        <p class="text-body leading-relaxed font-medium opacity-80 text-base">
+          A **macronutrient split** determines what proportion of your daily calories comes from each of the three primary food components: **Carbohydrates** (4 calories/gram), **Protein** (4 calories/gram), and **Fats** (9 calories/gram).
+        </p>
+        <p class="text-body leading-relaxed font-medium opacity-80 text-base">
+          This calculator allows you to toggle preset splits—like standard **Balanced** (40/30/30), **Low Carb**, **Ketogenic**, and **High Protein**—or customize your split using sliders. Having the right macro balance is key to achieving fat loss, muscle growth, and keeping daily energy levels high.
+        </p>
+      </div>
+    </section>
+
+    <section id="faq" class="py-16 lg:py-20 px-6 bg-canvas relative z-10 border-b border-hairline">
+      <div class="max-w-4xl mx-auto">
+        <div class="text-center mb-12 lg:mb-14">
+          <h2 class="text-4xl sm:text-6xl font-black tracking-tighter mb-6 sm:mb-8 text-ink leading-none">Questions about Macros</h2>
+          <p class="text-lg sm:text-xl text-body max-w-2xl mx-auto tracking-tight font-medium opacity-60">Everything you need to know about calculating and balancing macronutrients.</p>
+        </div>
+        
+        <FAQAccordion client:visible faqs={macroFaqs} />
+      </div>
+    </section>
+
+    <section class="py-16 lg:py-20 px-6 bg-canvas border-b border-hairline">
+      <div class="max-w-4xl mx-auto text-center">
+        <p class="text-sm text-mute font-medium">
+          Need to figure out your total daily calorie needs? Try our 
+          <a href="/calorie-calculator/" class="text-ink font-bold underline underline-offset-2 hover:text-status-healthy transition-colors">Calorie Calculator</a>
+        </p>
+      </div>
+    </section>
+  </main>
+
+  <Footer />
+</Layout>

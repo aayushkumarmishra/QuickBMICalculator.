@@ -115,7 +115,7 @@ export const AdminSidebar: React.FC<SidebarProps> = ({ currentPath, isOpen, onCl
                     className="flex flex-col whitespace-nowrap"
                   >
                     <span className="font-black tracking-tighter text-ink leading-tight text-lg">Admin</span>
-                    <span className="text-[10px] font-mono font-black text-mute uppercase tracking-widest opacity-40">QuickBMI Platform</span>
+                    <span className="text-[10px] font-mono font-black text-mute uppercase tracking-widest opacity-40">QuickBMICalculator Platform</span>
                   </motion.div>
                 )}
               </AnimatePresence>

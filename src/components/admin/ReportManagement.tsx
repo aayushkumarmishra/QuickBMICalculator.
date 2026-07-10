@@ -70,7 +70,7 @@ const Toast: React.FC<{
 
 interface HealthReport {
   id: string;
-  calculator_type: 'bmi' | 'bmr' | 'calorie' | 'ideal_weight' | 'water_intake';
+  calculator_type: 'bmi' | 'bmr' | 'calorie' | 'ideal_weight' | 'water_intake' | 'body_fat' | 'lean_body_mass' | 'protein_intake' | 'macro' | 'daily_nutrition';
   input_data: any;
   result_data: any;
   created_at: string;
@@ -95,7 +95,7 @@ export const ReportManagement: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   const [search, setSearch] = useState('');
-  const [reportTypeFilter, setReportTypeFilter] = useState<'all' | 'bmi' | 'bmr' | 'calorie' | 'water_intake' | 'ideal_weight'>('all');
+  const [reportTypeFilter, setReportTypeFilter] = useState<'all' | 'bmi' | 'bmr' | 'calorie' | 'water_intake' | 'ideal_weight' | 'body_fat' | 'lean_body_mass' | 'protein_intake' | 'macro' | 'daily_nutrition'>('all');
   const [bmiFilter, setBmiFilter] = useState<'all' | 'Underweight' | 'Normal' | 'Overweight' | 'Obese'>('all');
   const [dateFilter, setDateFilter] = useState<'all' | 'today' | '7days' | '30days'>('all');
   const [page, setPage] = useState(1);
@@ -385,6 +385,16 @@ export const ReportManagement: React.FC = () => {
           return resData.range ? formatRange(resData.range.min, resData.range.max, 'kg') : 'N/A';
         case 'water_intake': 
           return formatWater(resData.waterIntake || 0);
+        case 'body_fat': 
+          return `${Number(resData.bodyFat || 0).toFixed(1)}%`;
+        case 'lean_body_mass': 
+          return `${Number(resData.leanMass || 0).toFixed(1)} ${getWeightUnit(report)}`;
+        case 'protein_intake': 
+          return `${Math.round(resData.proteinGoal || 0)} g/day`;
+        case 'macro': 
+          return `${Math.round(resData.carbsGrams || 0)}g / ${Math.round(resData.proteinGrams || 0)}g / ${Math.round(resData.fatGrams || 0)}g`;
+        case 'daily_nutrition': 
+          return `${Math.round(resData.targetCalories || 0)} kcal/day`;
         default: 
           return 'N/A';
       }
@@ -427,13 +437,22 @@ export const ReportManagement: React.FC = () => {
         return 'Water Intake';
       case 'ideal_weight':
         return 'Ideal Weight';
+      case 'body_fat':
+        return 'Body Fat';
+      case 'lean_body_mass':
+        return 'Lean Mass';
+      case 'protein_intake':
+        return 'Protein Intake';
+      case 'macro':
+        return 'Macronutrients';
+      case 'daily_nutrition':
+        return 'Daily Nutrition';
       default:
         return '';
     }
   };
 
   const handleViewDetails = (reportId: string) => {
-    console.log("Navigating to", reportId);
     window.location.assign(`/admin/reports/${reportId}`);
   };
 
@@ -615,6 +634,11 @@ export const ReportManagement: React.FC = () => {
         else if (r.calculator_type === 'calorie') valSummary = result.maintenance ? formatKcal(result.maintenance) : '';
         else if (r.calculator_type === 'ideal_weight') valSummary = result.range ? formatRange(result.range.min, result.range.max, 'kg') : '';
         else if (r.calculator_type === 'water_intake') valSummary = result.waterIntake ? formatWater(result.waterIntake) : '';
+        else if (r.calculator_type === 'body_fat') valSummary = result.bodyFat ? `${Number(result.bodyFat).toFixed(1)}%` : '';
+        else if (r.calculator_type === 'lean_body_mass') valSummary = result.leanMass ? `${Number(result.leanMass).toFixed(1)}` : '';
+        else if (r.calculator_type === 'protein_intake') valSummary = result.proteinGoal ? `${Math.round(result.proteinGoal)}g` : '';
+        else if (r.calculator_type === 'macro') valSummary = result.proteinGrams ? `${Math.round(result.carbsGrams)}c / ${Math.round(result.proteinGrams)}p / ${Math.round(result.fatGrams)}f` : '';
+        else if (r.calculator_type === 'daily_nutrition') valSummary = result.targetCalories ? `${Math.round(result.targetCalories)} kcal` : '';
 
         let heightStr = '—';
         if (input.height) {
@@ -701,7 +725,7 @@ export const ReportManagement: React.FC = () => {
           <div className="flex flex-wrap items-center gap-4 w-full xl:w-auto">
             {/* Report Type Filters */}
             <div className="flex items-center bg-canvas border border-hairline rounded-pill p-1.5 shadow-premium-sm overflow-x-auto no-scrollbar">
-              {(['all', 'bmi', 'bmr', 'calorie', 'water_intake', 'ideal_weight'] as const).map((type) => (
+              {(['all', 'bmi', 'bmr', 'calorie', 'water_intake', 'ideal_weight', 'body_fat', 'lean_body_mass', 'protein_intake', 'macro', 'daily_nutrition'] as const).map((type) => (
                 <button
                   key={type}
                   onClick={() => { 
@@ -713,7 +737,7 @@ export const ReportManagement: React.FC = () => {
                     reportTypeFilter === type ? 'bg-ink text-canvas shadow-premium-md' : 'text-mute hover:text-ink'
                   }`}
                 >
-                  {type === 'all' ? 'All Types' : type === 'bmi' ? 'BMI' : type === 'bmr' ? 'BMR' : type === 'calorie' ? 'Calorie' : type === 'water_intake' ? 'Water' : 'Ideal Weight'}
+                  {type === 'all' ? 'All Types' : type === 'bmi' ? 'BMI' : type === 'bmr' ? 'BMR' : type === 'calorie' ? 'Calorie' : type === 'water_intake' ? 'Water' : type === 'ideal_weight' ? 'Ideal Weight' : type === 'body_fat' ? 'Body Fat' : type === 'lean_body_mass' ? 'Lean Mass' : type === 'protein_intake' ? 'Protein' : type === 'macro' ? 'Macros' : 'Nutrition'}
                 </button>
               ))}
             </div>

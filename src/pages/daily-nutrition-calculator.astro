@@ -1,0 +1,79 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { Navbar } from '../components/Navbar';
+import Footer from '../components/Footer.astro';
+import HeroCalculator from '../components/HeroCalculator.astro';
+import { DailyNutritionCalculatorCard } from '../components/calculator/DailyNutritionCalculatorCard';
+import { FAQAccordion } from '../components/FAQAccordion';
+import { dailyNutritionFaqs } from '../data/faq';
+
+const faqSchema = {
+	"@type": "FAQPage",
+	"@id": `${Astro.url.href}#faq`,
+	"mainEntity": dailyNutritionFaqs.map(faq => ({
+		"@type": "Question",
+		"name": faq.q,
+		"acceptedAnswer": {
+			"@type": "Answer",
+			"text": faq.a
+		}
+	}))
+};
+---
+
+<Layout 
+  title="Daily Nutrition Calculator - TDEE Calorie Targets | QuickBMICalculator"
+  description="Calculate your Total Daily Energy Expenditure (TDEE) and safe calorie deficit/surplus levels. Includes safe limit indicators and daily macro goals."
+  appName="Daily Nutrition Calculator"
+  extraSchema={[faqSchema]}
+>
+  <Navbar client:load />
+
+  <main class="flex-grow">
+    <HeroCalculator
+      subtitle="Compute your resting metabolism, active TDEE, and safe caloric deficit/surplus targets for sustainable physical change."
+      badgeTag="Mifflin-St Jeor + AMDR"
+      badgeLine="Balanced macro targets"
+    >
+      <span class="text-accent">Daily Nutrition</span> Calculator
+    </HeroCalculator>
+
+    <section id="calculator" class="relative z-20 px-4 sm:px-6 pt-4 sm:pt-8 lg:pt-10 pb-16 sm:pb-24">
+      <DailyNutritionCalculatorCard client:load />
+    </section>
+
+    <section class="py-16 lg:py-20 px-6 bg-canvas-soft border-y border-hairline">
+      <div class="max-w-4xl mx-auto space-y-6">
+        <h2 class="text-3xl sm:text-4xl font-black tracking-tighter text-ink">What is TDEE and Daily Caloric Target?</h2>
+        <p class="text-body leading-relaxed font-medium opacity-80 text-base">
+          Your <strong>Total Daily Energy Expenditure (TDEE)</strong> is the number of calories your body burns in 24 hours, incorporating your basic resting metabolism (BMR) and standard physical movements.
+        </p>
+        <p class="text-body leading-relaxed font-medium opacity-80 text-base">
+          To achieve weight modification, you must adjust your daily nutrition. This calculator estimates your TDEE and applies safe caloric adjustments based on target rates (e.g., losing or gaining 0.5 kg per week). Safety constraints prevent calories from falling below physiological floors (1200 kcal/day for females and 1500 kcal/day for males), ensuring your nutrition remains health-supportive.
+        </p>
+      </div>
+    </section>
+
+    <section id="faq" class="py-16 lg:py-20 px-6 bg-canvas relative z-10 border-b border-hairline">
+      <div class="max-w-4xl mx-auto">
+        <div class="text-center mb-12 lg:mb-14">
+          <h2 class="text-4xl sm:text-6xl font-black tracking-tighter mb-6 sm:mb-8 text-ink leading-none">Questions about Daily Nutrition</h2>
+          <p class="text-lg sm:text-xl text-body max-w-2xl mx-auto tracking-tight font-medium opacity-60">Everything you need to know about calculating TDEE, calorie targets, and safe deficits.</p>
+        </div>
+        
+        <FAQAccordion client:visible faqs={dailyNutritionFaqs} />
+      </div>
+    </section>
+
+    <section class="py-16 lg:py-20 px-6 bg-canvas border-b border-hairline">
+      <div class="max-w-4xl mx-auto text-center">
+        <p class="text-sm text-mute font-medium">
+          Need details on your water intake requirements? Try our 
+          <a href="/water-intake-calculator/" class="text-ink font-bold underline underline-offset-2 hover:text-status-healthy transition-colors">Water Intake Calculator</a>
+        </p>
+      </div>
+    </section>
+  </main>
+
+  <Footer />
+</Layout>

@@ -50,7 +50,7 @@ interface TrackerProfile {
 
 interface HealthReport {
   id: string;
-  calculator_type: 'bmi' | 'bmr' | 'calorie' | 'ideal_weight' | 'water_intake';
+  calculator_type: 'bmi' | 'bmr' | 'calorie' | 'ideal_weight' | 'water_intake' | 'body_fat' | 'lean_body_mass' | 'protein_intake' | 'macro' | 'daily_nutrition';
   input_data: any;
   result_data: any;
   created_at: string;
@@ -61,7 +61,7 @@ interface HealthReport {
 
 interface HistoryReport {
   id: string;
-  calculator_type: 'bmi' | 'bmr' | 'calorie' | 'ideal_weight' | 'water_intake';
+  calculator_type: 'bmi' | 'bmr' | 'calorie' | 'ideal_weight' | 'water_intake' | 'body_fat' | 'lean_body_mass' | 'protein_intake' | 'macro' | 'daily_nutrition';
   result_data: any;
   created_at: string;
 }
@@ -184,6 +184,16 @@ export const ReportDetailsView: React.FC<ReportDetailsProps> = ({ reportId }) =>
           return result.range ? formatRange(result.range.min, result.range.max, 'kg') : 'N/A';
         case 'water_intake': 
           return formatWater(result.waterIntake || 0);
+        case 'body_fat': 
+          return `${Number(result.bodyFat || 0).toFixed(1)}%`;
+        case 'lean_body_mass': 
+          return `${Number(result.leanMass || 0).toFixed(1)} kg`;
+        case 'protein_intake': 
+          return `${Math.round(result.proteinGoal || 0)} g/day`;
+        case 'macro': 
+          return `${Math.round(result.carbsGrams || 0)}g / ${Math.round(result.proteinGrams || 0)}g / ${Math.round(result.fatGrams || 0)}g`;
+        case 'daily_nutrition': 
+          return `${Math.round(result.targetCalories || 0)} kcal/day`;
         default: 
           return 'N/A';
       }

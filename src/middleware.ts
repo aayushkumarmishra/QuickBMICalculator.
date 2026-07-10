@@ -44,7 +44,7 @@ export const onRequest = defineMiddleware(async ({ locals, url, redirect, cookie
           .from('profiles')
           .select('role')
           .eq('id', user.id)
-          .single();
+          .maybeSingle();
 
         if (profile && !profileError) {
           role = profile.role;
