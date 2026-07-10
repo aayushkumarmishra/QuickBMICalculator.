@@ -2,6 +2,7 @@
 import Layout from '../layouts/Layout.astro';
 import { Navbar } from '../components/Navbar';
 import Footer from '../components/Footer.astro';
+import HeroCalculator from '../components/HeroCalculator.astro';
 import { MacroCalculatorCard } from '../components/calculator/MacroCalculatorCard';
 import { FAQAccordion } from '../components/FAQAccordion';
 import { macroFaqs } from '../data/faq';
@@ -21,7 +22,7 @@ const faqSchema = {
 ---
 
 <Layout 
-  title="Macronutrient Calculator - Balance Carbs Protein Fat | QuickBMI"
+  title="Macronutrient Calculator - Balance Carbs Protein Fat | QuickBMICalculator"
   description="Calculate your optimal daily macronutrient splits (carbs, protein, fat) in grams. Supports Balanced, Keto, and High Protein splits."
   appName="Macronutrient Calculator"
   extraSchema={[faqSchema]}
@@ -29,22 +30,19 @@ const faqSchema = {
   <Navbar client:load />
 
   <main class="flex-grow">
-    <section class="relative pt-20 pb-16 sm:pt-24 sm:pb-20 lg:pb-28 px-4 sm:px-6 flex flex-col items-center bg-canvas -mt-20">
-      <div class="max-w-4xl mx-auto text-center space-y-4 sm:space-y-6 relative z-10">
-        <h1 class="text-4xl sm:text-6xl lg:text-7xl font-black tracking-[-0.06em] leading-[0.9] text-ink">
-          <span class="tracking-normal bg-linear-to-r from-status-healthy to-status-under bg-clip-text text-transparent dark:bg-none dark:text-ink">Macro</span> Calculator
-        </h1>
-        <p class="text-base sm:text-xl text-body max-w-2xl mx-auto leading-tight font-medium opacity-70">
-          Divide your daily calorie budget into carbohydrates, protein, and fats to fit your exact diet profile.
-        </p>
-      </div>
-    </section>
+    <HeroCalculator
+      subtitle="Divide your daily calorie budget into carbohydrates, protein, and fats to fit your exact diet profile."
+      badgeTag="AMDR Ranges"
+      badgeLine="Dietary reference intake splits"
+    >
+      <span class="text-accent">Macro</span> Calculator
+    </HeroCalculator>
 
-    <section id="calculator" class="relative z-20 px-4 sm:px-6 pt-4 sm:pt-8 lg:pt-10 mb-12 sm:mb-16 lg:mb-24 pb-16 sm:pb-24">
+    <section id="calculator" class="relative z-20 px-4 sm:px-6 pt-4 sm:pt-8 lg:pt-10 pb-16 sm:pb-24">
       <MacroCalculatorCard client:load />
     </section>
 
-    <section class="py-12 sm:py-16 px-6 bg-canvas-soft border-y border-hairline">
+    <section class="py-16 lg:py-20 px-6 bg-canvas-soft border-y border-hairline">
       <div class="max-w-4xl mx-auto space-y-6">
         <h2 class="text-3xl sm:text-4xl font-black tracking-tighter text-ink">What is a Macronutrient Split?</h2>
         <p class="text-body leading-relaxed font-medium opacity-80 text-base">
@@ -56,7 +54,7 @@ const faqSchema = {
       </div>
     </section>
 
-    <section id="faq" class="py-16 sm:py-20 lg:py-28 px-6 bg-canvas relative z-10 border-b border-hairline">
+    <section id="faq" class="py-16 lg:py-20 px-6 bg-canvas relative z-10 border-b border-hairline">
       <div class="max-w-4xl mx-auto">
         <div class="text-center mb-12 lg:mb-14">
           <h2 class="text-4xl sm:text-6xl font-black tracking-tighter mb-6 sm:mb-8 text-ink leading-none">Questions about Macros</h2>
@@ -67,7 +65,7 @@ const faqSchema = {
       </div>
     </section>
 
-    <section class="py-12 px-6 bg-canvas border-b border-hairline">
+    <section class="py-16 lg:py-20 px-6 bg-canvas border-b border-hairline">
       <div class="max-w-4xl mx-auto text-center">
         <p class="text-sm text-mute font-medium">
           Need to figure out your total daily calorie needs? Try our 

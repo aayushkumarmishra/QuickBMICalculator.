@@ -2,158 +2,217 @@
 import Layout from '../../layouts/Layout.astro';
 import { Navbar } from '../../components/Navbar';
 import Footer from '../../components/Footer.astro';
+import HeroBackdrop from '../../components/HeroBackdrop.astro';
 import { getCollection } from 'astro:content';
+import { getCategoryInfo, getMotifContent } from '../../lib/blog';
 
 const posts = (await getCollection('blog'))
 	.filter(post => !post.data.draft)
 	.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
 
-const title = "Health & Wellness Blog | QuickBMI";
+const title = "Health & Wellness Blog | QuickBMICalculator";
 const description = "Explore our latest articles on health, fitness, BMI, and wellness. Stay informed with expert insights and tips.";
+
+function readingTime(excerpt) {
+	if (!excerpt) return '';
+	const mins = Math.ceil(excerpt.split(/\s+/).length / 200);
+	return mins < 1 ? '&lt;1 min read' : `${mins} min read`;
+}
+
+const [featured, ...remaining] = posts;
+const showFeaturedWide = posts.length >= 3;
 ---
 
 <Layout title={title} description={description}>
 	<Navbar client:load />
 	
 	<main class="flex-grow">
-		{/* HERO SECTION - Matching BMR Hero Structure Exactly */}
-		<section class="relative pt-20 pb-16 sm:pt-24 sm:pb-20 lg:pb-28 px-4 sm:px-6 flex flex-col items-center bg-canvas">
-			<div class="max-w-4xl mx-auto text-center space-y-4 sm:space-y-6 relative z-10">
-				{/* Health Insights Badge */}
+		<section class="relative pt-20 pb-12 sm:pt-24 sm:pb-16 lg:pb-20 px-4 sm:px-6 flex flex-col items-center bg-canvas overflow-hidden">
+			<HeroBackdrop />
+
+			<div class="max-w-4xl mx-auto text-center space-y-4 sm:space-y-5 relative z-10">
 				<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/5 border border-primary/10">
-					<span class="text-[10px] font-mono font-bold text-primary uppercase tracking-widest">Health Insights</span>
+					<span class="text-[10px] font-mono font-bold text-mute uppercase tracking-[0.16em]">Health Insights</span>
 				</div>
 
-				<h1 class="text-4xl sm:text-6xl lg:text-7xl font-black tracking-[-0.06em] leading-[1.05] text-ink">
-					Our <span class="relative inline-block px-2 pb-2 tracking-normal bg-linear-to-r from-status-healthy to-status-under bg-clip-text text-transparent dark:bg-none dark:text-ink">
-						{/* Localized Glow - Strictly behind "Blog" */}
-						<div class="absolute -inset-8 sm:-inset-12 pointer-events-none -z-10">
-							<div class="absolute inset-0 bg-[radial-gradient(circle,rgba(0,223,216,0.08)_0%,transparent_70%)] blur-2xl sm:blur-3xl rounded-full dark:opacity-[0.15]"></div>
-							<div class="absolute inset-0 bg-[radial-gradient(circle,rgba(0,112,243,0.06)_0%,transparent_70%)] blur-3xl sm:blur-4xl rounded-full translate-y-2 dark:opacity-[0.12]"></div>
-						</div>
-						Blog
-					</span>
+				<h1 class="text-[clamp(2.2rem,4.5vw,3.4rem)] font-bold tracking-[-0.02em] leading-[1.1] text-ink">
+					Our <span class="text-accent">Blog</span>
 				</h1>
 
-				<p class="text-base sm:text-xl text-body max-w-2xl mx-auto leading-tight font-medium opacity-70">
+				<p class="text-base sm:text-lg text-mute max-w-[60ch] mx-auto leading-relaxed font-medium">
 					Deep dives into body metrics, health science, and wellness strategies to help you live a better life.
 				</p>
 			</div>
 		</section>
 
-		{/* CONTENT SECTION - Natural Flow following Hero */}
-		<div class="max-w-7xl mx-auto px-6 pt-4 sm:pt-8 lg:pt-10 pb-32 relative z-10">
-			{/* Blog Grid/List */}
+		<div class="max-w-7xl mx-auto px-6 pb-32 relative z-10">
 			{posts.length > 0 ? (
 				<>
-					{posts.length < 3 ? (
-						<div class="max-w-5xl mx-auto">
-							{posts.map((post) => (
-								<article class="group relative bg-canvas border border-hairline rounded-3xl overflow-hidden hover:shadow-premium-2xl transition-all duration-700 flex flex-col md:flex-row mb-12 last:mb-0 min-h-[400px]">
-									{post.data.heroImage && (
-										<a href={`/blog/${post.id}/`} class="md:w-1/2 aspect-[16/9] md:aspect-auto overflow-hidden border-b md:border-b-0 md:border-r border-hairline">
-											<img 
-												src={post.data.heroImage} 
-												alt={post.data.title}
-												class="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
-											/>
-										</a>
-									)}
-									<div class="p-8 md:p-12 flex flex-col justify-center flex-grow md:w-1/2">
-										<div class="flex items-center gap-3 mb-6">
-											<time datetime={post.data.pubDate.toISOString()} class="text-[10px] font-mono font-bold text-mute uppercase tracking-widest">
-												{post.data.pubDate.toLocaleDateString('en-US', {
-													year: 'numeric',
-													month: 'long',
-													day: 'numeric',
-												})}
-											</time>
-											<span class="w-1 h-1 rounded-full bg-hairline-strong"></span>
-											<span class="text-[10px] font-mono font-bold text-primary uppercase tracking-widest">{post.data.author}</span>
-										</div>
-										
-										<h2 class="text-3xl md:text-4xl font-black text-ink mb-6 group-hover:text-primary transition-colors tracking-tight leading-tight">
-											<a href={`/blog/${post.id}/`}>
-												{post.data.title}
-											</a>
-										</h2>
-										
-										<p class="text-mute text-base md:text-lg leading-relaxed mb-8 font-medium">
-											{post.data.excerpt}
-										</p>
-										
-										<div class="mt-4">
-											<a 
-												href={`/blog/${post.id}/`}
-												class="inline-flex items-center gap-3 px-6 py-3 bg-ink text-canvas rounded-full text-[12px] font-black uppercase tracking-widest hover:bg-primary transition-colors group/link shadow-premium-lg"
-											>
-												Read Full Article
-												<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="transition-transform duration-300 group-hover/link:translate-x-1">
-													<path d="M5 12h14"></path>
-													<path d="m12 5 7 7-7 7"></path>
-												</svg>
-											</a>
-										</div>
+					{showFeaturedWide && featured ? (
+						<>
+							<article class="group featured-card" style={`--cat-light: ${getCategoryInfo(featured.data.tags).light}; --cat-dark: ${getCategoryInfo(featured.data.tags).dark};`}>
+								<div class="featured-motif">
+									<svg viewBox="0 0 200 150" class="absolute inset-0 w-full h-full pointer-events-none opacity-[0.5]" preserveAspectRatio="xMidYMid slice" set:html={getMotifContent(getCategoryInfo(featured.data.tags).motif)} />
+									<div class="featured-pill absolute top-4 left-4 z-10 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-surface/90 backdrop-blur-sm border border-hairline text-[10px] font-mono font-bold text-ink uppercase tracking-[0.08em] shadow-sm">
+										<svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" class="text-amber-500"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/></svg>
+										Featured
 									</div>
-								</article>
-							))}
-						</div>
+								</div>
+								<div class="featured-body">
+									<div class="flex items-center gap-2 mb-3">
+										<span class="w-2 h-2 rounded-full" style={`background: ${getCategoryInfo(featured.data.tags).light};`}></span>
+										<span class="text-[10px] font-mono font-bold text-mute uppercase tracking-[0.16em]">{featured.data.tags?.[0] || 'Health'}</span>
+									</div>
+									<div class="flex flex-wrap items-center gap-2 mb-4">
+										<time datetime={featured.data.pubDate.toISOString()} class="text-[11px] font-mono font-bold text-mute uppercase tracking-[0.1em] whitespace-nowrap">
+											{featured.data.pubDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+										</time>
+										{(() => {
+											const rt = readingTime(featured.data.excerpt);
+											return rt ? (
+												<>
+													<span class="w-1 h-1 rounded-full bg-hairline-strong shrink-0"></span>
+													<span class="text-[11px] font-mono font-bold text-mute uppercase tracking-[0.1em] whitespace-nowrap" set:html={rt}></span>
+												</>
+											) : null;
+										})()}
+									</div>
+									<h2 class="text-2xl md:text-3xl lg:text-4xl font-bold text-ink mb-4 tracking-tight leading-tight">
+										<a href={`/blog/${featured.id}/`} class="hover:text-primary transition-colors">
+											{featured.data.title}
+										</a>
+									</h2>
+									<p class="text-mute text-sm md:text-base leading-relaxed mb-6 font-medium line-clamp-3">
+										{featured.data.excerpt}
+									</p>
+									<div>
+										<a href={`/blog/${featured.id}/`} class="read-link inline-flex items-center gap-1.5 text-[11px] font-mono font-bold text-ink uppercase tracking-[0.16em] relative py-0.5">
+											Read Article
+											<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="transition-transform duration-300 group-hover:translate-x-1">
+												<path d="M5 12h14"></path>
+												<path d="m12 5 7 7-7 7"></path>
+											</svg>
+										</a>
+									</div>
+								</div>
+							</article>
+
+							{remaining.length > 0 && (
+								<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+									{remaining.map((post, i) => {
+										const catInfo = getCategoryInfo(post.data.tags);
+										const isWide = i === 3;
+										return (
+											<article class={`group grid-card ${isWide ? 'lg:col-span-2' : ''}`}
+												style={`--cat-light: ${catInfo.light}; --cat-dark: ${catInfo.dark};`}>
+												<div class="grid-motif">
+													<svg viewBox="0 0 200 150" class="absolute inset-0 w-full h-full pointer-events-none opacity-[0.5]" preserveAspectRatio="xMidYMid slice" set:html={getMotifContent(catInfo.motif)} />
+													<div class="absolute bottom-3 left-3 z-10 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-surface/90 backdrop-blur-sm border border-hairline shadow-sm">
+														<span class="w-2 h-2 rounded-full shrink-0" style={`background: ${catInfo.light};`}></span>
+														<span class="text-[10px] font-mono font-bold text-ink uppercase tracking-[0.08em]">{post.data.tags?.[0] || 'Health'}</span>
+													</div>
+												</div>
+												<div class={`grid-body ${isWide ? 'sm:py-6 sm:px-6 sm:justify-center' : ''}`}>
+													<div class="flex flex-wrap items-center gap-2 mb-3">
+														<time datetime={post.data.pubDate.toISOString()} class="text-[10px] font-mono font-bold text-mute uppercase tracking-[0.1em] whitespace-nowrap">
+															{post.data.pubDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+														</time>
+														{(() => {
+															const rt = readingTime(post.data.excerpt);
+															return rt ? (
+																<>
+																	<span class="w-0.5 h-0.5 rounded-full bg-hairline-strong shrink-0"></span>
+																	<span class="text-[10px] font-mono font-bold text-mute uppercase tracking-[0.1em] whitespace-nowrap" set:html={rt}></span>
+																</>
+															) : null;
+														})()}
+													</div>
+													<h2 class="font-bold text-ink group-hover:text-primary transition-colors tracking-tight line-clamp-2">
+														<a href={`/blog/${post.id}/`}>
+															{post.data.title}
+														</a>
+													</h2>
+													<p class="text-mute text-sm leading-relaxed mt-2 mb-5 line-clamp-2 font-medium">
+														{post.data.excerpt}
+													</p>
+													<div class="mt-auto">
+														<a href={`/blog/${post.id}/`} class="read-link inline-flex items-center gap-1.5 text-[10px] font-mono font-bold text-ink uppercase tracking-[0.16em] relative py-0.5">
+															Read
+															<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="transition-transform duration-300 group-hover:translate-x-1">
+																<path d="M5 12h14"></path>
+																<path d="m12 5 7 7-7 7"></path>
+															</svg>
+														</a>
+													</div>
+												</div>
+											</article>
+										);
+									})}
+								</div>
+							)}
+						</>
 					) : (
-						<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-							{posts.map((post) => (
-								<article class="group bg-canvas border border-hairline rounded-2xl overflow-hidden hover:shadow-premium-xl transition-all duration-500 flex flex-col h-full">
-									{post.data.heroImage && (
-										<a href={`/blog/${post.id}/`} class="aspect-[16/9] overflow-hidden border-b border-hairline">
-											<img 
-												src={post.data.heroImage} 
-												alt={post.data.title}
-												class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-											/>
-										</a>
-									)}
-									<div class="p-8 flex flex-col flex-grow">
-										<div class="flex items-center gap-3 mb-4">
-											<time datetime={post.data.pubDate.toISOString()} class="text-[10px] font-mono font-bold text-mute uppercase tracking-widest">
-												{post.data.pubDate.toLocaleDateString('en-US', {
-													year: 'numeric',
-													month: 'long',
-													day: 'numeric',
-												})}
-											</time>
-											<span class="w-1 h-1 rounded-full bg-hairline-strong"></span>
-											<span class="text-[10px] font-mono font-bold text-primary uppercase tracking-widest">{post.data.author}</span>
+						<div class="max-w-5xl mx-auto">
+							{posts.map((post, idx) => {
+								const catInfo = getCategoryInfo(post.data.tags);
+								return (
+									<article class="group flex-col md:flex-row bg-surface border border-hairline rounded-[18px] overflow-hidden hover:border-hairline-strong transition-all duration-500 mb-8 last:mb-0 min-h-[320px] flex"
+										style={`--cat-light: ${catInfo.light}; --cat-dark: ${catInfo.dark};`}>
+										<div class="md:w-[40%] min-h-[200px] md:min-h-[320px] shrink-0 relative overflow-hidden motif-panel"
+											style={`--cat-light: ${catInfo.light}; --cat-dark: ${catInfo.dark};`}>
+											<svg viewBox="0 0 200 150" class="absolute inset-0 w-full h-full pointer-events-none opacity-[0.5]" preserveAspectRatio="xMidYMid slice" set:html={getMotifContent(catInfo.motif)} />
+											{idx === 0 ? (
+												<div class="absolute top-4 left-4 z-10 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-surface/90 backdrop-blur-sm border border-hairline text-[10px] font-mono font-bold text-ink uppercase tracking-[0.08em] shadow-sm">
+													<svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" class="text-amber-500"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/></svg>
+													Featured
+												</div>
+											) : null}
 										</div>
-										
-										<h2 class="text-xl font-bold text-ink mb-4 group-hover:text-primary transition-colors line-clamp-2">
-											<a href={`/blog/${post.id}/`}>
-												{post.data.title}
-											</a>
-										</h2>
-										
-										<p class="text-mute text-sm leading-relaxed mb-8 line-clamp-3 font-medium">
-											{post.data.excerpt}
-										</p>
-										
-										<div class="mt-auto">
-											<a 
-												href={`/blog/${post.id}/`}
-												class="inline-flex items-center gap-2 text-[11px] font-black uppercase tracking-widest text-ink group/link"
-											>
-												Read Article
-												<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="transition-transform duration-300 group-hover/link:translate-x-1">
-													<path d="M5 12h14"></path>
-													<path d="m12 5 7 7-7 7"></path>
-												</svg>
-											</a>
+										<div class="p-7 md:p-10 flex flex-col justify-center flex-1">
+											<div class="flex items-center gap-2 mb-3">
+												<span class="w-2 h-2 rounded-full shrink-0" style={`background: ${catInfo.light};`}></span>
+												<span class="text-[10px] font-mono font-bold text-mute uppercase tracking-[0.16em]">{post.data.tags?.[0] || 'Health'}</span>
+											</div>
+											<div class="flex flex-wrap items-center gap-2.5 mb-4">
+												<time datetime={post.data.pubDate.toISOString()} class="text-[11px] font-mono font-bold text-mute uppercase tracking-[0.1em] whitespace-nowrap">
+													{post.data.pubDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+												</time>
+												{(() => {
+													const rt = readingTime(post.data.excerpt);
+													return rt ? (
+														<>
+															<span class="w-1 h-1 rounded-full bg-hairline-strong shrink-0"></span>
+															<span class="text-[11px] font-mono font-bold text-mute uppercase tracking-[0.1em] whitespace-nowrap" set:html={rt}></span>
+														</>
+													) : null;
+												})()}
+											</div>
+											<h2 class="text-2xl md:text-3xl font-bold text-ink mb-4 group-hover:text-primary transition-colors tracking-tight leading-tight">
+												<a href={`/blog/${post.id}/`}>
+													{post.data.title}
+												</a>
+											</h2>
+											<p class="text-mute text-sm md:text-base leading-relaxed mb-6 font-medium line-clamp-3">
+												{post.data.excerpt}
+											</p>
+											<div>
+												<a href={`/blog/${post.id}/`} class="read-link inline-flex items-center gap-1.5 text-[11px] font-mono font-bold text-ink uppercase tracking-[0.16em] relative py-0.5">
+													Read Article
+													<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="transition-transform duration-300 group-hover:translate-x-1">
+														<path d="M5 12h14"></path>
+														<path d="m12 5 7 7-7 7"></path>
+													</svg>
+												</a>
+											</div>
 										</div>
-									</div>
-								</article>
-							))}
+									</article>
+								);
+							})}
 						</div>
 					)}
 				</>
 			) : (
-				<div class="bg-canvas border border-hairline rounded-2xl p-12 text-center">
+				<div class="bg-surface border border-hairline rounded-2xl p-12 text-center">
 					<p class="text-mute font-medium">No articles found. Check back soon!</p>
 				</div>
 			)}
@@ -164,10 +223,164 @@ const description = "Explore our latest articles on health, fitness, BMI, and we
 </Layout>
 
 <style>
-	.text-primary {
-		color: #171717; /* Default to ink if no primary color defined, but usually it's a theme color */
+	.featured-card {
+		display: flex;
+		flex-direction: column;
+		background: var(--color-surface);
+		border: 1px solid var(--color-hairline);
+		border-radius: 18px;
+		overflow: hidden;
+		transition: all 0.5s;
+		margin-bottom: 2.5rem;
 	}
-	:global(.dark) .text-primary {
-		color: #fafafa;
+	.featured-card:hover {
+		border-color: var(--color-hairline-strong);
+	}
+	@media (min-width: 768px) {
+		.featured-card {
+			flex-direction: row;
+			margin-bottom: 3.5rem;
+		}
+	}
+
+	.featured-motif {
+		position: relative;
+		min-height: 260px;
+		overflow: hidden;
+		display: flex;
+		align-items: flex-start;
+		justify-content: space-between;
+		padding: 1.25rem;
+		background: radial-gradient(ellipse at 30% 40%, var(--cat-light, oklch(65% 0.15 185)), transparent 70%);
+		color: var(--cat-light, oklch(65% 0.15 185));
+	}
+	:global(.dark) .featured-motif {
+		background: radial-gradient(ellipse at 30% 40%, var(--cat-dark, oklch(72% 0.13 185)), transparent 70%);
+		color: var(--cat-dark, oklch(72% 0.13 185));
+	}
+	@media (min-width: 768px) {
+		.featured-motif {
+			width: 45%;
+			min-height: 380px;
+			flex-shrink: 0;
+		}
+	}
+
+	.featured-body {
+		padding: 1.75rem;
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
+		flex: 1;
+	}
+	@media (min-width: 768px) {
+		.featured-body {
+			padding: 2.5rem;
+		}
+	}
+
+	.grid-card {
+		display: flex;
+		flex-direction: column;
+		background: var(--color-surface);
+		border: 1px solid var(--color-hairline);
+		border-radius: 16px;
+		overflow: hidden;
+		transition: all 0.4s;
+	}
+	.grid-card:hover {
+		border-color: var(--color-hairline-strong);
+		translate: 0 -3px;
+	}
+	@media (min-width: 1024px) {
+		.grid-card.lg\:col-span-2 {
+			flex-direction: row;
+		}
+	}
+
+	.grid-motif {
+		position: relative;
+		height: 150px;
+		overflow: hidden;
+		flex-shrink: 0;
+		background: radial-gradient(ellipse at 30% 40%, var(--cat-light, oklch(65% 0.15 185)), transparent 70%);
+		color: var(--cat-light, oklch(65% 0.15 185));
+	}
+	:global(.dark) .grid-motif {
+		background: radial-gradient(ellipse at 30% 40%, var(--cat-dark, oklch(72% 0.13 185)), transparent 70%);
+		color: var(--cat-dark, oklch(72% 0.13 185));
+	}
+
+	.grid-body {
+		padding: 1.25rem;
+		display: flex;
+		flex-direction: column;
+		flex: 1;
+	}
+
+	.motif-panel {
+		background: radial-gradient(ellipse at 30% 40%, var(--cat-light, oklch(65% 0.15 185)), transparent 70%);
+		color: var(--cat-light, oklch(65% 0.15 185));
+	}
+	:global(.dark) .motif-panel {
+		background: radial-gradient(ellipse at 30% 40%, var(--cat-dark, oklch(72% 0.13 185)), transparent 70%);
+		color: var(--cat-dark, oklch(72% 0.13 185));
+	}
+
+	.read-link::after {
+		content: '';
+		position: absolute;
+		bottom: 0;
+		left: 0;
+		width: 100%;
+		height: 1px;
+		background: currentColor;
+		transform: scaleX(0);
+		transform-origin: right;
+		transition: transform 0.3s ease;
+	}
+	.read-link:hover::after {
+		transform: scaleX(1);
+		transform-origin: left;
+	}
+
+	.grid-body h2,
+	.featured-body h2,
+	.flex-1 h2 {
+		font-size: 1rem;
+	}
+	@media (min-width: 768px) {
+		.grid-body h2 {
+			font-size: 1.125rem;
+		}
+	}
+	.featured-body h2 {
+		font-size: 1.5rem;
+	}
+	@media (min-width: 768px) {
+		.featured-body h2 {
+			font-size: 1.875rem;
+		}
+	}
+	@media (min-width: 1024px) {
+		.featured-body h2 {
+			font-size: 2.25rem;
+		}
+	}
+
+	@media (min-width: 1024px) {
+		.lg\:col-span-2 .grid-motif {
+			height: auto;
+			min-height: 100%;
+			width: 35%;
+			flex-shrink: 0;
+		}
+		.lg\:col-span-2 .grid-body {
+			padding: 1.5rem;
+			justify-content: center;
+		}
+		.lg\:col-span-2 .grid-body h2 {
+			font-size: 1.25rem;
+		}
 	}
 </style>

@@ -164,28 +164,54 @@ export const WaterIntakeCalculatorCard: React.FC = () => {
 
     setIsExporting(true);
     try {
-      const { generateReportPDF } = await import('../../lib/pdf');
-      
-      const inputData = {
-        age,
-        gender,
-        weight,
-        activity,
-        climate,
-        system: weightUnit === 'lb' ? 'us' : 'metric',
-        weightUnitOther: weightUnit
-      };
+      const { generateDataDrivenReport } = await import('../../lib/pdf');
 
-      const resultData = {
-        waterGoal, waterIntake: waterGoal, timings, recommendations
-      };
+      const activityLabel = ACTIVITY_LEVELS.find((a) => a.value === activity)?.label || activity;
+      const climateLabel = CLIMATE_TYPES.find((c) => c.value === climate)?.label || climate;
 
-      await generateReportPDF({
+      const weightStr = `${weight} ${weightUnit}`;
+
+      await generateDataDrivenReport({
         profileName: trimmedName,
         calculatorType: 'water_intake',
-        inputData,
-        resultData,
-        date: new Date().toLocaleDateString()
+        date: new Date().toLocaleDateString(),
+        unitSystem: weightUnit === 'lb' ? 'US' : 'METRIC',
+
+        profileRows: [
+          { label: 'AGE', value: `${age} YRS` },
+          { label: 'GENDER', value: (gender || '--').toUpperCase() },
+          { label: 'WEIGHT', value: weightStr },
+          { label: 'ACTIVITY', value: activityLabel.toUpperCase() },
+          { label: 'CLIMATE', value: climateLabel.toUpperCase() },
+        ],
+
+        heroRows: [
+          { label: 'DAILY WATER REQUIREMENT', value: `${waterGoal.toFixed(1)} Liters` },
+          { label: 'HYDRATION STATUS', value: hydrationStatus },
+        ],
+
+        sections: [
+          {
+            title: 'CLIMATE & ACTIVITY ADJUSTMENT',
+            rows: [
+              { label: 'ACTIVITY', value: `${activityLabel.toUpperCase()} (+${activity || 0}ml)` },
+              { label: 'CLIMATE', value: `${climateLabel.toUpperCase()} (+${climate || 0}ml)` },
+            ],
+            columns: 2,
+          },
+          {
+            title: 'DAILY HYDRATION TIMINGS',
+            rows: [
+              { label: 'MORNING (25%)', value: `${timings.morning.toFixed(1)} L` },
+              { label: 'AFTERNOON (40%)', value: `${timings.afternoon.toFixed(1)} L` },
+              { label: 'EVENING (20%)', value: `${timings.night.toFixed(1)} L` },
+              { label: 'WORKOUT (15%)', value: `${timings.workout.toFixed(1)} L` },
+            ],
+            columns: 2,
+          },
+        ],
+
+        recommendations,
       });
     } catch (error) {
       console.error('PDF generation failed:', error);
@@ -269,7 +295,7 @@ export const WaterIntakeCalculatorCard: React.FC = () => {
                         key={g} 
                         type="button"
                         onClick={() => setGender(g as 'male' | 'female')}
-                        className={`flex-1 py-2.5 text-[10px] font-mono font-bold uppercase tracking-[0.08em] transition-all duration-300 rounded-full focus-ring ${gender === g ? 'bg-ink text-canvas dark:bg-canvas dark:text-ink shadow-premium-sm' : 'text-mute hover:text-ink'}`}
+                        className={`flex-1 py-2.5 text-[10px] font-mono font-bold uppercase tracking-[0.08em] transition-all duration-300 rounded-full focus-ring ${gender === g ? 'bg-[var(--color-accent)] text-[oklch(16%_0.02_262)] shadow-premium-sm' : 'text-mute hover:text-ink'}`}
                       >
                         {g.toUpperCase()}
                       </button>

@@ -2,15 +2,17 @@
 import Layout from '../layouts/Layout.astro';
 import { Navbar } from '../components/Navbar';
 import Footer from '../components/Footer.astro';
+import HeroBackdrop from '../components/HeroBackdrop.astro';
 
-const title = "Terms & Conditions - QuickBMI";
+const title = "Terms & Conditions - QuickBMICalculator";
 const description = "Review the terms of use for QuickBMI. Understand our medical disclaimers and how to use our BMI platform safely.";
 ---
 
 <Layout title={title} description={description}>
 	<Navbar client:load />
 
-	<main class="pt-32 pb-20 px-6">
+	<main class="pt-32 pb-20 px-6 relative overflow-hidden">
+		<HeroBackdrop />
 		<article class="max-w-3xl mx-auto space-y-12">
 			<header class="space-y-4">
 				<h1 class="text-4xl sm:text-6xl font-black tracking-tighter text-ink leading-none">Terms of Use</h1>
@@ -21,14 +23,14 @@ const description = "Review the terms of use for QuickBMI. Understand our medica
 				<div class="space-y-4">
 					<h2 class="text-2xl font-black tracking-tight text-ink">1. Acceptance of Terms</h2>
 					<p class="text-body leading-relaxed font-medium opacity-80">
-						By accessing and using QuickBMI, you agree to be bound by these Terms of Use and all applicable laws and regulations. If you do not agree with any of these terms, you are prohibited from using or accessing this site.
+						By accessing and using QuickBMICalculator, you agree to be bound by these Terms of Use and all applicable laws and regulations. If you do not agree with any of these terms, you are prohibited from using or accessing this site.
 					</p>
 				</div>
 
 				<div class="space-y-4">
 					<h2 class="text-2xl font-black tracking-tight text-ink">2. Informational Purpose</h2>
 					<p class="text-body leading-relaxed font-medium opacity-80">
-						QuickBMI is provided as a tool for informational and educational purposes only. The calculations and insights provided are based on the World Health Organization (WHO) standards but should not be treated as professional medical diagnosis or treatment.
+						QuickBMICalculator is provided as a tool for informational and educational purposes only. The calculations and insights provided are based on the World Health Organization (WHO) standards but should not be treated as professional medical diagnosis or treatment.
 					</p>
 				</div>
 
@@ -42,21 +44,21 @@ const description = "Review the terms of use for QuickBMI. Understand our medica
 				<div class="space-y-4">
 					<h2 class="text-2xl font-black tracking-tight text-ink">4. Limitation of Liability</h2>
 					<p class="text-body leading-relaxed font-medium opacity-80">
-						In no event shall QuickBMI or its creators be liable for any damages (including, without limitation, damages for loss of data or profit, or due to business interruption) arising out of the use or inability to use the materials on QuickBMI, even if we have been notified orally or in writing of the possibility of such damage.
+						In no event shall QuickBMICalculator or its creators be liable for any damages (including, without limitation, damages for loss of data or profit, or due to business interruption) arising out of the use or inability to use the materials on QuickBMICalculator, even if we have been notified orally or in writing of the possibility of such damage.
 					</p>
 				</div>
 
 				<div class="space-y-4">
 					<h2 class="text-2xl font-black tracking-tight text-ink">5. Fair Use</h2>
 					<p class="text-body leading-relaxed font-medium opacity-80">
-						You agree to use this website only for lawful purposes. You are prohibited from attempting to reverse engineer, scrape, or disrupt the services provided by QuickBMI.
+						You agree to use this website only for lawful purposes. You are prohibited from attempting to reverse engineer, scrape, or disrupt the services provided by QuickBMICalculator.
 					</p>
 				</div>
 
 				<div class="space-y-4">
 					<h2 class="text-2xl font-black tracking-tight text-ink">6. External Links</h2>
 					<p class="text-body leading-relaxed font-medium opacity-80">
-						QuickBMI may contain links to external sites (such as WHO guidelines). We are not responsible for the content or privacy practices of these external sites.
+						QuickBMICalculator may contain links to external sites (such as WHO guidelines). We are not responsible for the content or privacy practices of these external sites.
 					</p>
 				</div>
 			</section>

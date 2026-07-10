@@ -2,16 +2,18 @@
 import Layout from '../layouts/Layout.astro';
 import { Navbar } from '../components/Navbar';
 import Footer from '../components/Footer.astro';
+import HeroBackdrop from '../components/HeroBackdrop.astro';
 import { BrandLogo } from '../components/BrandLogo';
 
-const title = "About Us - QuickBMI";
+const title = "About Us - QuickBMICalculator";
 const description = "Discover the story behind QuickBMI. A modern BMI intelligence platform focused on accurate, real-time health insights based on WHO standards.";
 ---
 
 <Layout title={title} description={description}>
 	<Navbar client:load />
 
-	<main class="flex-grow pt-12 sm:pt-20 pb-40 px-6">
+	<main class="flex-grow pt-12 sm:pt-20 pb-40 px-6 relative overflow-hidden bg-canvas">
+		<HeroBackdrop />
 		<article class="max-w-4xl mx-auto space-y-16">
 			<header class="space-y-8 text-center">
 				<div class="inline-flex items-center justify-center p-4 bg-canvas-soft rounded-[2rem] border border-hairline shadow-premium-sm mb-4">
@@ -19,7 +21,7 @@ const description = "Discover the story behind QuickBMI. A modern BMI intelligen
 				</div>
 				<h1 class="text-4xl xs:text-5xl sm:text-7xl lg:text-8xl font-black tracking-tighter text-ink leading-[0.9]">
 					BMI Intelligence <br />
-					<span class="text-mute/40">Redefined</span>
+					<span class="text-accent">Redefined</span>
 				</h1>
 				<p class="text-lg sm:text-xl sm:text-2xl text-body max-w-2xl mx-auto leading-relaxed font-medium opacity-70">
 					A modern platform focused on providing accurate, real-time BMI insights with a focus on privacy and precision.
@@ -30,7 +32,7 @@ const description = "Discover the story behind QuickBMI. A modern BMI intelligen
 				<section class="space-y-6 p-10 bg-canvas-soft rounded-[2rem] border border-hairline shadow-premium-sm">
 					<h2 class="text-2xl font-black tracking-tight text-ink">The Mission</h2>
 					<p class="text-body leading-relaxed font-medium opacity-80">
-						QuickBMI was built to simplify health tracking. We believe that understanding your body metrics should be fast, private, and accessible to everyone. By combining modern web technology with established health standards, we provide a tool that works instantly on any device.
+						QuickBMICalculator was built to simplify health tracking. We believe that understanding your body metrics should be fast, private, and accessible to everyone. By combining modern web technology with established health standards, we provide a tool that works instantly on any device.
 					</p>
 				</section>
 

@@ -78,29 +78,48 @@ export const ProteinCalculatorCard: React.FC = () => {
     if (proteinGoal <= 0) return;
     setIsExporting(true);
     try {
-      const { generateReportPDF } = await import('../../lib/pdf');
-      
-      const inputData = {
-        name,
-        age,
-        gender,
-        weight,
-        activity,
-        goal,
-        system: weightUnit === 'lb' ? 'us' : 'metric',
-        weightUnitOther: weightUnit
-      };
+      const { generateDataDrivenReport } = await import('../../lib/pdf');
 
-      const resultData = {
-        proteinGoal, proteinRange, proteinCalories, multiplier
-      };
+      const activityLabel = ACTIVITY_LEVELS.find((a) => a.value === activity)?.label || activity;
 
-      await generateReportPDF({
+      const weightStr = `${weight} ${weightUnit}`;
+
+      await generateDataDrivenReport({
         profileName: name || 'Valued User',
         calculatorType: 'protein_intake',
-        inputData,
-        resultData,
-        date: new Date().toLocaleDateString()
+        date: new Date().toLocaleDateString(),
+        unitSystem: weightUnit === 'lb' ? 'US' : 'METRIC',
+
+        profileRows: [
+          { label: 'AGE', value: `${age} YRS` },
+          { label: 'GENDER', value: (gender || '--').toUpperCase() },
+          { label: 'WEIGHT', value: weightStr },
+          { label: 'ACTIVITY', value: activityLabel.toUpperCase() },
+          { label: 'GOAL', value: (goal || 'MAINTENANCE').toUpperCase() },
+        ],
+
+        heroRows: [
+          { label: 'PROTEIN REQUIREMENT', value: `${Math.round(proteinGoal)} g/day` },
+          { label: 'CALORIE SHARE', value: `${Math.round(proteinCalories)} kcal` },
+        ],
+
+        sections: [
+          {
+            title: 'PROTEIN RANGE',
+            rows: [
+              { label: 'MINIMUM', value: `${Math.round(proteinRange.min)} g/day` },
+              { label: 'MAXIMUM', value: `${Math.round(proteinRange.max)} g/day` },
+            ],
+            columns: 2,
+          },
+          {
+            title: 'MULTIPLIER',
+            rows: [
+              { label: 'ACTIVITY FACTOR', value: `${multiplier.toFixed(2)} g/kg` },
+            ],
+            columns: 1,
+          },
+        ],
       });
     } catch (error) {
       console.error('PDF generation failed:', error);
@@ -232,7 +251,7 @@ export const ProteinCalculatorCard: React.FC = () => {
                         key={g} 
                         type="button"
                         onClick={() => setGender(g as Gender)}
-                        className={`flex-1 py-2.5 text-[10px] font-mono font-bold uppercase tracking-[0.08em] transition-all duration-300 rounded-full focus-ring ${gender === g ? 'bg-ink text-canvas dark:bg-canvas dark:text-ink shadow-premium-sm' : 'text-mute hover:text-ink'}`}
+                        className={`flex-1 py-2.5 text-[10px] font-mono font-bold uppercase tracking-[0.08em] transition-all duration-300 rounded-full focus-ring ${gender === g ? 'bg-[var(--color-accent)] text-[oklch(16%_0.02_262)] shadow-premium-sm' : 'text-mute hover:text-ink'}`}
                       >
                         {g.toUpperCase()}
                       </button>
@@ -267,7 +286,7 @@ export const ProteinCalculatorCard: React.FC = () => {
                         key={item.value} 
                         type="button"
                         onClick={() => setGoal(item.value as Goal)}
-                        className={`flex-1 py-2.5 text-[10px] font-mono font-bold uppercase tracking-[0.08em] transition-all duration-300 rounded-full focus-ring ${goal === item.value ? 'bg-ink text-canvas dark:bg-canvas dark:text-ink shadow-premium-sm' : 'text-mute hover:text-ink'}`}
+                        className={`flex-1 py-2.5 text-[10px] font-mono font-bold uppercase tracking-[0.08em] transition-all duration-300 rounded-full focus-ring ${goal === item.value ? 'bg-[var(--color-accent)] text-[oklch(16%_0.02_262)] shadow-premium-sm' : 'text-mute hover:text-ink'}`}
                       >
                         {item.label.toUpperCase()}
                       </button>

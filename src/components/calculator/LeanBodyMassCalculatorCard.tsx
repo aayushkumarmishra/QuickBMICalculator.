@@ -75,23 +75,70 @@ export const LeanBodyMassCalculatorCard: React.FC = () => {
     if (leanMass <= 0) return;
     setIsExporting(true);
     try {
-      const { generateReportPDF } = await import('../../lib/pdf');
-      
-      const inputData = {
-        name, age, gender, weight, height, feet, inches, customBodyFat, system,
-        heightUnitOther, weightUnitOther
-      };
+      const { generateDataDrivenReport } = await import('../../lib/pdf');
 
-      const resultData = {
-        leanMass, fatMass, leanMassPct, fatMassPct, boerLBM, jamesLBM, humeLBM, method
-      };
+      const heightStr = (() => {
+        if (system === 'us' || (system === 'other' && heightUnitOther === 'ft+in')) {
+          return `${feet || 0}ft ${inches || 0}in`;
+        }
+        if (system === 'metric') return `${height}cm`;
+        if (heightUnitOther === 'm') return `${height}m`;
+        if (heightUnitOther === 'in') return `${height}in`;
+        return height ? `${height}${heightUnitOther || 'cm'}` : '--';
+      })();
 
-      await generateReportPDF({
+      const weightStr = (() => {
+        if (system === 'us') return `${weight} lb`;
+        if (system === 'metric') return `${weight} kg`;
+        return `${weight} ${weightUnitOther || 'kg'}`;
+      })();
+
+      const unit = system === 'metric' || (system === 'other' && weightUnitOther === 'kg') ? 'kg' : 'lb';
+
+      await generateDataDrivenReport({
         profileName: name || 'Valued User',
         calculatorType: 'lean_body_mass',
-        inputData,
-        resultData,
-        date: new Date().toLocaleDateString()
+        date: new Date().toLocaleDateString(),
+        unitSystem: system.toUpperCase(),
+
+        profileRows: [
+          { label: 'AGE', value: `${age} YRS` },
+          { label: 'GENDER', value: (gender || '--').toUpperCase() },
+          { label: 'HEIGHT', value: heightStr },
+          { label: 'WEIGHT', value: weightStr },
+        ],
+
+        heroRows: [
+          { label: 'LEAN BODY MASS', value: `${leanMass.toFixed(1)} ${unit}` },
+          { label: 'METHODOLOGY', value: (method || '--').toUpperCase() },
+        ],
+
+        sections: [
+          {
+            title: 'LBM FORMULAS COMPARISON',
+            rows: [
+              { label: 'BOER FORMULA', value: `${boerLBM.toFixed(1)} ${unit}` },
+              { label: 'JAMES FORMULA', value: `${jamesLBM.toFixed(1)} ${unit}` },
+              { label: 'HUME FORMULA', value: `${humeLBM.toFixed(1)} ${unit}` },
+            ],
+            columns: 3,
+          },
+          {
+            title: 'BODY COMPOSITION',
+            rows: [
+              { label: 'FAT MASS', value: `${fatMass.toFixed(1)} ${unit}` },
+              { label: 'LEAN MASS', value: `${leanMass.toFixed(1)} ${unit}` },
+              { label: 'FAT MASS %', value: `${fatMassPct.toFixed(1)}%` },
+              { label: 'LEAN MASS %', value: `${leanMassPct.toFixed(1)}%` },
+            ],
+            columns: 2,
+          },
+          ...(customBodyFat ? [{
+            title: 'CUSTOM BODY FAT',
+            rows: [{ label: 'USER ENTERED BF%', value: `${customBodyFat}%` }],
+            columns: 1,
+          }] : []),
+        ],
       });
     } catch (error) {
       console.error('PDF generation failed:', error);
@@ -184,11 +231,11 @@ export const LeanBodyMassCalculatorCard: React.FC = () => {
     const calculatedFatMassKg = wKg - finalLeanMassKg;
 
     // Convert values back to selected display units
-    const displayLeanMass = system === 'metric' ? finalLeanMassKg : finalLeanMassKg / 0.45359237;
-    const displayFatMass = system === 'metric' ? calculatedFatMassKg : calculatedFatMassKg / 0.45359237;
-    const boerDisplay = system === 'metric' ? boerVal : boerVal / 0.45359237;
-    const jamesDisplay = system === 'metric' ? jamesVal : jamesVal / 0.45359237;
-    const humeDisplay = system === 'metric' ? humeVal : humeVal / 0.45359237;
+    const displayLeanMass = (system === 'metric' || (system === 'other' && weightUnitOther === 'kg')) ? finalLeanMassKg : finalLeanMassKg / 0.45359237;
+    const displayFatMass = (system === 'metric' || (system === 'other' && weightUnitOther === 'kg')) ? calculatedFatMassKg : calculatedFatMassKg / 0.45359237;
+    const boerDisplay = (system === 'metric' || (system === 'other' && weightUnitOther === 'kg')) ? boerVal : boerVal / 0.45359237;
+    const jamesDisplay = (system === 'metric' || (system === 'other' && weightUnitOther === 'kg')) ? jamesVal : jamesVal / 0.45359237;
+    const humeDisplay = (system === 'metric' || (system === 'other' && weightUnitOther === 'kg')) ? humeVal : humeVal / 0.45359237;
 
     const leanPct = (finalLeanMassKg / wKg) * 100;
     const fatPct = 100 - leanPct;
@@ -260,7 +307,7 @@ export const LeanBodyMassCalculatorCard: React.FC = () => {
                       key={s} 
                       type="button"
                       onClick={() => { setSystem(s as UnitSystem); handleReset(); }}
-                      className={`flex-1 py-2.5 text-[10px] font-mono font-bold uppercase tracking-[0.08em] transition-all duration-300 rounded-full focus-ring ${system === s ? 'bg-ink text-canvas dark:bg-canvas dark:text-ink shadow-premium-sm' : 'text-mute hover:text-ink'}`}
+                      className={`flex-1 py-2.5 text-[10px] font-mono font-bold uppercase tracking-[0.08em] transition-all duration-300 rounded-full focus-ring ${system === s ? 'bg-[var(--color-accent)] text-[oklch(16%_0.02_262)] shadow-premium-sm' : 'text-mute hover:text-ink'}`}
                     >
                       {s === 'us' ? 'US' : s.toUpperCase()}
                     </button>
@@ -300,7 +347,7 @@ export const LeanBodyMassCalculatorCard: React.FC = () => {
                         key={g} 
                         type="button"
                         onClick={() => setGender(g as Gender)}
-                        className={`flex-1 py-2.5 text-[10px] font-mono font-bold uppercase tracking-[0.08em] transition-all duration-300 rounded-full focus-ring ${gender === g ? 'bg-ink text-canvas dark:bg-canvas dark:text-ink shadow-premium-sm' : 'text-mute hover:text-ink'}`}
+                        className={`flex-1 py-2.5 text-[10px] font-mono font-bold uppercase tracking-[0.08em] transition-all duration-300 rounded-full focus-ring ${gender === g ? 'bg-[var(--color-accent)] text-[oklch(16%_0.02_262)] shadow-premium-sm' : 'text-mute hover:text-ink'}`}
                       >
                         {g.toUpperCase()}
                       </button>
@@ -460,7 +507,7 @@ export const LeanBodyMassCalculatorCard: React.FC = () => {
                           <span className="text-6xl sm:text-7xl font-black tracking-[-0.03em] text-canvas dark:text-ink leading-none">
                             {leanMass.toFixed(1)}
                           </span>
-                          <span className="text-xs font-mono font-bold text-canvas-soft/50 dark:text-mute/50 uppercase tracking-widest">{system === 'metric' ? 'kg' : 'lb'}</span>
+                          <span className="text-xs font-mono font-bold text-canvas-soft/50 dark:text-mute/50 uppercase tracking-widest">{system === 'metric' || (system === 'other' && weightUnitOther === 'kg') ? 'kg' : 'lb'}</span>
                         </div>
                       </div>
 
@@ -493,7 +540,7 @@ export const LeanBodyMassCalculatorCard: React.FC = () => {
                         <div className="text-[9px] font-mono font-bold text-mute uppercase tracking-[0.2em] mb-3">Boer Formula</div>
                         <div className="text-xl sm:text-2xl font-mono font-bold text-ink tracking-tight mb-2">
                           {boerLBM.toFixed(1)}
-                          <span className="text-[10px] font-sans font-medium text-mute ml-1">{system === 'metric' ? 'KG' : 'LB'}</span>
+                          <span className="text-[10px] font-sans font-medium text-mute ml-1">{system === 'metric' || (system === 'other' && weightUnitOther === 'kg') ? 'KG' : 'LB'}</span>
                         </div>
                       </div>
                       <div className="w-full">
@@ -507,7 +554,7 @@ export const LeanBodyMassCalculatorCard: React.FC = () => {
                         <div className="text-[9px] font-mono font-bold text-mute uppercase tracking-[0.2em] mb-3">James Formula</div>
                         <div className="text-xl sm:text-2xl font-mono font-bold text-ink tracking-tight mb-2">
                           {jamesLBM.toFixed(1)}
-                          <span className="text-[10px] font-sans font-medium text-mute ml-1">{system === 'metric' ? 'KG' : 'LB'}</span>
+                          <span className="text-[10px] font-sans font-medium text-mute ml-1">{system === 'metric' || (system === 'other' && weightUnitOther === 'kg') ? 'KG' : 'LB'}</span>
                         </div>
                       </div>
                       <div className="w-full">
@@ -521,7 +568,7 @@ export const LeanBodyMassCalculatorCard: React.FC = () => {
                         <div className="text-[9px] font-mono font-bold text-mute uppercase tracking-[0.2em] mb-3">Hume Formula</div>
                         <div className="text-xl sm:text-2xl font-mono font-bold text-ink tracking-tight mb-2">
                           {humeLBM.toFixed(1)}
-                          <span className="text-[10px] font-sans font-medium text-mute ml-1">{system === 'metric' ? 'KG' : 'LB'}</span>
+                          <span className="text-[10px] font-sans font-medium text-mute ml-1">{system === 'metric' || (system === 'other' && weightUnitOther === 'kg') ? 'KG' : 'LB'}</span>
                         </div>
                       </div>
                       <div className="w-full">
@@ -535,7 +582,7 @@ export const LeanBodyMassCalculatorCard: React.FC = () => {
                         <div className="text-[9px] font-mono font-bold text-mute uppercase tracking-[0.2em] mb-3">Fat Body Mass</div>
                         <div className="text-xl sm:text-2xl font-mono font-bold text-ink tracking-tight mb-2">
                           {fatMass.toFixed(1)}
-                          <span className="text-[10px] font-sans font-medium text-mute ml-1">{system === 'metric' ? 'KG' : 'LB'}</span>
+                          <span className="text-[10px] font-sans font-medium text-mute ml-1">{system === 'metric' || (system === 'other' && weightUnitOther === 'kg') ? 'KG' : 'LB'}</span>
                         </div>
                       </div>
                       <div className="w-full">

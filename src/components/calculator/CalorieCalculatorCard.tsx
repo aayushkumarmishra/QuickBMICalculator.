@@ -207,22 +207,83 @@ export const CalorieCalculatorCard: React.FC = () => {
 
     setIsExporting(true);
     try {
-      const { generateReportPDF } = await import('../../lib/pdf');
-      
-      const inputData = {
-        age, gender, height, weight, feet, inches, activity, goal, system, heightUnitOther, weightUnitOther
-      };
+      const { generateDataDrivenReport } = await import('../../lib/pdf');
 
-      const resultData = {
-        bmr, tdee, targetCalories, caloriesByGoal, recommendations
-      };
+      const heightStr = (() => {
+        if (system === 'us' || (system === 'other' && heightUnitOther === 'ft+in')) {
+          return `${feet || 0}ft ${inches || 0}in`;
+        }
+        if (system === 'metric') return `${height}cm`;
+        if (heightUnitOther === 'm') return `${height}m`;
+        if (heightUnitOther === 'in') return `${height}in`;
+        return height ? `${height}${heightUnitOther || 'cm'}` : '--';
+      })();
 
-      await generateReportPDF({
+      const weightStr = (() => {
+        if (system === 'us') return `${weight} lb`;
+        if (system === 'metric') return `${weight} kg`;
+        return `${weight} ${weightUnitOther || 'kg'}`;
+      })();
+
+      const activityLabel = ACTIVITY_LEVELS.find((a) => a.value === activity)?.label || activity;
+
+      const markerPct = goal === 'loss' ? 16.5 : goal === 'gain' ? 83.5 : 50;
+
+      await generateDataDrivenReport({
         profileName: trimmedName,
         calculatorType: 'calorie',
-        inputData,
-        resultData,
-        date: new Date().toLocaleDateString()
+        date: new Date().toLocaleDateString(),
+        unitSystem: system.toUpperCase(),
+
+        profileRows: [
+          { label: 'AGE', value: `${age} YRS` },
+          { label: 'GENDER', value: (gender || '--').toUpperCase() },
+          { label: 'ACTIVITY', value: activityLabel.toUpperCase() },
+          { label: 'HEIGHT', value: heightStr },
+          { label: 'WEIGHT', value: weightStr },
+          { label: 'GOAL', value: (goal || 'MAINTENANCE').toUpperCase() },
+        ],
+
+        heroRows: [
+          { label: 'TARGET DAILY CALORIES', value: `${Math.round(targetCalories).toLocaleString()} kcal` },
+          { label: 'SELECTED GOAL', value: (goal || 'MAINTENANCE').toUpperCase() },
+        ],
+
+        barSegments: [
+          { color: [0, 112, 243], widthPct: 33.3 },
+          { color: [0, 223, 216], widthPct: 33.3 },
+          { color: [245, 166, 35], widthPct: 33.4 },
+        ],
+        barMarkerPct: markerPct,
+        barLabels: [
+          { text: 'FAT LOSS', pct: 0, align: 'left' },
+          { text: 'MAINTENANCE', pct: 33.3, align: 'left' },
+          { text: 'WEIGHT GAIN', pct: 66.6, align: 'left' },
+        ],
+
+        sections: [
+          {
+            title: 'ENERGY EXPENDITURE PLAN',
+            rows: [
+              { label: 'BMR BASE', value: `${Math.round(bmr).toLocaleString()} kcal` },
+              { label: 'MAINTENANCE', value: `${Math.round(tdee).toLocaleString()} kcal` },
+              { label: 'WEIGHT LOSS', value: `${Math.round(caloriesByGoal.loss).toLocaleString()} kcal`, color: '235, 100, 100' },
+              { label: 'WEIGHT GAIN', value: `${Math.round(caloriesByGoal.gain).toLocaleString()} kcal`, color: '34, 197, 94' },
+            ],
+            columns: 4,
+          },
+          {
+            title: 'ACTIVITY & HYDRATION GUIDE',
+            rows: [
+              { label: 'WALKING', value: suggestedActivity.walking },
+              { label: 'STEPS / DAY', value: suggestedActivity.steps },
+              { label: 'WATER INTAKE', value: `${waterIntake.toFixed(1)} L / day` },
+            ],
+            columns: 3,
+          },
+        ],
+
+        recommendations,
       });
     } catch (error) {
       console.error('PDF generation failed:', error);
@@ -287,7 +348,7 @@ export const CalorieCalculatorCard: React.FC = () => {
                       key={s} 
                       type="button"
                       onClick={() => { setSystem(s as UnitSystem); setWeight(''); }}
-                      className={`flex-1 py-2.5 text-[10px] font-mono font-bold uppercase tracking-[0.08em] transition-all duration-300 rounded-full focus-ring ${system === s ? 'bg-ink text-canvas dark:bg-canvas dark:text-ink shadow-premium-sm' : 'text-mute hover:text-ink'}`}
+                      className={`flex-1 py-2.5 text-[10px] font-mono font-bold uppercase tracking-[0.08em] transition-all duration-300 rounded-full focus-ring ${system === s ? 'bg-[var(--color-accent)] text-[oklch(16%_0.02_262)] shadow-premium-sm' : 'text-mute hover:text-ink'}`}
                     >
                       {s === 'us' ? 'US' : s.toUpperCase()}
                     </button>
@@ -329,7 +390,7 @@ export const CalorieCalculatorCard: React.FC = () => {
                         key={g} 
                         type="button"
                         onClick={() => setGender(g as 'male' | 'female')}
-                        className={`flex-1 py-2.5 text-[10px] font-mono font-bold uppercase tracking-[0.08em] transition-all duration-300 rounded-full focus-ring ${gender === g ? 'bg-ink text-canvas dark:bg-canvas dark:text-ink shadow-premium-sm' : 'text-mute hover:text-ink'}`}
+                        className={`flex-1 py-2.5 text-[10px] font-mono font-bold uppercase tracking-[0.08em] transition-all duration-300 rounded-full focus-ring ${gender === g ? 'bg-[var(--color-accent)] text-[oklch(16%_0.02_262)] shadow-premium-sm' : 'text-mute hover:text-ink'}`}
                       >
                         {g.toUpperCase()}
                       </button>
@@ -410,7 +471,7 @@ export const CalorieCalculatorCard: React.FC = () => {
                         key={g} 
                         type="button"
                         onClick={() => setGoal(g as Goal)}
-                        className={`flex-1 py-2.5 text-[10px] font-mono font-bold uppercase tracking-[0.08em] transition-all duration-300 rounded-full focus-ring ${goal === g ? 'bg-ink text-canvas dark:bg-canvas dark:text-ink shadow-premium-sm' : 'text-mute hover:text-ink'}`}
+                        className={`flex-1 py-2.5 text-[10px] font-mono font-bold uppercase tracking-[0.08em] transition-all duration-300 rounded-full focus-ring ${goal === g ? 'bg-[var(--color-accent)] text-[oklch(16%_0.02_262)] shadow-premium-sm' : 'text-mute hover:text-ink'}`}
                       >
                         {g.toUpperCase()}
                       </button>

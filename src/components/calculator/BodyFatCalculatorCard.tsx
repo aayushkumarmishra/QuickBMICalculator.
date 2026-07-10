@@ -85,23 +85,81 @@ export const BodyFatCalculatorCard: React.FC = () => {
     if (bodyFat <= 0) return;
     setIsExporting(true);
     try {
-      const { generateReportPDF } = await import('../../lib/pdf');
-      
-      const inputData = {
-        name, age, gender, weight, height, feet, inches, neck, waist, hips, system,
-        heightUnitOther, weightUnitOther, circumferenceUnitOther
-      };
+      const { generateDataDrivenReport } = await import('../../lib/pdf');
 
-      const resultData = {
-        bodyFat, fatMass, leanMass, category
-      };
+      const heightStr = (() => {
+        if (system === 'us' || (system === 'other' && heightUnitOther === 'ft+in')) {
+          return `${feet || 0}ft ${inches || 0}in`;
+        }
+        if (system === 'metric') return `${height}cm`;
+        if (heightUnitOther === 'm') return `${height}m`;
+        if (heightUnitOther === 'in') return `${height}in`;
+        return height ? `${height}${heightUnitOther || 'cm'}` : '--';
+      })();
 
-      await generateReportPDF({
+      const weightStr = (() => {
+        if (system === 'us') return `${weight} lb`;
+        if (system === 'metric') return `${weight} kg`;
+        return `${weight} ${weightUnitOther || 'kg'}`;
+      })();
+
+      const circUnit = system === 'metric' || (system === 'other' && circumferenceUnitOther === 'cm') ? 'cm' : 'in';
+      const massUnit = system === 'metric' || (system === 'other' && weightUnitOther === 'kg') ? 'kg' : 'lb';
+
+      const bfPct = Math.min(Math.max(((bodyFat - 5) / 35) * 100, 0), 100);
+
+      await generateDataDrivenReport({
         profileName: name || 'Valued User',
         calculatorType: 'body_fat',
-        inputData,
-        resultData,
-        date: new Date().toLocaleDateString()
+        date: new Date().toLocaleDateString(),
+        unitSystem: system.toUpperCase(),
+
+        profileRows: [
+          { label: 'AGE', value: `${age} YRS` },
+          { label: 'GENDER', value: (gender || '--').toUpperCase() },
+          { label: 'HEIGHT', value: heightStr },
+          { label: 'WEIGHT', value: weightStr },
+        ],
+
+        heroRows: [
+          { label: 'BODY FAT PERCENTAGE', value: `${bodyFat.toFixed(1)}%` },
+          { label: 'CLASSIFICATION', value: category || '--' },
+        ],
+
+        barSegments: [
+          { color: [0, 112, 243], widthPct: 14 },
+          { color: [0, 223, 216], widthPct: 26 },
+          { color: [245, 166, 35], widthPct: 20 },
+          { color: [255, 0, 0], widthPct: 40 },
+        ],
+        barMarkerPct: bfPct,
+        barMinLabel: '5',
+        barMaxLabel: '40+',
+        barLabels: [
+          { text: '14', pct: 14, align: 'center' },
+          { text: '21', pct: 40, align: 'center' },
+          { text: '25', pct: 60, align: 'center' },
+        ],
+
+        sections: [
+          {
+            title: 'BODY COMPOSITION',
+            rows: [
+              { label: 'FAT MASS', value: `${fatMass.toFixed(1)} ${massUnit}` },
+              { label: 'LEAN MASS', value: `${leanMass.toFixed(1)} ${massUnit}` },
+            ],
+            columns: 2,
+          },
+          {
+            title: 'CIRCUMFERENCE MEASUREMENTS',
+            rows: [
+              { label: 'NECK', value: `${neck} ${circUnit}` },
+              { label: 'WAIST', value: `${waist} ${circUnit}` },
+              ...(gender === 'female' ? [{ label: 'HIPS', value: `${hips} ${circUnit}` }] : []),
+            ],
+            columns: 3,
+          },
+        ],
       });
     } catch (error) {
       console.error('PDF generation failed:', error);
@@ -193,8 +251,8 @@ export const BodyFatCalculatorCard: React.FC = () => {
     const calculatedLeanMassKg = wKg - calculatedFatMassKg;
 
     // Convert output masses back to standard display values based on selected unit system
-    const fatMassVal = system === 'metric' ? calculatedFatMassKg : calculatedFatMassKg / 0.45359237;
-    const leanMassVal = system === 'metric' ? calculatedLeanMassKg : calculatedLeanMassKg / 0.45359237;
+    const fatMassVal = (system === 'metric' || (system === 'other' && weightUnitOther === 'kg')) ? calculatedFatMassKg : calculatedFatMassKg / 0.45359237;
+    const leanMassVal = (system === 'metric' || (system === 'other' && weightUnitOther === 'kg')) ? calculatedLeanMassKg : calculatedLeanMassKg / 0.45359237;
 
     // ACE guidelines categories for Body Fat
     let cat = '';
@@ -312,7 +370,7 @@ export const BodyFatCalculatorCard: React.FC = () => {
                       key={s} 
                       type="button"
                       onClick={() => { setSystem(s as UnitSystem); handleReset(); }}
-                      className={`flex-1 py-2.5 text-[10px] font-mono font-bold uppercase tracking-[0.08em] transition-all duration-300 rounded-full focus-ring ${system === s ? 'bg-ink text-canvas dark:bg-canvas dark:text-ink shadow-premium-sm' : 'text-mute hover:text-ink'}`}
+                      className={`flex-1 py-2.5 text-[10px] font-mono font-bold uppercase tracking-[0.08em] transition-all duration-300 rounded-full focus-ring ${system === s ? 'bg-[var(--color-accent)] text-[oklch(16%_0.02_262)] shadow-premium-sm' : 'text-mute hover:text-ink'}`}
                     >
                       {s === 'us' ? 'US' : s.toUpperCase()}
                     </button>
@@ -352,7 +410,7 @@ export const BodyFatCalculatorCard: React.FC = () => {
                         key={g} 
                         type="button"
                         onClick={() => { setGender(g as Gender); setHips(''); }}
-                        className={`flex-1 py-2.5 text-[10px] font-mono font-bold uppercase tracking-[0.08em] transition-all duration-300 rounded-full focus-ring ${gender === g ? 'bg-ink text-canvas dark:bg-canvas dark:text-ink shadow-premium-sm' : 'text-mute hover:text-ink'}`}
+                        className={`flex-1 py-2.5 text-[10px] font-mono font-bold uppercase tracking-[0.08em] transition-all duration-300 rounded-full focus-ring ${gender === g ? 'bg-[var(--color-accent)] text-[oklch(16%_0.02_262)] shadow-premium-sm' : 'text-mute hover:text-ink'}`}
                       >
                         {g.toUpperCase()}
                       </button>
@@ -572,7 +630,7 @@ export const BodyFatCalculatorCard: React.FC = () => {
                     <div className="bg-surface-2 border border-hairline rounded-ui p-5 space-y-1">
                       <span className="text-[9px] font-mono font-bold text-mute uppercase tracking-widest opacity-60">Lean Body Mass</span>
                       <p className="text-xl sm:text-2xl font-mono font-bold text-ink">
-                        {leanMass.toFixed(1)} {system === 'metric' ? 'kg' : 'lb'}
+                        {leanMass.toFixed(1)} {system === 'metric' || (system === 'other' && weightUnitOther === 'kg') ? 'kg' : 'lb'}
                       </p>
                       <p className="text-[10px] font-semibold text-mute">
                         {((leanMass / (parseFloat(weight) || 1)) * 100).toFixed(1)}% of weight
@@ -582,7 +640,7 @@ export const BodyFatCalculatorCard: React.FC = () => {
                     <div className="bg-surface-2 border border-hairline rounded-ui p-5 space-y-1">
                       <span className="text-[9px] font-mono font-bold text-mute uppercase tracking-widest opacity-60">Fat Body Mass</span>
                       <p className="text-xl sm:text-2xl font-mono font-bold text-ink">
-                        {fatMass.toFixed(1)} {system === 'metric' ? 'kg' : 'lb'}
+                        {fatMass.toFixed(1)} {system === 'metric' || (system === 'other' && weightUnitOther === 'kg') ? 'kg' : 'lb'}
                       </p>
                       <p className="text-[10px] font-semibold text-mute">
                         {bodyFat.toFixed(1)}% of weight

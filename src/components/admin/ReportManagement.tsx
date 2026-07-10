@@ -453,7 +453,6 @@ export const ReportManagement: React.FC = () => {
   };
 
   const handleViewDetails = (reportId: string) => {
-    console.log("Navigating to", reportId);
     window.location.assign(`/admin/reports/${reportId}`);
   };
 

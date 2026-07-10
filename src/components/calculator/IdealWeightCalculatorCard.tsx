@@ -130,9 +130,12 @@ export const IdealWeightCalculatorCard: React.FC = () => {
       'Stay consistent with daily activity'
     ];
 
+    const displayUnit = system === 'us' || (system === 'other' && weightUnitOther === 'lb') ? 'lb' : 'kg';
+
     if (wKg > rangeHigh) {
       const diff = wKg - rangeHigh;
-      comp = { text: `You are ~${diff.toFixed(1)} kg above your healthy range`, diff, status: 'over' };
+      const displayDiff = displayUnit === 'lb' ? (diff / LBS_TO_KG).toFixed(1) : diff.toFixed(1);
+      comp = { text: `You are ~${displayDiff} ${displayUnit} above your healthy range`, diff, status: 'over' };
       sColor = 'text-red-500';
       recs = [
         'Focus on gradual fat loss',
@@ -141,7 +144,8 @@ export const IdealWeightCalculatorCard: React.FC = () => {
       ];
     } else if (wKg < rangeLow) {
       const diff = rangeLow - wKg;
-      comp = { text: `You are ~${diff.toFixed(1)} kg below your healthy range`, diff, status: 'under' };
+      const displayDiff = displayUnit === 'lb' ? (diff / LBS_TO_KG).toFixed(1) : diff.toFixed(1);
+      comp = { text: `You are ~${displayDiff} ${displayUnit} below your healthy range`, diff, status: 'under' };
       sColor = 'text-blue-500';
       recs = [
         'Aim for a healthy calorie surplus',
@@ -170,22 +174,63 @@ export const IdealWeightCalculatorCard: React.FC = () => {
 
     setIsExporting(true);
     try {
-      const { generateReportPDF } = await import('../../lib/pdf');
-      
-      const inputData = {
-        age, gender, height, weight, feet, inches, system, heightUnitOther, weightUnitOther
-      };
+      const { generateDataDrivenReport } = await import('../../lib/pdf');
 
-      const resultData = {
-        idealWeight, healthyRange, comparison, waterIntake, recommendations
-      };
+      const heightStr = (() => {
+        if (system === 'us' || (system === 'other' && heightUnitOther === 'ft+in')) {
+          return `${feet || 0}ft ${inches || 0}in`;
+        }
+        if (system === 'metric') return `${height}cm`;
+        if (heightUnitOther === 'm') return `${height}m`;
+        if (heightUnitOther === 'in') return `${height}in`;
+        return height ? `${height}${heightUnitOther || 'cm'}` : '--';
+      })();
 
-      await generateReportPDF({
+      const weightStr = (() => {
+        if (system === 'us') return `${weight} lb`;
+        if (system === 'metric') return `${weight} kg`;
+        return `${weight} ${weightUnitOther || 'kg'}`;
+      })();
+
+      const idealLb = idealWeight / 0.45359237;
+
+      const rangeUnit = system === 'us' || (system === 'other' && weightUnitOther === 'lb') ? 'lb' : 'kg';
+      const rangeLow = rangeUnit === 'lb' ? healthyRange.low / 0.45359237 : healthyRange.low;
+      const rangeHigh = rangeUnit === 'lb' ? healthyRange.high / 0.45359237 : healthyRange.high;
+
+      await generateDataDrivenReport({
         profileName: trimmedName,
         calculatorType: 'ideal_weight',
-        inputData,
-        resultData,
-        date: new Date().toLocaleDateString()
+        date: new Date().toLocaleDateString(),
+        unitSystem: system.toUpperCase(),
+
+        profileRows: [
+          { label: 'AGE', value: `${age} YRS` },
+          { label: 'GENDER', value: (gender || '--').toUpperCase() },
+          { label: 'HEIGHT', value: heightStr },
+          { label: 'WEIGHT', value: weightStr },
+        ],
+
+        heroRows: [
+          { label: 'IDEAL WEIGHT (DEVINE)', value: `${idealWeight.toFixed(1)} kg / ${idealLb.toFixed(1)} lb` },
+        ],
+
+        sections: [
+          {
+            title: 'DAILY WATER INTAKE',
+            rows: [
+              { label: 'WATER', value: `${waterIntake.toFixed(1)} L / day` },
+            ],
+            columns: 1,
+          },
+        ],
+
+        splitSection: {
+          leftTitle: 'HEALTHY WEIGHT RANGE',
+          leftRows: [{ label: `Recommended range for your height`, value: `${rangeLow.toFixed(1)} - ${rangeHigh.toFixed(1)} ${rangeUnit}` }],
+        },
+
+        recommendations,
       });
     } catch (error) {
       console.error('PDF generation failed:', error);
@@ -244,7 +289,7 @@ export const IdealWeightCalculatorCard: React.FC = () => {
                       key={s} 
                       type="button"
                       onClick={() => { setSystem(s as UnitSystem); setWeight(''); }}
-                      className={`flex-1 py-2.5 text-[10px] font-mono font-bold uppercase tracking-[0.08em] transition-all duration-300 rounded-full focus-ring ${system === s ? 'bg-ink text-canvas dark:bg-canvas dark:text-ink shadow-premium-sm' : 'text-mute hover:text-ink'}`}
+                      className={`flex-1 py-2.5 text-[10px] font-mono font-bold uppercase tracking-[0.08em] transition-all duration-300 rounded-full focus-ring ${system === s ? 'bg-[var(--color-accent)] text-[oklch(16%_0.02_262)] shadow-premium-sm' : 'text-mute hover:text-ink'}`}
                     >
                       {s === 'us' ? 'US' : s.toUpperCase()}
                     </button>
@@ -286,7 +331,7 @@ export const IdealWeightCalculatorCard: React.FC = () => {
                         key={g} 
                         type="button"
                         onClick={() => setGender(g as 'male' | 'female')}
-                        className={`flex-1 py-2.5 text-[10px] font-mono font-bold uppercase tracking-[0.08em] transition-all duration-300 rounded-full focus-ring ${gender === g ? 'bg-ink text-canvas dark:bg-canvas dark:text-ink shadow-premium-sm' : 'text-mute hover:text-ink'}`}
+                        className={`flex-1 py-2.5 text-[10px] font-mono font-bold uppercase tracking-[0.08em] transition-all duration-300 rounded-full focus-ring ${gender === g ? 'bg-[var(--color-accent)] text-[oklch(16%_0.02_262)] shadow-premium-sm' : 'text-mute hover:text-ink'}`}
                       >
                         {g.toUpperCase()}
                       </button>

@@ -2,6 +2,7 @@
 import Layout from '../layouts/Layout.astro';
 import { Navbar } from '../components/Navbar';
 import Footer from '../components/Footer.astro';
+import HeroBackdrop from '../components/HeroBackdrop.astro';
 import { TrackerView } from '../components/tracker/TrackerView';
 import { createClient } from '@supabase/supabase-js';
 
@@ -26,20 +27,17 @@ if (!hasSession) {
   return Astro.redirect('/login?returnTo=/tracker');
 }
 
-const title = "My Tracker - Progress Dashboard | QuickBMI";
+const title = "My Tracker - Progress Dashboard | QuickBMICalculator";
 const description = "Track your health metrics over time. View saved reports for yourself and your family members in one place.";
 ---
 
 <Layout title={title} description={description} robots="noindex, nofollow">
   <Navbar client:load />
 
-  <main class="flex-grow pt-8 sm:pt-12 lg:pt-20 pb-24 px-4 sm:px-6 bg-canvas-soft relative overflow-hidden min-h-[90vh]">
-    {/* Background Decorations */}
-    <div class="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full max-w-7xl pointer-events-none -z-10">
-      <div class="absolute top-0 left-1/4 w-[50%] h-[50%] bg-[radial-gradient(circle,rgba(23,23,23,0.03)_0%,transparent_70%)] blur-[100px] rounded-full"></div>
-    </div>
+	<main class="flex-grow pt-8 sm:pt-12 lg:pt-20 pb-24 px-4 sm:px-6 bg-canvas-soft relative overflow-hidden min-h-[90vh]">
+		<HeroBackdrop />
 
-    <div class="w-full max-w-7xl mx-auto space-y-16 lg:space-y-24">
+		<div class="w-full max-w-7xl mx-auto space-y-16 lg:space-y-24 relative z-10">
       <TrackerView client:load />
     </div>
   </main>

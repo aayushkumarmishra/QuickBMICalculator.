@@ -77,22 +77,46 @@ export const MacroCalculatorCard: React.FC = () => {
     if (proteinGrams <= 0) return;
     setIsExporting(true);
     try {
-      const { generateReportPDF } = await import('../../lib/pdf');
-      
-      const inputData = {
-        name, calories, preset, customCarbs, customProtein, customFat
-      };
+      const { generateDataDrivenReport } = await import('../../lib/pdf');
 
-      const resultData = {
-        carbsGrams, proteinGrams, fatGrams, carbsCalories, proteinCalories, fatCalories, carbsPct, proteinPct, fatPct, sumPct
-      };
+      const presetLabel = preset ? (preset === 'custom' ? 'CUSTOM' : preset.toUpperCase()) : '--';
 
-      await generateReportPDF({
+      await generateDataDrivenReport({
         profileName: name || 'Valued User',
         calculatorType: 'macro',
-        inputData,
-        resultData,
-        date: new Date().toLocaleDateString()
+        date: new Date().toLocaleDateString(),
+        unitSystem: '--',
+
+        profileRows: [
+          { label: 'CALORIES', value: `${parseInt(calories).toLocaleString()} kcal` },
+          { label: 'PRESET', value: presetLabel },
+        ],
+
+        heroRows: [
+          { label: 'MACRONUTRIENTS (C/P/F)', value: `${Math.round(carbsGrams)}g / ${Math.round(proteinGrams)}g / ${Math.round(fatGrams)}g` },
+          { label: 'DIET PROFILE', value: presetLabel },
+        ],
+
+        sections: [
+          {
+            title: 'CALORIE BREAKDOWN',
+            rows: [
+              { label: 'CARBS', value: `${Math.round(carbsCalories)} kcal` },
+              { label: 'PROTEIN', value: `${Math.round(proteinCalories)} kcal` },
+              { label: 'FAT', value: `${Math.round(fatCalories)} kcal` },
+            ],
+            columns: 3,
+          },
+          {
+            title: 'PERCENTAGE SPLIT',
+            rows: [
+              { label: 'CARBS', value: `${carbsPct}%` },
+              { label: 'PROTEIN', value: `${proteinPct}%` },
+              { label: 'FAT', value: `${fatPct}%` },
+            ],
+            columns: 3,
+          },
+        ],
       });
     } catch (error) {
       console.error('PDF generation failed:', error);
@@ -257,7 +281,7 @@ export const MacroCalculatorCard: React.FC = () => {
                         key={type}
                         type="button"
                         onClick={() => setPreset(type)}
-                        className={`py-3 text-[10px] font-mono font-bold uppercase tracking-[0.08em] transition-all rounded-full border focus-ring ${preset === type ? 'bg-ink text-canvas border-ink dark:bg-canvas dark:text-ink shadow-premium-sm' : 'bg-canvas text-mute border-hairline hover:text-ink hover:bg-canvas-soft'}`}
+                        className={`py-3 text-[10px] font-mono font-bold uppercase tracking-[0.08em] transition-all rounded-full border focus-ring ${preset === type ? 'bg-[var(--color-accent)] text-[oklch(16%_0.02_262)] border-[var(--color-accent)] shadow-premium-sm' : 'bg-canvas text-mute border-hairline hover:text-ink hover:bg-canvas-soft'}`}
                       >
                         {type === 'lowcarb' ? 'Low Carb' : type === 'highprotein' ? 'High Protein' : type.toUpperCase()}
                       </button>

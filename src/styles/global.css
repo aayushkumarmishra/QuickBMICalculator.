@@ -81,17 +81,17 @@
   --color-ink-soft: oklch(75% 0.01 262);
   --color-primary: oklch(94% 0.006 262);
   --color-body: oklch(75% 0.01 262);
-  --color-mute: oklch(60% 0.015 262);
+  --color-mute: oklch(62% 0.015 262);
   --color-hairline: oklch(26% 0.015 262);
   --color-hairline-strong: oklch(34% 0.018 262);
   
   /* Slightly desaturate status accents in dark mode */
-  --color-status-under: oklch(58% 0.12 248);
-  --color-status-healthy: oklch(64% 0.10 165);
-  --color-status-over: oklch(75% 0.10 74);
-  --color-status-obese: oklch(58% 0.15 26);
-  --color-accent: oklch(62% 0.10 216);
-  --color-accent-wash: oklch(70% 0.12 216 / 0.35);
+  --color-status-under: oklch(66% 0.14 248);
+  --color-status-healthy: oklch(70% 0.12 165);
+  --color-status-over: oklch(80% 0.12 74);
+  --color-status-obese: oklch(66% 0.17 26);
+  --color-accent: oklch(72% 0.13 216);
+  --color-accent-wash: oklch(72% 0.12 216 / 0.22);
 }
 
 @layer utilities {
@@ -136,6 +136,13 @@
 
   .text-gradient {
     @apply bg-clip-text text-transparent bg-gradient-to-br from-ink to-body dark:from-white dark:to-mute;
+  }
+
+  .text-gradient-status {
+    background-image: linear-gradient(to right, var(--color-status-healthy), var(--color-status-under));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
   }
 
   /* Premium Custom Scrollbar */

@@ -175,7 +175,7 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({ profileId })
             </span>
           </>
         }
-        title={<span className="bg-linear-to-r from-status-healthy to-status-under bg-clip-text text-transparent dark:bg-none dark:text-ink">{profileDisplayName}</span>}
+        title={<><span className="text-ink">{profile.profile_name}</span>{profile.nickname && <> <span className="text-accent pb-2 inline-block">({profile.nickname})</span></>}</>}
         description={`Comprehensive health monitoring and history tracking for ${profileDisplayName}.`}
         rightContent={
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-5 w-full sm:w-auto">
@@ -288,8 +288,8 @@ const ReportCard: React.FC<{
   const handleDownload = async () => {
     setIsExporting(true);
     try {
-      const { generateReportPDF } = await import('../../lib/pdf');
-      await generateReportPDF({
+      const { generateSavedReportPDF } = await import('../../lib/pdf');
+      await generateSavedReportPDF({
         profileName,
         nickname,
         relation,

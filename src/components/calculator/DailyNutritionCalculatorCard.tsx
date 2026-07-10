@@ -92,23 +92,91 @@ export const DailyNutritionCalculatorCard: React.FC = () => {
     if (targetCalories <= 0) return;
     setIsExporting(true);
     try {
-      const { generateReportPDF } = await import('../../lib/pdf');
-      
-      const inputData = {
-        name, age, gender, weight, height, feet, inches, activity, goal, rate, system,
-        heightUnitOther, weightUnitOther
-      };
+      const { generateDataDrivenReport } = await import('../../lib/pdf');
 
-      const resultData = {
-        bmr, tdee, targetCalories, dailyAdjustment, carbsGrams, proteinGrams, fatGrams, isFloorTriggered
-      };
+      // Format height for display
+      const heightStr = (() => {
+        if (system === 'us' || (system === 'other' && heightUnitOther === 'ft+in')) {
+          return `${feet || 0}ft ${inches || 0}in`;
+        }
+        if (system === 'metric') return `${height}cm`;
+        if (heightUnitOther === 'm') return `${height}m`;
+        if (heightUnitOther === 'in') return `${height}in`;
+        return height ? `${height}${heightUnitOther || 'cm'}` : '--';
+      })();
 
-      await generateReportPDF({
+      const weightStr = (() => {
+        if (system === 'us') return `${weight} lb`;
+        if (system === 'metric') return `${weight} kg`;
+        return `${weight} ${weightUnitOther || 'kg'}`;
+      })();
+
+      const activityLabel = ACTIVITY_LEVELS.find((a) => a.value === activity)?.label || activity;
+
+      const isWeightMetric = system === 'metric' || (system === 'other' && weightUnitOther === 'kg');
+      const rateNum = parseFloat(rate);
+      const rateDisplay = isWeightMetric
+        ? `${rate} KG/WK`
+        : `${(rateNum * 2.2).toFixed(1)} LB/WK`;
+
+      await generateDataDrivenReport({
         profileName: name || 'Valued User',
         calculatorType: 'daily_nutrition',
-        inputData,
-        resultData,
-        date: new Date().toLocaleDateString()
+        date: new Date().toLocaleDateString(),
+        unitSystem: system.toUpperCase(),
+
+        profileRows: [
+          { label: 'AGE', value: `${age} YRS` },
+          { label: 'GENDER', value: gender.toUpperCase() },
+          { label: 'ACTIVITY', value: activityLabel.toUpperCase() },
+          { label: 'HEIGHT', value: heightStr },
+          { label: 'WEIGHT', value: weightStr },
+          { label: 'GOAL', value: goal.toUpperCase() },
+          { label: 'RATE', value: rateDisplay },
+          { label: 'SYSTEM', value: system.toUpperCase() },
+        ],
+
+        heroRows: [
+          { label: 'DAILY CALORIE BUDGET', value: `${Math.round(targetCalories).toLocaleString()} kcal` },
+          { label: 'TDEE (MAINTENANCE)', value: `${Math.round(tdee).toLocaleString()} kcal` },
+        ],
+
+        sections: [
+          {
+            title: 'ENERGY EXPENDITURE PLAN',
+            rows: [
+              { label: 'BMR BASE', value: bmr ? `${Math.round(bmr).toLocaleString()} kcal` : '--' },
+              { label: 'MAINTENANCE', value: tdee ? `${Math.round(tdee).toLocaleString()} kcal` : '--' },
+              { label: 'WEIGHT LOSS', value: tdee ? `${Math.round(tdee - 500).toLocaleString()} kcal` : '--', color: '235, 100, 100' },
+              { label: 'WEIGHT GAIN', value: tdee ? `${Math.round(tdee + 500).toLocaleString()} kcal` : '--', color: '34, 197, 94' },
+            ],
+            columns: 4,
+          },
+          {
+            title: 'MACRONUTRIENT BREAKDOWN',
+            rows: [
+              { label: 'PROTEIN', value: `${Math.round(proteinGrams)}g` },
+              { label: 'CARBOHYDRATES', value: `${Math.round(carbsGrams)}g` },
+              { label: 'DIETARY FATS', value: `${Math.round(fatGrams)}g` },
+              { label: 'DAILY ADJUSTMENT', value: `${dailyAdjustment > 0 ? '+' : ''}${Math.round(dailyAdjustment)} kcal` },
+            ],
+            columns: 4,
+          },
+          ...(isFloorTriggered
+            ? [{
+                title: 'SAFETY LIMIT ACTIVE',
+                rows: [{ label: 'STATUS', value: 'Calorie floor applied — minimum safe intake enforced', color: '245, 166, 35' }],
+                columns: 1,
+              }]
+            : []),
+        ],
+
+        recommendations: [
+          'Maintain balanced nutrition',
+          'Stay active daily',
+          'Keep consistent sleep schedule',
+          'Track progress monthly',
+        ],
       });
     } catch (error) {
       console.error('PDF generation failed:', error);
@@ -271,7 +339,7 @@ export const DailyNutritionCalculatorCard: React.FC = () => {
                       key={s} 
                       type="button"
                       onClick={() => { setSystem(s as UnitSystem); handleReset(); }}
-                      className={`flex-1 py-2.5 text-[10px] font-mono font-bold uppercase tracking-[0.08em] transition-all duration-300 rounded-full focus-ring ${system === s ? 'bg-ink text-canvas dark:bg-canvas dark:text-ink shadow-premium-sm' : 'text-mute hover:text-ink'}`}
+                      className={`flex-1 py-2.5 text-[10px] font-mono font-bold uppercase tracking-[0.08em] transition-all duration-300 rounded-full focus-ring ${system === s ? 'bg-[var(--color-accent)] text-[oklch(16%_0.02_262)] shadow-premium-sm' : 'text-mute hover:text-ink'}`}
                     >
                       {s === 'us' ? 'US' : s.toUpperCase()}
                     </button>
@@ -311,7 +379,7 @@ export const DailyNutritionCalculatorCard: React.FC = () => {
                         key={g} 
                         type="button"
                         onClick={() => setGender(g as Gender)}
-                        className={`flex-1 py-2.5 text-[10px] font-mono font-bold uppercase tracking-[0.08em] transition-all duration-300 rounded-full focus-ring ${gender === g ? 'bg-ink text-canvas dark:bg-canvas dark:text-ink shadow-premium-sm' : 'text-mute hover:text-ink'}`}
+                        className={`flex-1 py-2.5 text-[10px] font-mono font-bold uppercase tracking-[0.08em] transition-all duration-300 rounded-full focus-ring ${gender === g ? 'bg-[var(--color-accent)] text-[oklch(16%_0.02_262)] shadow-premium-sm' : 'text-mute hover:text-ink'}`}
                       >
                         {g.toUpperCase()}
                       </button>
@@ -392,7 +460,7 @@ export const DailyNutritionCalculatorCard: React.FC = () => {
                         key={item.value} 
                         type="button"
                         onClick={() => setGoal(item.value as Goal)}
-                        className={`flex-1 py-2.5 text-[10px] font-mono font-bold uppercase tracking-[0.08em] transition-all duration-300 rounded-full focus-ring ${goal === item.value ? 'bg-ink text-canvas dark:bg-canvas dark:text-ink shadow-premium-sm' : 'text-mute hover:text-ink'}`}
+                        className={`flex-1 py-2.5 text-[10px] font-mono font-bold uppercase tracking-[0.08em] transition-all duration-300 rounded-full focus-ring ${goal === item.value ? 'bg-[var(--color-accent)] text-[oklch(16%_0.02_262)] shadow-premium-sm' : 'text-mute hover:text-ink'}`}
                       >
                         {item.label.toUpperCase()}
                       </button>
@@ -413,7 +481,7 @@ export const DailyNutritionCalculatorCard: React.FC = () => {
                           key={item.value} 
                           type="button"
                           onClick={() => setRate(item.value as Rate)}
-                          className={`flex-1 py-2.5 text-[10px] font-mono font-bold uppercase tracking-[0.08em] transition-all duration-300 rounded-full focus-ring ${rate === item.value ? 'bg-ink text-canvas dark:bg-canvas dark:text-ink shadow-premium-sm' : 'text-mute hover:text-ink'}`}
+                          className={`flex-1 py-2.5 text-[10px] font-mono font-bold uppercase tracking-[0.08em] transition-all duration-300 rounded-full focus-ring ${rate === item.value ? 'bg-[var(--color-accent)] text-[oklch(16%_0.02_262)] shadow-premium-sm' : 'text-mute hover:text-ink'}`}
                         >
                           {item.label.toUpperCase()}
                         </button>
@@ -578,8 +646,12 @@ export const DailyNutritionCalculatorCard: React.FC = () => {
                     <h4 className="text-[10px] font-mono font-black text-ink uppercase tracking-widest">Weight projection</h4>
                     <p className="text-xs text-body leading-relaxed font-medium">
                       Based on your TDEE of <strong>{Math.round(tdee)} calories</strong> and selection, your target intake is adjusted by <strong>{dailyAdjustment > 0 ? '+' : ''}{Math.round(dailyAdjustment)} kcal</strong> daily.
-                      {goal === 'loss' && ` Adhering to this target should result in a weight loss of approximately ${rate} kg (${(parseFloat(rate) * 2.2).toFixed(1)} lbs) per week, projecting to a reduction of around ${(parseFloat(rate) * 4).toFixed(1)} kg within one month.`}
-                      {goal === 'gain' && ` Eating at this surplus should result in a healthy weight gain of approximately ${rate} kg (${(parseFloat(rate) * 2.2).toFixed(1)} lbs) per week, supporting lean mass synthesis when paired with weightlifting.`}
+                      {goal === 'loss' && (system === 'us' || (system === 'other' && weightUnitOther === 'lb'))
+                        ? ` Adhering to this target should result in a weight loss of approximately ${(parseFloat(rate) * 2.2).toFixed(1)} lbs (${rate} kg) per week, projecting to a reduction of around ${(parseFloat(rate) * 4 * 2.2).toFixed(1)} lbs within one month.`
+                        : goal === 'loss' && ` Adhering to this target should result in a weight loss of approximately ${rate} kg (${(parseFloat(rate) * 2.2).toFixed(1)} lbs) per week, projecting to a reduction of around ${(parseFloat(rate) * 4).toFixed(1)} kg within one month.`}
+                      {goal === 'gain' && (system === 'us' || (system === 'other' && weightUnitOther === 'lb'))
+                        ? ` Eating at this surplus should result in a healthy weight gain of approximately ${(parseFloat(rate) * 2.2).toFixed(1)} lbs (${rate} kg) per week, supporting lean mass synthesis when paired with weightlifting.`
+                        : goal === 'gain' && ` Eating at this surplus should result in a healthy weight gain of approximately ${rate} kg (${(parseFloat(rate) * 2.2).toFixed(1)} lbs) per week, supporting lean mass synthesis when paired with weightlifting.`}
                       {goal === 'maintenance' && " Eating at maintenance calories balances daily expenditures, keeping your weight stable and sustaining day-to-day energetic outputs."}
                     </p>
                   </div>

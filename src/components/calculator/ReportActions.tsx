@@ -10,7 +10,7 @@ interface ReportActionsProps {
   isExporting: boolean;
   hasResult: boolean;
   isValidName: boolean;
-  calculatorType: 'bmi' | 'bmr' | 'calorie' | 'ideal_weight' | 'water_intake';
+  calculatorType: 'bmi' | 'bmr' | 'calorie' | 'ideal_weight' | 'water_intake' | 'body_fat' | 'lean_body_mass' | 'macro' | 'protein_intake' | 'daily_nutrition';
   inputData: any;
   resultData: any;
 }

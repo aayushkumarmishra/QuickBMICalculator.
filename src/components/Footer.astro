@@ -8,74 +8,76 @@ const { role } = Astro.locals;
 const isAdmin = role === 'admin';
 
 const socialLinks = [
-  { 
-    name: 'X (Twitter)', 
-    href: 'https://x.com/AysuhMishra', 
-    icon: X 
+  {
+    name: 'X (Twitter)',
+    href: 'https://x.com/AysuhMishra',
+    icon: X
   },
-  { 
-    name: 'Telegram', 
-    href: 'https://t.me/+3NlArnuptl8yZGRl', 
-    icon: Send 
+  {
+    name: 'Telegram',
+    href: 'https://t.me/+3NlArnuptl8yZGRl',
+    icon: Send
   },
-  { 
-    name: 'LinkedIn', 
-    href: 'https://www.linkedin.com/in/ayush-kumar-m-558b631b0', 
-    icon: 'linkedin'
+  {
+    name: 'LinkedIn',
+    href: 'https://www.linkedin.com/in/ayush-kumar-m-558b631b0',
+    icon: null
   },
-];
-
-const quickLinks = [
-  { name: 'Home', href: '/' },
-  { name: 'BMI Calculator', href: '/#calculator' },
-  { name: 'BMR Calculator', href: '/bmr-calculator/' },
-  { name: 'Calorie Calculator', href: '/calorie-calculator/' },
-  { name: 'Water Intake Calculator', href: '/water-intake-calculator/' },
-  { name: 'Ideal Weight Calculator', href: '/ideal-weight-calculator/' },
-  { name: 'Body Fat Calculator', href: '/body-fat-calculator/' },
-  { name: 'Lean Body Mass Calculator', href: '/lean-body-mass-calculator/' },
-  { name: 'Protein Intake Calculator', href: '/protein-intake-calculator/' },
-  { name: 'Macro Calculator', href: '/macro-calculator/' },
-  { name: 'Daily Nutrition Calculator', href: '/daily-nutrition-calculator/' },
-  { name: 'How it Works', href: '/#how-it-works' },
-  { name: 'BMI Categories', href: '/#bmi-categories' },
-  { name: 'FAQ', href: '/#faq' },
-];
-
-const legalLinks = [
-  { name: 'WHO Guidelines', href: 'https://www.who.int/data/gho/data/themes/topics/topic-details/GHO/body-mass-index', external: true },
-  { name: 'About Us', href: '/about' },
-  { name: 'Contact Us', href: '/contact' },
-  { name: 'Privacy Policy', href: '/privacy-policy' },
-  { name: 'Terms of Use', href: '/terms-and-conditions' },
 ];
 ---
 
 {!isAdmin && (
-<footer class="bg-canvas border-t border-hairline pt-12 pb-12 lg:pt-16 lg:pb-16 relative z-10">
-  <div class="max-w-7xl mx-auto px-6">
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-x-8 gap-y-12 lg:gap-16 mb-12 lg:mb-16">
-      
-      {/* LEFT SIDE: Brand & Social */}
-      <div class="md:col-span-2 lg:col-span-5 space-y-6 min-w-0">
-        <a href="/" class="inline-flex items-center gap-3 group">
-          <BrandLogo className="w-10 h-10 transition-transform duration-500 group-hover:rotate-6 group-hover:scale-110" variant="ink" />
-          <div class="flex flex-col">
-            <span class="font-black text-xl tracking-tighter text-ink leading-tight">QuickBMI</span>
-            <span class="text-[9px] font-mono font-bold text-status-healthy/90 uppercase tracking-widest">Real-time BMI Engine</span>
-          </div>
+<footer class="relative z-10 bg-canvas border-t border-hairline overflow-hidden">
+  <!-- Subtle accent glow (themed) -->
+  <div class="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
+    <div class="absolute bottom-0 left-1/2 -translate-x-1/2 w-full max-w-7xl">
+      <div class="absolute bottom-0 left-1/2 -translate-x-1/2 w-[80%] h-[300px] bg-[radial-gradient(circle,rgba(0,223,216,0.05)_0%,transparent_70%)] blur-[100px] rounded-full dark:opacity-[0.12]"></div>
+      <div class="absolute bottom-0 left-1/2 -translate-x-1/2 w-[60%] h-[200px] bg-[radial-gradient(circle,rgba(0,112,243,0.03)_0%,transparent_70%)] blur-[120px] rounded-full dark:opacity-[0.1]"></div>
+    </div>
+    <div class="absolute bottom-0 left-1/2 -translate-x-1/2 w-[70%] max-w-[600px] h-[250px] footer-accent-glow" style="background: radial-gradient(circle, var(--color-accent) 0%, transparent 70%); filter: blur(80px);"></div>
+  </div>
+
+  <div class="relative z-10">
+    <!-- CTA STRIP -->
+    <div class="border-b border-hairline">
+      <div class="max-w-7xl mx-auto px-6 py-10 sm:py-12 lg:py-14 flex flex-col sm:flex-row items-center justify-between gap-6 text-center sm:text-left">
+        <div>
+          <h2 class="text-2xl sm:text-3xl font-black tracking-tighter text-ink">
+            Ready to know your <span class="text-accent">numbers</span>?
+          </h2>
+          <p class="text-mute text-sm font-medium mt-1.5">Get instant, science-based body measurements in seconds.</p>
+        </div>
+        <a
+          href="/#calculator"
+          class="inline-flex items-center gap-2.5 px-8 py-3.5 bg-ink text-canvas rounded-pill text-xs font-black uppercase tracking-widest shadow-premium-md hover:shadow-premium-xl hover:scale-105 active:scale-95 transition-all duration-300 shrink-0 min-h-[44px]"
+        >
+          Start calculating
+          <ArrowUpRight class="w-4 h-4" />
         </a>
-        <div class="space-y-6">
-          <p class="text-mute text-sm leading-relaxed max-w-md font-medium">
-            Professional BMI analysis platform for accurate body measurement insights. Empowering wellness through precision analytics.
+      </div>
+    </div>
+
+    <!-- 4-COLUMN GRID -->
+    <div class="max-w-7xl mx-auto px-6 py-12 lg:py-16">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-10 gap-y-12">
+        <!-- BRAND BLOCK -->
+        <div class="sm:col-span-2 lg:col-span-1 space-y-5">
+          <a href="/" class="inline-flex items-center gap-2.5 group">
+            <BrandLogo className="w-9 h-9 transition-transform duration-500 group-hover:rotate-6 group-hover:scale-110" variant="ink" />
+            <div class="flex flex-col">
+              <span class="font-black text-lg tracking-tighter text-ink leading-tight">QuickBMICalculator</span>
+            </div>
+          </a>
+          <p class="text-mute text-sm leading-relaxed font-medium max-w-xs">
+            Ten free, science-based calculators for BMI, metabolism, nutrition, and body composition. Private by design.
           </p>
-          <div class="flex flex-wrap gap-3">
+          <div class="flex flex-wrap gap-2.5 pt-1">
             {socialLinks.map((social) => (
               <a
                 href={social.href}
                 target="_blank"
                 rel="noopener noreferrer"
-                class="relative w-10 h-10 flex items-center justify-center rounded-xl bg-canvas-soft border border-hairline text-mute hover:text-ink hover:border-hairline-strong transition-all duration-500 shadow-premium-sm hover:shadow-premium-md hover:-translate-y-1 active:scale-95 group"
+                class="relative w-11 h-11 flex items-center justify-center rounded-xl bg-canvas-soft border border-hairline text-mute hover:text-accent hover:border-accent/30 transition-all duration-400 shadow-premium-sm hover:shadow-premium-md hover:-translate-y-1 active:scale-95 group"
                 aria-label={social.name}
               >
                 <span class="transition-transform duration-500 group-hover:scale-105 relative z-10 scale-90">
@@ -84,62 +86,127 @@ const legalLinks = [
                       <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect width="4" height="12" x="2" y="9"/><circle cx="4" cy="4" r="2"/>
                     </svg>
                   ) : (
-                    <social.icon className="w-5 h-5" />
+                    <social.icon className="w-[18px] h-[18px]" />
                   )}
                 </span>
               </a>
             ))}
           </div>
         </div>
-      </div>
 
-      {/* CENTER: Quick Links */}
-      <div class="lg:col-span-4 space-y-6 min-w-0">
-        <h4 class="text-[10px] font-mono font-bold text-mute uppercase tracking-[0.3em]">Quick Links</h4>
-        <ul class="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4">
-          {quickLinks.map((link) => (
+        <!-- CALCULATORS -->
+        <div class="space-y-5">
+          <h4 class="text-[10px] font-mono font-bold text-mute uppercase tracking-[0.3em]">Calculators</h4>
+          <ul class="space-y-3.5">
+            <li><a href="/" class="footer-link">BMI Calculator</a></li>
+            <li><a href="/bmr-calculator/" class="footer-link">BMR Calculator</a></li>
+            <li><a href="/calorie-calculator/" class="footer-link">Calorie Calculator</a></li>
+            <li><a href="/water-intake-calculator/" class="footer-link">Water Intake</a></li>
+            <li><a href="/ideal-weight-calculator/" class="footer-link">Ideal Weight</a></li>
+            <li><a href="/body-fat-calculator/" class="footer-link">Body Fat</a></li>
+          </ul>
+        </div>
+
+        <!-- MORE TOOLS -->
+        <div class="space-y-5">
+          <h4 class="text-[10px] font-mono font-bold text-mute uppercase tracking-[0.3em]">More Tools</h4>
+          <ul class="space-y-3.5">
+            <li><a href="/lean-body-mass-calculator/" class="footer-link">Lean Body Mass</a></li>
+            <li><a href="/protein-intake-calculator/" class="footer-link">Protein Intake</a></li>
+            <li><a href="/macro-calculator/" class="footer-link">Macro Calculator</a></li>
+            <li><a href="/daily-nutrition-calculator/" class="footer-link">Daily Nutrition</a></li>
+            <li><a href="/#how-it-works" class="footer-link">How it Works</a></li>
+            <li><a href="/#bmi-categories" class="footer-link">BMI Categories</a></li>
+          </ul>
+        </div>
+
+        <!-- COMPANY -->
+        <div class="space-y-5">
+          <h4 class="text-[10px] font-mono font-bold text-mute uppercase tracking-[0.3em]">Company</h4>
+          <ul class="space-y-3.5">
+            <li><a href="/about" class="footer-link">About</a></li>
+            <li><a href="/blog" class="footer-link">Blog</a></li>
+            <li><a href="/contact" class="footer-link">Contact</a></li>
+            <li><a href="/#faq" class="footer-link">FAQ</a></li>
+            <li><a href="/privacy-policy" class="footer-link">Privacy Policy</a></li>
+            <li><a href="/terms-and-conditions" class="footer-link">Terms of Use</a></li>
             <li>
-              <a 
-                href={link.href} 
-                class="text-sm font-bold text-ink/60 hover:text-ink transition-colors duration-200"
+              <a
+                href="https://www.who.int/data/gho/data/themes/topics/topic-details/GHO/body-mass-index"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="footer-link"
               >
-                {link.name}
+                WHO Guidelines
+                <ArrowUpRight class="w-3 h-3 inline-block ml-1 -mt-0.5 opacity-60 group-hover:opacity-100 transition-opacity" />
               </a>
             </li>
-          ))}
-        </ul>
-      </div>
-
-      {/* RIGHT SIDE: Scientific / Legal */}
-      <div class="lg:col-span-3 space-y-6 min-w-0">
-        <h4 class="text-[10px] font-mono font-bold text-mute uppercase tracking-[0.3em]">Scientific & Legal</h4>
-        <ul class="space-y-4">
-          {legalLinks.map((link) => (
-            <li>
-              <a 
-                href={link.href} 
-                target={link.external ? "_blank" : undefined}
-                rel={link.external ? "noopener noreferrer" : undefined}
-                class="group flex items-center text-sm font-bold text-ink/60 hover:text-ink transition-colors duration-200"
-              >
-                {link.name}
-                {link.external && <ArrowUpRight class="w-3 h-3 ml-1.5 opacity-0 group-hover:opacity-100 transition-all -translate-y-0.5" />}
-              </a>
-            </li>
-          ))}
-        </ul>
+          </ul>
+        </div>
       </div>
     </div>
 
-    {/* Bottom Row */}
-    <div class="pt-8 border-t border-hairline/50 flex flex-col md:flex-row justify-between items-center gap-6">
-      <div class="text-[10px] font-mono font-bold text-mute uppercase tracking-[0.1em] text-center md:text-left">
-        &copy; {currentYear} QuickBMICalculator | Built by <span class="text-ink">Ayush Kumar Mishra</span>
-      </div>
-      <div class="text-[10px] font-mono font-bold text-mute uppercase tracking-[0.1em] opacity-60 text-center md:text-right">
-        WHO Compliant &bull; Privacy First &bull; Real-Time Analysis
+    <!-- BOTTOM BAR -->
+    <div class="border-t border-hairline">
+      <div class="max-w-7xl mx-auto px-6 py-6 flex flex-col md:flex-row justify-between items-center gap-4">
+        <div class="text-[10px] font-mono font-bold text-mute uppercase tracking-[0.1em] text-center md:text-left">
+          &copy; {currentYear} QuickBMICalculator &middot; Built by <span class="text-ink">Ayush Kumar Mishra</span>
+        </div>
+        <div class="flex flex-wrap justify-center gap-4">
+          <span class="inline-flex items-center gap-1.5 text-[9px] font-mono font-bold text-mute uppercase tracking-[0.1em]">
+            <span class="w-1.5 h-1.5 rounded-full bg-status-healthy inline-block"></span>
+            WHO Compliant
+          </span>
+          <span class="inline-flex items-center gap-1.5 text-[9px] font-mono font-bold text-mute uppercase tracking-[0.1em]">
+            <span class="w-1.5 h-1.5 rounded-full bg-status-healthy inline-block"></span>
+            Privacy First
+          </span>
+          <span class="inline-flex items-center gap-1.5 text-[9px] font-mono font-bold text-mute uppercase tracking-[0.1em]">
+            <span class="w-1.5 h-1.5 rounded-full bg-status-healthy inline-block"></span>
+            Instant Results
+          </span>
+        </div>
       </div>
     </div>
   </div>
 </footer>
 )}
+
+<style>
+  .footer-accent-glow {
+    opacity: 0.08;
+  }
+  :global(.dark) .footer-accent-glow {
+    opacity: 0.18;
+  }
+
+  .footer-link {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: color-mix(in srgb, var(--color-ink) 60%, transparent);
+    min-height: 44px;
+    transition: color 0.3s ease, transform 0.3s ease;
+    transform: translateX(0);
+  }
+  .footer-link:is(:hover, :focus-visible) {
+    color: var(--color-accent);
+    transform: translateX(4px);
+  }
+  .footer-link::after {
+    content: '';
+    position: absolute;
+    bottom: 6px;
+    left: 0;
+    width: 0;
+    height: 2px;
+    border-radius: 1px;
+    background-color: var(--color-accent);
+    transition: width 0.3s ease;
+  }
+  .footer-link:is(:hover, :focus-visible)::after {
+    width: 100%;
+  }
+</style>

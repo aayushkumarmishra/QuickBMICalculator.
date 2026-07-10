@@ -2,19 +2,21 @@
 import Layout from '../layouts/Layout.astro';
 import { Navbar } from '../components/Navbar';
 import Footer from '../components/Footer.astro';
+import HeroBackdrop from '../components/HeroBackdrop.astro';
 import { Mail, MessageCircle, Clock } from 'lucide-react';
 
-const title = "Contact Us - QuickBMI";
+const title = "Contact Us - QuickBMICalculator";
 const description = "Have questions or feedback about QuickBMI? Get in touch with our support team. We're here to help you with your BMI queries.";
 ---
 
 <Layout title={title} description={description}>
 	<Navbar client:load />
 
-	<main class="flex-grow pt-12 sm:pt-20 pb-40 px-6">
+	<main class="flex-grow pt-12 sm:pt-20 pb-40 px-6 relative overflow-hidden bg-canvas">
+		<HeroBackdrop />
 		<article class="max-w-4xl mx-auto space-y-16">
 			<header class="space-y-6 text-center">
-				<h1 class="text-4xl xs:text-5xl sm:text-7xl font-black tracking-tighter text-ink leading-none">Get in Touch</h1>
+				<h1 class="text-4xl xs:text-5xl sm:text-7xl font-black tracking-tighter text-ink leading-none">Get in <span class="text-accent">Touch</span></h1>
 				<p class="text-base sm:text-lg sm:text-xl text-body max-w-2xl mx-auto font-medium opacity-70">
 					Have questions, feedback, or need support? We're here to help you get the most out of our BMI platform.
 				</p>
@@ -38,7 +40,7 @@ const description = "Have questions or feedback about QuickBMI? Get in touch wit
 					</div>
 					<div>
 						<h3 class="text-lg font-black tracking-tight text-ink">Feedback</h3>
-						<p class="text-sm text-body font-medium opacity-60 mt-1">Help us improve QuickBMI</p>
+						<p class="text-sm text-body font-medium opacity-60 mt-1">Help us improve QuickBMICalculator</p>
 					</div>
 					<p class="text-ink font-bold">Via Social Channels</p>
 				</div>

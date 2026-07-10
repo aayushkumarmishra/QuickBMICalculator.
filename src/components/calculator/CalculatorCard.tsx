@@ -229,22 +229,129 @@ export const CalculatorCard: React.FC = () => {
     if (bmi <= 0) return;
     setIsExporting(true);
     try {
-      const { generateReportPDF } = await import('../../lib/pdf');
-      
-      const inputData = {
-        age, gender, height, weight, feet, inches, activity, goal, system, heightUnitOther, weightUnitOther
-      };
+      const { generateDataDrivenReport } = await import('../../lib/pdf');
 
-      const resultData = {
-        bmi, category, idealWeightRange, ponderalIndex, bmr, tdee
-      };
+      const heightStr = (() => {
+        if (system === 'us' || (system === 'other' && heightUnitOther === 'ft+in')) {
+          return `${feet || 0}ft ${inches || 0}in`;
+        }
+        if (system === 'metric') return `${height}cm`;
+        if (heightUnitOther === 'm') return `${height}m`;
+        if (heightUnitOther === 'in') return `${height}in`;
+        return height ? `${height}${heightUnitOther || 'cm'}` : '--';
+      })();
 
-      await generateReportPDF({
+      const weightStr = (() => {
+        if (system === 'us') return `${weight} lb`;
+        if (system === 'metric') return `${weight} kg`;
+        return `${weight} ${weightUnitOther || 'kg'}`;
+      })();
+
+      const activityLabel = ACTIVITY_LEVELS.find((a) => a.value === activity)?.label || activity;
+
+      const weightKg = (() => {
+        const w = parseFloat(weight) || 0;
+        if (system === 'metric') return w;
+        if (system === 'us') return w * 0.45359237;
+        return weightUnitOther === 'kg' ? w : w * 0.45359237;
+      })();
+
+      const water = weightKg > 0 ? (weightKg * 0.033).toFixed(1) : '0';
+
+      const bmiPct = Math.min(Math.max(((bmi - 15) / 25) * 100, 0), 100);
+
+      const activityMap: Record<string, { walking: string; steps: string }> = {
+        'Underweight':     { walking: '20-30 min/day', steps: '5,000-7,000 steps/day' },
+        'Normal Weight':   { walking: '30 min/day',    steps: '7,000-8,000 steps/day' },
+        'Overweight':      { walking: '30-45 min/day', steps: '7,000-9,000 steps/day' },
+        'Obesity Class I': { walking: '30-45 min/day', steps: '9,000+ steps/day' },
+        'Obesity Class II':  { walking: '30-45 min/day', steps: '9,000+ steps/day' },
+        'Obesity Class III': { walking: '30-45 min/day', steps: '9,000+ steps/day' },
+      };
+      const actData = activityMap[category] || activityMap['Normal Weight'];
+
+      const recsMap: Record<string, string[]> = {
+        'Underweight':     ['Protein-rich foods', 'Strength training 3x/wk', 'Increase calories', 'Eat 5-6 meals/day'],
+        'Normal Weight':   ['Balanced nutrition', 'Stay active 30 min/day', 'Consistent sleep', 'Stay hydrated'],
+        'Overweight':      ['Walk 30-45 min daily', '7,000-9,000 steps', 'Calorie deficit', 'Reduce processed foods'],
+        'Obesity':         ['Consult specialist', 'Track calories daily', 'Monitor progress', 'Regular activity'],
+      };
+      const recKey = category.includes('Obesity') ? 'Obesity' : category;
+      const recs = recsMap[recKey] || recsMap['Normal Weight'];
+
+      const rangeMin = idealWeightRange?.min?.toFixed(1) || '--';
+      const rangeMax = idealWeightRange?.max?.toFixed(1) || '--';
+      const weightUnit = system === 'us' || (system === 'other' && weightUnitOther === 'lb') ? 'lb' : 'kg';
+
+      await generateDataDrivenReport({
         profileName: name || 'Valued User',
         calculatorType: 'bmi',
-        inputData,
-        resultData,
-        date: new Date().toLocaleDateString()
+        date: new Date().toLocaleDateString(),
+        unitSystem: system.toUpperCase(),
+
+        profileRows: [
+          { label: 'AGE', value: `${age} YRS` },
+          { label: 'GENDER', value: (gender || '--').toUpperCase() },
+          { label: 'ACTIVITY', value: activityLabel.toUpperCase() },
+          { label: 'HEIGHT', value: heightStr },
+          { label: 'WEIGHT', value: weightStr },
+          { label: 'GOAL', value: (goal || 'MAINTENANCE').toUpperCase() },
+        ],
+
+        heroRows: [
+          { label: 'CURRENT BMI', value: bmi.toFixed(1) },
+          { label: 'CLASSIFICATION', value: category || '--' },
+        ],
+
+        barSegments: [
+          { color: [0, 112, 243], widthPct: 14 },
+          { color: [0, 223, 216], widthPct: 26 },
+          { color: [245, 166, 35], widthPct: 20 },
+          { color: [255, 0, 0], widthPct: 40 },
+        ],
+        barMarkerPct: bmiPct,
+        barMinLabel: '15',
+        barMaxLabel: '40+',
+        barLabels: [
+          { text: '18.5', pct: 14, align: 'center' },
+          { text: '25', pct: 40, align: 'center' },
+          { text: '30', pct: 60, align: 'center' },
+        ],
+
+        sections: [
+          {
+            title: 'ENERGY EXPENDITURE PLAN',
+            rows: [
+              { label: 'BMR BASE', value: bmr ? `${Math.round(bmr).toLocaleString()} kcal` : '--' },
+              { label: 'MAINTENANCE', value: tdee ? `${Math.round(tdee).toLocaleString()} kcal` : '--' },
+              { label: 'WEIGHT LOSS', value: tdee ? `${Math.round(tdee - 500).toLocaleString()} kcal` : '--', color: '235, 100, 100' },
+              { label: 'WEIGHT GAIN', value: tdee ? `${Math.round(tdee + 500).toLocaleString()} kcal` : '--', color: '34, 197, 94' },
+            ],
+            columns: 4,
+          },
+          {
+            title: 'ACTIVITY & HYDRATION GUIDE',
+            rows: [
+              { label: 'WALKING', value: actData.walking },
+              { label: 'STEPS / DAY', value: actData.steps },
+              { label: 'WATER INTAKE', value: `${water} L / day` },
+            ],
+            columns: 3,
+          },
+        ],
+
+        splitSection: {
+          leftTitle: 'HEALTHY WEIGHT RANGE',
+          leftRows: [{ label: `Recommended range for your height`, value: `${rangeMin} - ${rangeMax} ${weightUnit}` }],
+          rightTitle: 'ADVANCED ANALYTICS',
+          rightRows: [
+            { label: 'BMI PRIME', value: (bmi / 25).toFixed(2) },
+            { label: 'PONDERAL INDEX', value: ponderalIndex ? ponderalIndex.toFixed(1) : '--' },
+          ],
+        },
+
+        whoTable: true,
+        recommendations: recs,
       });
     } catch (error) {
       console.error('PDF generation failed:', error);
@@ -289,7 +396,7 @@ export const CalculatorCard: React.FC = () => {
                       key={s} 
                       type="button"
                       onClick={() => { setSystem(s as UnitSystem); setWeight(''); }}
-                      className={`flex-1 py-2.5 text-[10px] font-mono font-bold uppercase tracking-[0.08em] transition-all duration-300 rounded-full focus-ring ${system === s ? 'bg-ink text-canvas dark:bg-canvas dark:text-ink shadow-premium-sm' : 'text-mute hover:text-ink'}`}
+                      className={`flex-1 py-2.5 text-[10px] font-mono font-bold uppercase tracking-[0.08em] transition-all duration-300 rounded-full focus-ring ${system === s ? 'bg-[var(--color-accent)] text-[oklch(16%_0.02_262)] shadow-premium-sm' : 'text-mute hover:text-ink'}`}
                     >
                       {s === 'us' ? 'US UNITS' : s.toUpperCase()}
                     </button>
@@ -331,7 +438,7 @@ export const CalculatorCard: React.FC = () => {
                         key={g} 
                         type="button"
                         onClick={() => setGender(g as 'male' | 'female')}
-                        className={`flex-1 rounded-full text-[10px] font-mono font-bold uppercase tracking-[0.08em] transition-all duration-300 focus-ring ${gender === g ? 'bg-ink text-canvas dark:bg-canvas dark:text-ink shadow-premium-sm' : 'text-mute hover:text-ink'}`}
+                        className={`flex-1 rounded-full text-[10px] font-mono font-bold uppercase tracking-[0.08em] transition-all duration-300 focus-ring ${gender === g ? 'bg-[var(--color-accent)] text-[oklch(16%_0.02_262)] shadow-premium-sm' : 'text-mute hover:text-ink'}`}
                       >
                         {g.toUpperCase()}
                       </button>
@@ -413,7 +520,7 @@ export const CalculatorCard: React.FC = () => {
                         key={g} 
                         type="button"
                         onClick={() => setGoal(g as Goal)}
-                        className={`flex-1 py-2.5 text-[10px] font-mono font-bold uppercase tracking-[0.08em] transition-all duration-300 rounded-full focus-ring ${goal === g ? 'bg-ink text-canvas dark:bg-canvas dark:text-ink shadow-premium-sm' : 'text-mute hover:text-ink'}`}
+                        className={`flex-1 py-2.5 text-[10px] font-mono font-bold uppercase tracking-[0.08em] transition-all duration-300 rounded-full focus-ring ${goal === g ? 'bg-[var(--color-accent)] text-[oklch(16%_0.02_262)] shadow-premium-sm' : 'text-mute hover:text-ink'}`}
                       >
                         {g.toUpperCase()}
                       </button>
