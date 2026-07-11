@@ -151,7 +151,19 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children, currentPath 
   const unreadCount = notifications.filter(n => !n.read).length;
 
   return (
-    <div className="min-h-screen bg-canvas-soft flex overflow-x-hidden text-ink">
+    <div className="min-h-screen bg-canvas-soft flex overflow-x-hidden text-ink relative">
+      {/* Shared glow + grid backdrop (behind content area, not sidebar) */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden z-0" aria-hidden="true">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full max-w-7xl">
+          <div className="absolute top-[-5%] left-1/2 -translate-x-1/2 w-[80%] h-[80%] bg-[radial-gradient(circle,rgba(0,223,216,0.06)_0%,transparent_70%)] blur-[100px] sm:blur-[120px] rounded-full dark:opacity-[0.12]"></div>
+          <div className="absolute top-[15%] left-1/2 -translate-x-1/2 w-[70%] h-[60%] bg-[radial-gradient(circle,rgba(0,112,243,0.04)_0%,transparent_70%)] blur-[120px] sm:blur-[140px] rounded-full dark:opacity-[0.1]"></div>
+        </div>
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90%] h-[90%] max-w-[800px] max-h-[800px] opacity-[0.14] dark:opacity-[0.22]" style={{ background: 'radial-gradient(circle, var(--color-accent, #00dfd8) 0%, transparent 70%)', filter: 'blur(80px)' }}></div>
+        <div className="absolute inset-0 opacity-[0.12] dark:opacity-[0.18]">
+          <div className="absolute inset-0" style={{ backgroundImage: 'linear-gradient(var(--color-mute, #888) 1px, transparent 1px), linear-gradient(90deg, var(--color-mute, #888) 1px, transparent 1px)', backgroundSize: '50px 50px', maskImage: 'radial-gradient(ellipse at center, black 30%, transparent 75%)', WebkitMaskImage: 'radial-gradient(ellipse at center, black 30%, transparent 75%)' }}></div>
+        </div>
+      </div>
+
       {/* Sidebar */}
       <AdminSidebar 
         currentPath={currentPath} 
@@ -162,8 +174,8 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children, currentPath 
       {/* Main Content Area */}
       <div 
         className={`
-          flex-1 flex flex-col min-w-0 transition-all duration-500 ease-premium
-          ${isCollapsed ? 'lg:pl-24' : 'lg:pl-72'}
+          flex-1 flex flex-col min-w-0 transition-all duration-500 ease-premium relative z-10
+          ${isCollapsed ? 'lg:ml-24' : 'lg:ml-72'}
         `}
       >
         {/* Desktop & Mobile Header */}
@@ -172,39 +184,38 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children, currentPath 
           <div className="flex items-center gap-4 lg:hidden">
             <button 
               onClick={() => setIsSidebarOpen(true)}
-              className="p-2.5 bg-canvas-soft border border-hairline rounded-xl text-ink"
+              className="p-2.5 bg-canvas-soft border border-hairline rounded-xl text-ink hover:bg-canvas-soft/80 transition-colors"
             >
               <Menu className="w-5 h-5" />
             </button>
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-ink flex items-center justify-center text-canvas">
+              <div className="w-8 h-8 rounded-lg bg-ink flex items-center justify-center text-canvas shadow-premium-sm">
                 <span className="font-black text-[10px]">QB</span>
               </div>
-              <span className="font-black text-xs uppercase tracking-tighter">Admin</span>
+              <span className="font-black text-xs uppercase tracking-tighter text-ink">Admin</span>
             </div>
           </div>
 
           {/* Page Context (Desktop) */}
           <div className="hidden lg:flex items-center gap-6">
-            <h2 className="text-sm font-black uppercase tracking-[0.2em] text-mute/40">{getPageTitle()}</h2>
-            <div className="w-px h-4 bg-hairline" />
-            <div className="flex items-center gap-2">
-               <span className="text-[10px] font-mono font-black text-status-healthy uppercase tracking-widest bg-status-healthy/5 px-2 py-0.5 rounded-md border border-status-healthy/10">System Operational</span>
-            </div>
+            <h2 className="text-sm font-black uppercase tracking-[0.2em] text-mute">{getPageTitle()}</h2>
+            <div className="w-px h-5 bg-hairline" />
+            <span className="text-[10px] font-mono font-black text-status-healthy uppercase tracking-widest bg-status-healthy/5 px-3 py-1 rounded-md border border-status-healthy/10">System Operational</span>
           </div>
 
           {/* Right Actions */}
-          <div className="flex items-center gap-3 lg:gap-6">
+          <div className="flex items-center gap-2 lg:gap-5">
             {/* Notification Center */}
             <div className="relative">
-              <button 
+              <button
                 onClick={() => { setShowNotifs(!showNotifs); setShowProfileMenu(false); }}
-                className={`p-3 rounded-pill transition-all relative group ${showNotifs ? 'bg-ink text-canvas shadow-premium-lg' : 'text-mute hover:text-ink hover:bg-canvas-soft'}`}
+                aria-label="Notifications"
+                className={`p-3 rounded-pill transition-all relative group ${showNotifs ? 'bg-ink text-canvas shadow-premium-lg' : 'text-ink/70 hover:text-ink hover:bg-canvas-soft'}`}
               >
                 <Bell className="w-4 h-4" />
                 {unreadCount > 0 && (
-                  <span className="absolute top-2.5 right-2.5 w-4 h-4 bg-red-500 text-[8px] font-black text-white rounded-full flex items-center justify-center border-2 border-canvas shadow-sm">
-                    {unreadCount}
+                  <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-red-500 text-[9px] font-black text-white rounded-full flex items-center justify-center border-2 border-canvas shadow-sm px-1 leading-none">
+                    {unreadCount > 99 ? '99+' : unreadCount}
                   </span>
                 )}
               </button>
@@ -294,22 +305,22 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children, currentPath 
               </AnimatePresence>
             </div>
 
-            <div className="w-px h-6 bg-hairline hidden sm:block" />
+            <div className="w-px h-7 bg-hairline hidden sm:block" />
 
             {/* Profile Dropdown */}
             <div className="relative">
-              <button 
+              <button
                 onClick={() => { setShowProfileMenu(!showProfileMenu); setShowNotifs(false); }}
-                className="flex items-center gap-3 pl-2 pr-4 py-1.5 rounded-pill border border-hairline bg-canvas hover:border-ink/20 transition-all active:scale-95 group"
+                className="flex items-center gap-3 pl-2 pr-3 py-1.5 rounded-pill border border-hairline bg-canvas hover:border-ink/20 hover:bg-canvas-soft/50 transition-all active:scale-[0.98] group"
               >
-                <div className="w-8 h-8 lg:w-9 lg:h-9 rounded-full bg-ink flex items-center justify-center text-canvas font-black text-[10px] lg:text-xs shadow-premium-sm group-hover:scale-105 transition-transform">
+                <div className="w-8 h-8 lg:w-9 lg:h-9 rounded-full bg-ink flex items-center justify-center text-canvas font-black text-[10px] lg:text-xs shadow-premium-sm group-hover:scale-105 transition-transform shrink-0">
                   {admin?.full_name?.charAt(0) || admin?.email?.charAt(0).toUpperCase() || <User className="w-4 h-4" />}
                 </div>
-                <div className="hidden lg:flex flex-col items-start leading-none gap-1">
-                  <span className="text-[10px] font-black tracking-tight">{admin?.full_name || 'Administrator'}</span>
-                  <span className="text-[8px] font-mono font-bold text-mute uppercase tracking-widest opacity-40">{admin?.role || 'Root Access'}</span>
+                <div className="hidden lg:flex flex-col items-start leading-tight gap-0.5">
+                  <span className="text-[10px] font-black text-ink tracking-tight">{admin?.full_name || 'Administrator'}</span>
+                  <span className="text-[8px] font-mono font-bold text-mute uppercase tracking-widest">{admin?.role || 'Root Access'}</span>
                 </div>
-                <ChevronDown className={`w-3 h-3 text-mute transition-transform duration-300 ${showProfileMenu ? 'rotate-180' : ''}`} />
+                <ChevronDown className={`w-3 h-3 text-mute transition-transform duration-300 shrink-0 ${showProfileMenu ? 'rotate-180' : ''}`} />
               </button>
 
               <AnimatePresence>
@@ -350,12 +361,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children, currentPath 
           </div>
         </header>
 
-        <main className="flex-1 p-6 sm:p-10 lg:p-12 xl:p-16 max-w-[1400px] w-full mx-auto relative">
-          {/* Background Decorations */}
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full pointer-events-none -z-10 overflow-hidden">
-            <div className="absolute top-0 left-1/4 w-[50%] h-[50%] bg-[radial-gradient(circle,rgba(23,23,23,0.01)_0%,transparent_70%)] blur-[100px] rounded-full"></div>
-          </div>
-
+        <main className="flex-1 p-6 sm:p-10 lg:p-12 xl:p-16 max-w-[1400px] w-full mx-auto relative bg-transparent">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}

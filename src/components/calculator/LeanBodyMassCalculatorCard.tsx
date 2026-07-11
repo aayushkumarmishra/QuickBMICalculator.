@@ -113,6 +113,18 @@ export const LeanBodyMassCalculatorCard: React.FC = () => {
           { label: 'METHODOLOGY', value: (method || '--').toUpperCase() },
         ],
 
+        barSegments: [
+          { color: [132, 204, 22], widthPct: leanMassPct },
+          { color: [245, 166, 35], widthPct: 100 - leanMassPct },
+        ],
+        barMarkerPct: leanMassPct,
+        barMinLabel: '0%',
+        barMaxLabel: '100%',
+        barLabels: [
+          { text: `LEAN ${leanMassPct.toFixed(1)}%`, pct: leanMassPct / 2, align: 'center' },
+          { text: `FAT ${(100 - leanMassPct).toFixed(1)}%`, pct: leanMassPct + (100 - leanMassPct) / 2, align: 'center' },
+        ],
+
         sections: [
           {
             title: 'LBM FORMULAS COMPARISON',

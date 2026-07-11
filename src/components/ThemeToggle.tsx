@@ -38,7 +38,7 @@ export const ThemeToggle: React.FC = () => {
     };
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key.toLowerCase() === 'd') {
+      if (e.key?.toLowerCase() === 'd') {
         const activeElement = document.activeElement;
         const isInput = activeElement && (
           ['INPUT', 'TEXTAREA', 'SELECT'].includes(activeElement.tagName) || 

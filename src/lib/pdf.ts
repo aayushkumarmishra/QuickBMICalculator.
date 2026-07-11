@@ -722,7 +722,7 @@ export const generateDataDrivenReport = async (report: DataDrivenReport) => {
     pdf.text(report.splitSection.leftRows[0]?.label || '', margin + 8, y + 16);
 
     pdf.roundedRect(margin + leftColWidth + 10, y, rightColWidth, 22, 2, 2, 'D');
-    report.splitSection.rightRows.forEach((entry, i) => {
+    (report.splitSection.rightRows || []).forEach((entry, i) => {
       const ry = y + 8 + i * 8;
       pdf.setFontSize(8);
       pdf.setTextColor(100, 100, 100);
@@ -975,6 +975,57 @@ export const generateSavedReportPDF = async (data: PDFData) => {
       break;
     }
 
+    case 'bmr': {
+      addProfile('AGE', i.age ? `${i.age} YRS` : '');
+      addProfile('GENDER', i.gender ? String(i.gender).toUpperCase() : '');
+      addProfile('ACTIVITY', activityLabels[i.activity] || String(i.activity || '').replace(/_/g, ' ').toUpperCase());
+      const h = buildProfileHeight(i);
+      if (h) addProfile('HEIGHT', h);
+      const w = buildProfileWeight(i);
+      if (w) addProfile('WEIGHT', w);
+      addProfile('GOAL', i.goal ? String(i.goal).toUpperCase() : '');
+
+      const bmrVal = Number(r.bmr || 0);
+      const tdee = Number(r.tdee || r.maintenance || 0);
+      addHero('BASAL METABOLIC RATE', bmrVal ? `${Math.round(bmrVal).toLocaleString()} kcal` : '--');
+      addHero('TOTAL DAILY EXPENDITURE', tdee ? `${Math.round(tdee).toLocaleString()} kcal` : '--');
+
+      const markerPct = String(i.goal || '') === 'loss' ? 16.5 : String(i.goal || '') === 'gain' ? 83.5 : 50;
+      barSegments = [
+        { color: [0, 112, 243], widthPct: 33.3 },
+        { color: [0, 223, 216], widthPct: 33.3 },
+        { color: [245, 166, 35], widthPct: 33.4 },
+      ];
+      barMarkerPct = markerPct;
+      barLabels = [
+        { text: 'FAT LOSS', pct: 0, align: 'left' },
+        { text: 'MAINTENANCE', pct: 33.3, align: 'left' },
+        { text: 'WEIGHT GAIN', pct: 66.6, align: 'left' },
+      ];
+
+      const goal = String(i.goal || 'maintenance').toLowerCase();
+      const cByGoal = r.caloriesByGoal || {};
+      const lossVal = Number(cByGoal.loss || 0);
+      const gainVal = Number(cByGoal.gain || 0);
+      addSection('ENERGY EXPENDITURE PLAN', [
+        { label: 'BMR BASE', value: bmrVal ? `${Math.round(bmrVal).toLocaleString()} kcal` : '--' },
+        { label: 'MAINTENANCE', value: tdee ? `${Math.round(tdee).toLocaleString()} kcal` : '--' },
+        { label: 'WEIGHT LOSS', value: lossVal ? `${Math.round(lossVal).toLocaleString()} kcal` : '--', color: '235, 100, 100' },
+        { label: 'WEIGHT GAIN', value: gainVal ? `${Math.round(gainVal).toLocaleString()} kcal` : '--', color: '34, 197, 94' },
+      ], 4);
+
+      const wKg = Number(i.weight_kg || i.weight) || (i.weight_lb ? i.weight_lb / 2.205 : 0);
+      const water = Number(r.waterIntake || r.waterGoal) || (wKg ? parseFloat((wKg * 0.033).toFixed(1)) : 0);
+      addSection('ACTIVITY & HYDRATION GUIDE', [
+        { label: 'WALKING', value: (r.suggestedActivity && r.suggestedActivity.walking) ? r.suggestedActivity.walking : '30 min/day' },
+        { label: 'STEPS / DAY', value: (r.suggestedActivity && r.suggestedActivity.steps) ? r.suggestedActivity.steps : '7,000-8,000 steps/day' },
+        { label: 'WATER INTAKE', value: water ? `${water.toFixed(1)} L / day` : '--' },
+      ], 3);
+
+      if (r.recommendations) recommendations = r.recommendations;
+      break;
+    }
+
     case 'body_fat': {
       addProfile('AGE', i.age ? `${i.age} YRS` : '');
       addProfile('GENDER', i.gender ? String(i.gender).toUpperCase() : '');
@@ -1028,8 +1079,24 @@ export const generateSavedReportPDF = async (data: PDFData) => {
       const w = buildProfileWeight(i);
       if (w) addProfile('WEIGHT', w);
 
-      addHero('LEAN BODY MASS', `${Number(r.leanMass || 0).toFixed(1)} ${massUnit}`);
+      const leanMassVal = Number(r.leanMass || 0);
+      const leanMassPctVal = Number(r.leanMassPct || 0);
+      addHero('LEAN BODY MASS', `${leanMassVal.toFixed(1)} ${massUnit}`);
       addHero('METHODOLOGY', String(r.method || '--').toUpperCase());
+
+      if (leanMassPctVal > 0) {
+        barSegments = [
+          { color: [132, 204, 22], widthPct: leanMassPctVal },
+          { color: [245, 166, 35], widthPct: 100 - leanMassPctVal },
+        ];
+        barMarkerPct = leanMassPctVal;
+        barMinLabel = '0%';
+        barMaxLabel = '100%';
+        barLabels = [
+          { text: `LEAN ${leanMassPctVal.toFixed(1)}%`, pct: leanMassPctVal / 2, align: 'center' },
+          { text: `FAT ${(100 - leanMassPctVal).toFixed(1)}%`, pct: leanMassPctVal + (100 - leanMassPctVal) / 2, align: 'center' },
+        ];
+      }
 
       const boer = Number(r.boerLBM || r.boerDisplay || 0);
       const james = Number(r.jamesLBM || r.jamesDisplay || 0);
@@ -1144,6 +1211,23 @@ export const generateSavedReportPDF = async (data: PDFData) => {
       const dietLabel = r.dietLabel || String(i.preset || 'custom').toUpperCase();
       addHero('DIET PROFILE', dietLabel);
 
+      const cPct = Number(r.carbsPct || 0);
+      const pPct = Number(r.proteinPct || 0);
+      const fPct = Number(r.fatPct || 0);
+      if (cPct + pPct + fPct > 0) {
+        barSegments = [
+          { color: [251, 191, 36], widthPct: cPct },
+          { color: [52, 211, 153], widthPct: pPct },
+          { color: [248, 113, 113], widthPct: fPct },
+        ];
+        barMarkerPct = cPct;
+        barLabels = [
+          { text: `CARBS ${cPct}%`, pct: cPct / 2, align: 'center' },
+          { text: `PROTEIN ${pPct}%`, pct: cPct + pPct / 2, align: 'center' },
+          { text: `FAT ${fPct}%`, pct: cPct + pPct + fPct / 2, align: 'center' },
+        ];
+      }
+
       addSection('CALORIE BREAKDOWN', [
         { label: 'CARBS', value: Number(r.carbsCalories || 0) ? `${Math.round(Number(r.carbsCalories))} kcal` : '--' },
         { label: 'PROTEIN', value: Number(r.proteinCalories || 0) ? `${Math.round(Number(r.proteinCalories))} kcal` : '--' },
@@ -1195,6 +1279,28 @@ export const generateSavedReportPDF = async (data: PDFData) => {
       const idealLb = idealWt / 0.45359237;
       addHero('IDEAL WEIGHT (DEVINE)', idealWt ? `${idealWt.toFixed(1)} kg / ${idealLb.toFixed(1)} lb` : '--');
 
+      const weightKg = Number(i.weight_kg || i.weight) || (i.weight_lb ? i.weight_lb / 2.205 : 0);
+      let heightCm = 0;
+      if (i.height_cm) heightCm = Number(i.height_cm);
+      else if (i.feet !== undefined) heightCm = ((Number(i.feet) || 0) * 12 + (Number(i.inches) || 0)) * 2.54;
+      else if (i.height) heightCm = Number(i.height);
+      const estimatedBmi = weightKg > 0 && heightCm > 0 ? weightKg / ((heightCm / 100) ** 2) : 0;
+      const bmiPct = estimatedBmi > 0 ? Math.min(Math.max(((estimatedBmi - 15) / 25) * 100, 0), 100) : 50;
+      barSegments = [
+        { color: [0, 112, 243], widthPct: 14 },
+        { color: [0, 223, 216], widthPct: 26 },
+        { color: [245, 166, 35], widthPct: 20 },
+        { color: [255, 0, 0], widthPct: 40 },
+      ];
+      barMarkerPct = bmiPct;
+      barMinLabel = '15';
+      barMaxLabel = '40+';
+      barLabels = [
+        { text: '18.5', pct: 14, align: 'center' },
+        { text: '25', pct: 40, align: 'center' },
+        { text: '30', pct: 60, align: 'center' },
+      ];
+
       const wIntake = Number(r.waterIntake || 0);
       addSection('DAILY WATER INTAKE', [
         { label: 'WATER', value: wIntake ? `${wIntake.toFixed(1)} L / day` : '--' },
@@ -1222,8 +1328,23 @@ export const generateSavedReportPDF = async (data: PDFData) => {
       addProfile('ACTIVITY', activityLabels[i.activity] || String(i.activity || '').replace(/_/g, ' ').toUpperCase());
       addProfile('CLIMATE', i.climate ? String(i.climate).toUpperCase() : '');
 
-      addHero('DAILY WATER REQUIREMENT', Number(r.waterGoal || r.waterIntake || 0) ? `${Number(r.waterGoal || r.waterIntake).toFixed(1)} Liters` : '--');
+      const waterGoalVal = Number(r.waterGoal || r.waterIntake || 0);
+      addHero('DAILY WATER REQUIREMENT', waterGoalVal ? `${waterGoalVal.toFixed(1)} Liters` : '--');
       if (isPresent(r.hydrationStatus)) addHero('HYDRATION STATUS', String(r.hydrationStatus).toUpperCase());
+
+      if (waterGoalVal > 0) {
+        barSegments = [
+          { color: [0, 112, 243], widthPct: 30 },
+          { color: [0, 223, 216], widthPct: 40 },
+          { color: [245, 166, 35], widthPct: 30 },
+        ];
+        barMarkerPct = Math.min(Math.max(((waterGoalVal - 1) / (5 - 1)) * 100, 0), 100);
+        barLabels = [
+          { text: 'LOW INTAKE', pct: 0, align: 'left' },
+          { text: 'NORMAL TARGET', pct: 30, align: 'left' },
+          { text: 'HIGH HYDRATION', pct: 70, align: 'left' },
+        ];
+      }
 
       if (i.activity || i.climate) {
         addSection('CLIMATE & ACTIVITY ADJUSTMENT', [

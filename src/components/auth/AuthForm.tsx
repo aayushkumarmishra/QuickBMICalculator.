@@ -24,6 +24,35 @@ const getSafeRedirect = (url: string | null): string => {
   return url;
 };
 
+const safeMessages = new Set([
+  'Passwords do not match',
+  'Password cannot be empty',
+  'Password cannot exceed 64 characters',
+  'Missing required fields',
+]);
+
+const sanitizeError = (err: any): string => {
+  const msg = err?.message || '';
+  if (safeMessages.has(msg)) return msg;
+  const lower = msg.toLowerCase();
+  if (lower.includes('already registered') || lower.includes('already exists')) {
+    return 'A user with this email already exists';
+  }
+  if (lower.includes('invalid login credentials') || lower.includes('invalid credentials')) {
+    return 'Invalid email or password';
+  }
+  if (lower.includes('email not confirmed')) {
+    return 'Please confirm your email address before signing in';
+  }
+  if (lower.includes('rate limit') || lower.includes('too many requests')) {
+    return 'Too many attempts. Please try again later.';
+  }
+  if (lower.includes('password should be at least')) {
+    return 'Password does not meet the minimum requirements';
+  }
+  return 'An error occurred. Please try again.';
+};
+
 export const AuthForm: React.FC<AuthFormProps> = ({ type }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -149,36 +178,36 @@ export const AuthForm: React.FC<AuthFormProps> = ({ type }) => {
         if (profile?.role === 'admin') {
           if (type === 'admin-login') {
             if (session) {
-              document.cookie = `sb-access-token=${session.access_token}; path=/; max-age=${session.expires_in}; SameSite=Lax; Secure`;
-              document.cookie = `sb-refresh-token=${session.refresh_token}; path=/; max-age=31536000; SameSite=Lax; Secure`;
+              document.cookie = `sb-access-token=${session.access_token}; path=/; max-age=${session.expires_in}; SameSite=Strict; Secure`;
+              document.cookie = `sb-refresh-token=${session.refresh_token}; path=/; max-age=2592000; SameSite=Strict; Secure`;
             }
-            document.cookie = `sb-role=admin; path=/; max-age=31536000; SameSite=Lax`;
+            document.cookie = `sb-role=admin; path=/; max-age=2592000; SameSite=Strict; Secure`;
             window.location.replace('/admin');
           } else {
             // Admin on regular login page - force user cookie and redirect home
-            document.cookie = `sb-role=user; path=/; max-age=0; SameSite=Lax`;
-            document.cookie = `sb-role=; path=/; max-age=0; SameSite=Lax`;
+            document.cookie = `sb-role=user; path=/; max-age=0; SameSite=Strict; Secure`;
+            document.cookie = `sb-role=; path=/; max-age=0; SameSite=Strict; Secure`;
             window.location.replace('/');
           }
         } else {
           if (session) {
-            document.cookie = `sb-access-token=${session.access_token}; path=/; max-age=${session.expires_in}; SameSite=Lax; Secure`;
-            document.cookie = `sb-refresh-token=${session.refresh_token}; path=/; max-age=31536000; SameSite=Lax; Secure`;
+            document.cookie = `sb-access-token=${session.access_token}; path=/; max-age=${session.expires_in}; SameSite=Strict; Secure`;
+            document.cookie = `sb-refresh-token=${session.refresh_token}; path=/; max-age=2592000; SameSite=Strict; Secure`;
           }
-          document.cookie = `sb-role=${role}; path=/; max-age=31536000; SameSite=Lax`;
+          document.cookie = `sb-role=${role}; path=/; max-age=2592000; SameSite=Strict; Secure`;
           const params = new URLSearchParams(window.location.search);
           const returnTo = params.get('returnTo') || '/';
           window.location.replace(getSafeRedirect(returnTo));
         }
       } else if (type === 'forgot-password') {
         const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
-          redirectTo: `${window.location.origin}/login`,
+          redirectTo: `${window.location.origin}/reset-password`,
         });
         if (resetError) throw resetError;
         setMessage('Password reset link sent! Please check your email.');
       }
     } catch (err: any) {
-      setError(err.message || 'An error occurred');
+      setError(sanitizeError(err));
     } finally {
       setLoading(false);
     }
@@ -196,7 +225,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({ type }) => {
       });
       if (error) throw error;
     } catch (err: any) {
-      setError(err.message || 'An error occurred with Google login');
+      setError(sanitizeError(err));
       setLoading(false);
     }
   };
@@ -309,7 +338,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({ type }) => {
                       if (error) throw error;
                       setMessage('Verification email resent!');
                     } catch (err: any) {
-                      setError(err.message);
+                      setError(sanitizeError(err));
                     } finally {
                       setLoading(false);
                     }

@@ -198,6 +198,22 @@ export const IdealWeightCalculatorCard: React.FC = () => {
       const rangeLow = rangeUnit === 'lb' ? healthyRange.low / 0.45359237 : healthyRange.low;
       const rangeHigh = rangeUnit === 'lb' ? healthyRange.high / 0.45359237 : healthyRange.high;
 
+      const wVal = parseFloat(weight) || 0;
+      let hCm = 0;
+      if (system === 'metric') {
+        hCm = parseFloat(height) || 0;
+      } else if (system === 'us') {
+        hCm = ((parseFloat(feet) || 0) * 12 + (parseFloat(inches) || 0)) * IN_TO_CM;
+      } else {
+        if (heightUnitOther === 'cm') hCm = parseFloat(height) || 0;
+        else if (heightUnitOther === 'm') hCm = (parseFloat(height) || 0) * 100;
+        else if (heightUnitOther === 'in') hCm = (parseFloat(height) || 0) * IN_TO_CM;
+        else if (heightUnitOther === 'ft+in') hCm = ((parseFloat(feet) || 0) * 12 + (parseFloat(inches) || 0)) * IN_TO_CM;
+      }
+      const wKg = system === 'metric' ? wVal : system === 'us' ? wVal * LBS_TO_KG : (weightUnitOther === 'kg' ? wVal : wVal * LBS_TO_KG);
+      const estimatedBmi = hCm > 0 ? wKg / ((hCm / 100) ** 2) : 0;
+      const bmiPct = estimatedBmi > 0 ? Math.min(Math.max(((estimatedBmi - 15) / 25) * 100, 0), 100) : 50;
+
       await generateDataDrivenReport({
         profileName: trimmedName,
         calculatorType: 'ideal_weight',
@@ -213,6 +229,21 @@ export const IdealWeightCalculatorCard: React.FC = () => {
 
         heroRows: [
           { label: 'IDEAL WEIGHT (DEVINE)', value: `${idealWeight.toFixed(1)} kg / ${idealLb.toFixed(1)} lb` },
+        ],
+
+        barSegments: [
+          { color: [0, 112, 243], widthPct: 14 },
+          { color: [0, 223, 216], widthPct: 26 },
+          { color: [245, 166, 35], widthPct: 20 },
+          { color: [255, 0, 0], widthPct: 40 },
+        ],
+        barMarkerPct: bmiPct,
+        barMinLabel: '15',
+        barMaxLabel: '40+',
+        barLabels: [
+          { text: '18.5', pct: 14, align: 'center' },
+          { text: '25', pct: 40, align: 'center' },
+          { text: '30', pct: 60, align: 'center' },
         ],
 
         sections: [

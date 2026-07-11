@@ -190,6 +190,18 @@ export const WaterIntakeCalculatorCard: React.FC = () => {
           { label: 'HYDRATION STATUS', value: hydrationStatus },
         ],
 
+        barSegments: [
+          { color: [0, 112, 243], widthPct: 30 },
+          { color: [0, 223, 216], widthPct: 40 },
+          { color: [245, 166, 35], widthPct: 30 },
+        ],
+        barMarkerPct: Math.min(Math.max(((waterGoal - 1) / (5 - 1)) * 100, 0), 100),
+        barLabels: [
+          { text: 'LOW INTAKE', pct: 0, align: 'left' },
+          { text: 'NORMAL TARGET', pct: 30, align: 'left' },
+          { text: 'HIGH HYDRATION', pct: 70, align: 'left' },
+        ],
+
         sections: [
           {
             title: 'CLIMATE & ACTIVITY ADJUSTMENT',

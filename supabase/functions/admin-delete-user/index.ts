@@ -1,11 +1,29 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { checkRateLimit, getRateLimitHeaders } from '../_shared/rate-limiter.ts';
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+const RATE_LIMIT = { windowMs: 60_000, maxRequests: 10 };
+
+const ALLOWED_ORIGINS = [
+  'https://quickbmicalculator.com',
+  'https://quickbmicalculator.pages.dev',
+  'http://localhost:4321',
+  'http://localhost:8788',
+];
+
+function getCorsHeaders(req: Request) {
+  const origin = req.headers.get('Origin') || '';
+  const allowed = ALLOWED_ORIGINS.includes(origin) ? origin : 'https://quickbmicalculator.com';
+  return {
+    'Access-Control-Allow-Origin': allowed,
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Max-Age': '86400',
+  };
+}
 
 Deno.serve(async (req: Request) => {
+  const corsHeaders = getCorsHeaders(req);
+
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
@@ -50,6 +68,15 @@ Deno.serve(async (req: Request) => {
       return new Response(JSON.stringify({ success: false, error: 'Forbidden: admin access required' }), {
         status: 403,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Rate limit by caller admin ID (10 req/min per admin)
+    if (!checkRateLimit(`admin-delete:${callerId}`, RATE_LIMIT)) {
+      const rateHeaders = getRateLimitHeaders(`admin-delete:${callerId}`, RATE_LIMIT);
+      return new Response(JSON.stringify({ success: false, error: 'Too many requests. Please slow down.' }), {
+        status: 429,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json', ...rateHeaders },
       });
     }
 
@@ -111,7 +138,7 @@ Deno.serve(async (req: Request) => {
     const { error: deleteError } = await adminClient.auth.admin.deleteUser(userId);
 
     if (deleteError) {
-      return new Response(JSON.stringify({ success: false, error: deleteError.message || 'Failed to delete authentication user' }), {
+      return new Response(JSON.stringify({ success: false, error: 'Failed to delete authentication user' }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -142,7 +169,7 @@ Deno.serve(async (req: Request) => {
     );
   } catch (err: any) {
     console.error('admin-delete-user error:', err);
-    return new Response(JSON.stringify({ success: false, error: err.message || 'Internal server error' }), {
+    return new Response(JSON.stringify({ success: false, error: 'Internal server error' }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });

@@ -34,7 +34,7 @@ export default defineConfig({
         const excludedExact = [
           '/403', '/404', '/500',
           '/login', '/logout', '/signup',
-          '/admin-login', '/forgot-password',
+          '/admin-login', '/forgot-password', '/reset-password',
           '/tracker', '/admin', '/auth'
         ];
         
@@ -55,7 +55,10 @@ export default defineConfig({
   ],
 
   vite: {
-    plugins: [tailwindcss()]
+    plugins: [tailwindcss()],
+    build: {
+      sourcemap: false
+    }
   },
 
   adapter: cloudflare({

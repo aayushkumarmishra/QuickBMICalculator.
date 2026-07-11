@@ -5,6 +5,11 @@ import { ReportDetailsView } from '../../../components/admin/ReportDetailsView';
 
 export const prerender = false;
 
+const role = Astro.locals.role;
+if (!role || role !== 'admin') {
+  return Astro.redirect('/403');
+}
+
 const { id } = Astro.params;
 
 if (!id) {

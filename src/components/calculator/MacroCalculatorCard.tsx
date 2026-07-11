@@ -97,6 +97,18 @@ export const MacroCalculatorCard: React.FC = () => {
           { label: 'DIET PROFILE', value: presetLabel },
         ],
 
+        barSegments: [
+          { color: [251, 191, 36], widthPct: carbsPct },
+          { color: [52, 211, 153], widthPct: proteinPct },
+          { color: [248, 113, 113], widthPct: fatPct },
+        ],
+        barMarkerPct: carbsPct,
+        barLabels: [
+          { text: `CARBS ${carbsPct}%`, pct: carbsPct / 2, align: 'center' },
+          { text: `PROTEIN ${proteinPct}%`, pct: carbsPct + proteinPct / 2, align: 'center' },
+          { text: `FAT ${fatPct}%`, pct: carbsPct + proteinPct + fatPct / 2, align: 'center' },
+        ],
+
         sections: [
           {
             title: 'CALORIE BREAKDOWN',
