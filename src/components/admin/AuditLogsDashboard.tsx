@@ -49,9 +49,33 @@ const Toast: React.FC<{
 };
 
 export const AuditLogsDashboard: React.FC = () => {
+  const [roleChecked, setRoleChecked] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const checkRole = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        window.location.replace('/login');
+        return;
+      }
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', session.user.id)
+        .single();
+      if (profile?.role !== 'admin') {
+        window.location.replace('/403');
+        return;
+      }
+      setIsAdmin(true);
+      setRoleChecked(true);
+    };
+    checkRole();
+  }, []);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
@@ -64,10 +88,11 @@ export const AuditLogsDashboard: React.FC = () => {
   }, [searchQuery]);
 
   useEffect(() => {
-    fetchAuditLogs();
-  }, [debouncedSearchQuery]);
+    if (roleChecked) fetchAuditLogs();
+  }, [debouncedSearchQuery, roleChecked]);
 
   const fetchAuditLogs = async () => {
+    if (!roleChecked) return;
     setLoading(true);
     try {
       const params = new URLSearchParams(window.location.search);

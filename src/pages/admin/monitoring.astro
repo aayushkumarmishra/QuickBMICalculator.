@@ -5,6 +5,10 @@ import { MonitoringDashboard } from '../../components/admin/MonitoringDashboard'
 
 export const prerender = false;
 
+const role = Astro.locals.role;
+if (!role || role !== 'admin') {
+  return Astro.redirect('/403');
+}
 const title = "System Monitoring | Admin | QuickBMICalculator";
 const description = "Admin platform system monitoring dashboard.";
 ---

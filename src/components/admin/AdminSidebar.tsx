@@ -94,101 +94,121 @@ export const AdminSidebar: React.FC<SidebarProps> = ({ currentPath, isOpen, onCl
 
       <aside 
         className={`
-          fixed top-0 left-0 bottom-0 bg-canvas border-r border-hairline z-[70] transition-all duration-500 ease-premium
+          fixed top-0 left-0 bottom-0 bg-canvas z-[70] transition-all duration-500 ease-premium
           ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
           ${isCollapsed ? 'lg:w-24' : 'lg:w-72'}
         `}
       >
-        <div className="flex flex-col h-full overflow-hidden">
+        {/* Right-edge shadow separator */}
+        <div className="absolute inset-y-0 right-0 w-px bg-hairline z-10" />
+        <div className="absolute inset-y-0 right-0 w-8 bg-gradient-to-r from-ink/[0.02] to-transparent pointer-events-none z-20" />
+
+        <div className={`flex flex-col h-full ${isCollapsed ? 'lg:items-center' : ''}`}>
           {/* Sidebar Header */}
-          <div className={`flex items-center justify-between p-8 mb-4 ${isCollapsed ? 'lg:p-6 lg:justify-center' : ''}`}>
-            <div className="flex items-center gap-3">
+          {isCollapsed ? (
+            /* Collapsed: vertical stack — logo then expand button */
+            <div className="flex flex-col items-center pt-6 pb-3">
               <div className="w-10 h-10 rounded-2xl bg-ink flex items-center justify-center text-canvas shadow-premium-lg shrink-0">
                 <span className="font-black text-xs">QB</span>
               </div>
-              <AnimatePresence>
-                {!isCollapsed && (
+              <button
+                onClick={toggleCollapse}
+                aria-label="Expand sidebar"
+                title="Expand sidebar"
+                className="hidden lg:flex items-center justify-center w-9 h-9 rounded-xl text-mute hover:text-ink hover:bg-canvas-soft transition-all mt-2"
+              >
+                <PanelLeftOpen className="w-4 h-4" />
+              </button>
+              <button 
+                onClick={onClose}
+                className="lg:hidden flex items-center justify-center w-9 h-9 rounded-xl hover:bg-canvas-soft text-mute mt-2"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+          ) : (
+            /* Expanded: horizontal row — brand block left, buttons right */
+            <div className="flex items-start justify-between px-6 pt-6 pb-2 mb-4">
+              <div className="flex items-center gap-3 min-w-0 pr-2">
+                <div className="w-10 h-10 rounded-2xl bg-ink flex items-center justify-center text-canvas shadow-premium-lg shrink-0 mt-0.5">
+                  <span className="font-black text-xs">QB</span>
+                </div>
+                <AnimatePresence>
                   <motion.div 
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: -10 }}
-                    className="flex flex-col whitespace-nowrap"
+                    className="flex flex-col min-w-0"
                   >
-                    <span className="font-black tracking-tighter text-ink leading-tight text-lg">Admin</span>
-                    <span className="text-[10px] font-mono font-black text-mute uppercase tracking-widest opacity-40">QuickBMICalculator Platform</span>
+                    <span className="font-black tracking-tighter text-ink leading-tight text-lg truncate">Admin</span>
+                    <span className="text-[10px] font-mono font-black text-mute/70 uppercase tracking-widest truncate">QuickBMICalculator Platform</span>
                   </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-            
-            <button 
-              onClick={onClose}
-              className="p-2 hover:bg-canvas-soft rounded-xl lg:hidden"
-            >
-              <X className="w-5 h-5 text-mute" />
-            </button>
-
-            {!isCollapsed && (
-              <button 
-                onClick={toggleCollapse}
-                className="hidden lg:flex p-2 hover:bg-canvas-soft rounded-xl text-mute hover:text-ink transition-colors"
-              >
-                <PanelLeftClose className="w-5 h-5" />
-              </button>
-            )}
-          </div>
-
-          {isCollapsed && (
-            <div className="hidden lg:flex justify-center mb-8">
-              <button 
-                onClick={toggleCollapse}
-                className="p-2 hover:bg-canvas-soft rounded-xl text-mute hover:text-ink transition-colors"
-              >
-                <PanelLeftOpen className="w-5 h-5" />
-              </button>
+                </AnimatePresence>
+              </div>
+              <div className="flex items-center gap-1 shrink-0">
+                <button
+                  onClick={toggleCollapse}
+                  aria-label="Collapse sidebar"
+                  title="Collapse sidebar"
+                  className="hidden lg:flex items-center justify-center w-9 h-9 rounded-xl text-mute hover:text-ink hover:bg-canvas-soft transition-all"
+                >
+                  <PanelLeftClose className="w-4 h-4" />
+                </button>
+                <button 
+                  onClick={onClose}
+                  className="lg:hidden flex items-center justify-center w-9 h-9 rounded-xl hover:bg-canvas-soft text-mute"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
             </div>
           )}
 
           {/* Navigation */}
-          <nav className="flex-1 px-4 space-y-1 overflow-y-auto no-scrollbar">
-            {navItems.map((item) => {
-              const isActive = normalizedPath === item.href;
-              return (
-                <a
-                  key={item.name}
-                  href={item.href}
-                  title={isCollapsed ? item.name : undefined}
-                  className={`
-                    flex items-center justify-between px-4 py-3.5 rounded-[1.25rem] transition-all duration-300 group relative
-                    ${isActive 
-                      ? 'bg-ink text-canvas shadow-premium-lg' 
-                      : 'text-mute hover:text-ink hover:bg-canvas-soft'
-                    }
-                    ${isCollapsed ? 'lg:justify-center lg:px-0 lg:w-12 lg:mx-auto' : 'px-6'}
-                  `}
-                >
-                  <div className="flex items-center gap-4 relative z-10 shrink-0">
-                    <item.icon className={`w-5 h-5 transition-transform group-hover:scale-110 ${isActive ? 'text-canvas' : 'text-mute group-hover:text-ink'}`} />
+          <nav className="flex-1 overflow-y-auto admin-sidebar-nav" style={{ scrollbarGutter: 'stable', scrollbarWidth: 'thin' }}>
+            <div className={isCollapsed ? 'flex flex-col items-center gap-0.5 py-1' : 'space-y-1'}>
+              {navItems.map((item) => {
+                const isActive = normalizedPath === item.href;
+                return (
+                  <a
+                    key={item.name}
+                    href={item.href}
+                    title={isCollapsed ? item.name : undefined}
+                    className={`
+                      flex items-center rounded-[1.25rem] transition-all duration-300 group relative
+                      ${isActive 
+                        ? 'bg-ink text-canvas shadow-premium-lg' 
+                        : 'text-mute hover:text-ink hover:bg-canvas-soft'
+                      }
+                      ${isCollapsed 
+                        ? 'justify-center w-12 h-12' 
+                        : 'justify-between py-3.5 px-5 mx-3'
+                      }
+                    `}
+                  >
+                    <div className="flex items-center gap-4 relative z-10 shrink-0">
+                      <item.icon className={`w-5 h-5 transition-transform group-hover:scale-110 ${isActive ? 'text-canvas' : 'text-mute group-hover:text-ink'}`} />
+                      {!isCollapsed && (
+                        <span className="text-[11px] font-black uppercase tracking-[0.15em] whitespace-nowrap">{item.name}</span>
+                      )}
+                    </div>
                     {!isCollapsed && (
-                      <span className="text-[11px] font-black uppercase tracking-[0.15em] whitespace-nowrap">{item.name}</span>
+                      <ChevronRight className={`w-4 h-4 transition-all duration-300 ${isActive ? 'opacity-40 translate-x-1' : 'opacity-0 -translate-x-2 group-hover:opacity-20 group-hover:translate-x-0'}`} />
                     )}
-                  </div>
-                  {!isCollapsed && (
-                    <ChevronRight className={`w-4 h-4 transition-all duration-300 ${isActive ? 'opacity-40 translate-x-1' : 'opacity-0 -translate-x-2 group-hover:opacity-20 group-hover:translate-x-0'}`} />
-                  )}
-                  
-                  {isActive && (
-                    <div className="absolute inset-0 bg-gradient-to-tr from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-[1.25rem]" />
-                  )}
-                </a>
-              );
-            })}
+                    
+                    {isActive && (
+                      <div className="absolute inset-0 bg-gradient-to-tr from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-[1.25rem]" />
+                    )}
+                  </a>
+                );
+              })}
+            </div>
           </nav>
 
           {/* Sidebar Footer */}
-          <div className={`p-4 mt-auto border-t border-hairline ${isCollapsed ? 'lg:p-2' : 'lg:p-6'}`}>
-            {/* Theme Toggle - Side-by-Side styled for Sidebar */}
-            <div className={`bg-canvas-soft border border-hairline rounded-pill p-1 flex mb-4 ${isCollapsed ? 'flex-col items-center gap-1' : ''}`}>
+          <div className={`border-t border-hairline ${isCollapsed ? 'p-3 pt-4 w-full' : 'p-6'}`}>
+            {/* Theme Toggle */}
+            <div className={`bg-canvas-soft border border-hairline rounded-pill p-1 flex ${isCollapsed ? 'flex-col items-center gap-1' : ''} ${!isCollapsed && 'mb-4'}`}>
               <button 
                 onClick={() => applyTheme('light')}
                 className={`flex-1 flex items-center justify-center py-2 px-3 rounded-pill transition-all ${theme === 'light' ? 'bg-canvas text-ink shadow-premium-sm' : 'text-mute hover:text-ink'}`}
@@ -210,12 +230,15 @@ export const AdminSidebar: React.FC<SidebarProps> = ({ currentPath, isOpen, onCl
             <button 
               onClick={() => window.location.href = '/logout'}
               className={`
-                w-full flex items-center justify-between py-4 text-[10px] font-black uppercase tracking-[0.25em] text-mute hover:text-red-500 hover:bg-red-500/5 rounded-pill transition-all group
-                ${isCollapsed ? 'lg:justify-center lg:px-0' : 'px-6'}
+                w-full flex items-center rounded-pill transition-all group
+                ${isCollapsed 
+                  ? 'justify-center py-3 text-mute hover:text-red-500 hover:bg-red-500/5' 
+                  : 'justify-between py-4 px-6 text-[10px] font-black uppercase tracking-[0.25em] text-mute hover:text-red-500 hover:bg-red-500/5'
+                }
               `}
             >
               <span className="flex items-center gap-4 shrink-0">
-                <LogOut className={`w-4 h-4 transition-transform group-hover:-translate-x-1 ${isCollapsed ? '' : ''}`} />
+                <LogOut className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
                 {!isCollapsed && "Logout"}
               </span>
               {!isCollapsed && (
@@ -228,3 +251,26 @@ export const AdminSidebar: React.FC<SidebarProps> = ({ currentPath, isOpen, onCl
     </>
   );
 };
+
+<style>{`
+.admin-sidebar-nav::-webkit-scrollbar {
+  width: 6px;
+}
+.admin-sidebar-nav::-webkit-scrollbar-track {
+  background: transparent;
+}
+.admin-sidebar-nav::-webkit-scrollbar-thumb {
+  background: var(--color-hairline, hsl(0 0% 80%));
+  border-radius: 999px;
+  min-height: 40px;
+}
+.admin-sidebar-nav::-webkit-scrollbar-thumb:hover {
+  background: var(--color-mute, hsl(0 0% 60%));
+}
+.dark .admin-sidebar-nav::-webkit-scrollbar-thumb {
+  background: var(--color-hairline, hsl(0 0% 25%));
+}
+.dark .admin-sidebar-nav::-webkit-scrollbar-thumb:hover {
+  background: var(--color-mute, hsl(0 0% 45%));
+}
+`}</style>

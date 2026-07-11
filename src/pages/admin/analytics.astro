@@ -5,6 +5,10 @@ import { AnalyticsDashboard } from '../../components/admin/AnalyticsDashboard';
 
 export const prerender = false;
 
+const role = Astro.locals.role;
+if (!role || role !== 'admin') {
+  return Astro.redirect('/403');
+}
 const title = "Analytics | Admin | QuickBMICalculator";
 const description = "Visual growth metrics and user behavior analytics.";
 ---

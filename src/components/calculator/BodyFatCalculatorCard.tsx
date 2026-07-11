@@ -482,30 +482,34 @@ export const BodyFatCalculatorCard: React.FC = () => {
                 <div className="col-span-2 border-t border-hairline pt-6 mt-2 space-y-4">
                   <span className="text-[10px] font-mono font-bold text-mute uppercase tracking-[0.3em] block ml-1">Circumferences</span>
                   <div className="grid grid-cols-2 gap-3 sm:gap-6">
-                    <InputGroup 
-                      id="neck" 
-                      label="Neck" 
-                      value={neck} 
-                      onChange={setNeck} 
-                      unit={system === 'metric' ? 'CM' : system === 'us' ? 'IN' : circumferenceUnitOther} 
-                      unitOptions={system === 'other' ? ['cm', 'in'] : undefined}
-                      onUnitChange={system === 'other' ? (val) => setCircumferenceUnitOther(val as any) : undefined}
-                      placeholder={system === 'metric' || (system === 'other' && circumferenceUnitOther === 'cm') ? '38' : '15'} 
-                      min={10} 
-                      max={80} 
-                    />
-                    <InputGroup 
-                      id="waist" 
-                      label="Waist" 
-                      value={waist} 
-                      onChange={setWaist} 
-                      unit={system === 'metric' ? 'CM' : system === 'us' ? 'IN' : circumferenceUnitOther} 
-                      unitOptions={system === 'other' ? ['cm', 'in'] : undefined}
-                      onUnitChange={system === 'other' ? (val) => setCircumferenceUnitOther(val as any) : undefined}
-                      placeholder={system === 'metric' || (system === 'other' && circumferenceUnitOther === 'cm') ? '88' : '34'} 
-                      min={20} 
-                      max={200} 
-                    />
+                    <div className={system === 'other' ? 'col-span-2' : ''}>
+                      <InputGroup 
+                        id="neck" 
+                        label="Neck" 
+                        value={neck} 
+                        onChange={setNeck} 
+                        unit={system === 'metric' ? 'CM' : system === 'us' ? 'IN' : circumferenceUnitOther} 
+                        unitOptions={system === 'other' ? ['cm', 'in'] : undefined}
+                        onUnitChange={system === 'other' ? (val) => setCircumferenceUnitOther(val as any) : undefined}
+                        placeholder={system === 'metric' || (system === 'other' && circumferenceUnitOther === 'cm') ? '38' : '15'} 
+                        min={10} 
+                        max={80} 
+                      />
+                    </div>
+                    <div className={system === 'other' ? 'col-span-2' : ''}>
+                      <InputGroup 
+                        id="waist" 
+                        label="Waist" 
+                        value={waist} 
+                        onChange={setWaist} 
+                        unit={system === 'metric' ? 'CM' : system === 'us' ? 'IN' : circumferenceUnitOther} 
+                        unitOptions={system === 'other' ? ['cm', 'in'] : undefined}
+                        onUnitChange={system === 'other' ? (val) => setCircumferenceUnitOther(val as any) : undefined}
+                        placeholder={system === 'metric' || (system === 'other' && circumferenceUnitOther === 'cm') ? '88' : '34'} 
+                        min={20} 
+                        max={200} 
+                      />
+                    </div>
                     {gender === 'female' && (
                       <div className="col-span-2">
                         <InputGroup 

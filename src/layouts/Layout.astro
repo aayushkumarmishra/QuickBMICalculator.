@@ -153,12 +153,12 @@ const {
 
 			supabase.auth.onAuthStateChange((event, session) => {
 				if (session) {
-					document.cookie = `sb-access-token=${session.access_token}; path=/; max-age=${session.expires_in || 3600}; SameSite=Lax; Secure`;
-					document.cookie = `sb-refresh-token=${session.refresh_token}; path=/; max-age=31536000; SameSite=Lax; Secure`;
+					document.cookie = `sb-access-token=${session.access_token}; path=/; max-age=${session.expires_in || 3600}; SameSite=Strict; Secure`;
+					document.cookie = `sb-refresh-token=${session.refresh_token}; path=/; max-age=2592000; SameSite=Strict; Secure`;
 				} else {
-					document.cookie = 'sb-access-token=; path=/; max-age=0; SameSite=Lax; Secure';
-					document.cookie = 'sb-refresh-token=; path=/; max-age=0; SameSite=Lax; Secure';
-					document.cookie = 'sb-role=; path=/; max-age=0; SameSite=Lax';
+					document.cookie = 'sb-access-token=; path=/; max-age=0; SameSite=Strict; Secure';
+					document.cookie = 'sb-refresh-token=; path=/; max-age=0; SameSite=Strict; Secure';
+					document.cookie = 'sb-role=; path=/; max-age=0; SameSite=Strict; Secure';
 				}
 			});
 		</script>

@@ -89,7 +89,8 @@ const StatCard: React.FC<{
         href={href}
         className={`
           block h-full bg-canvas border border-hairline p-6 rounded-[2rem] shadow-premium-sm transition-all group relative overflow-hidden
-          ${href ? 'hover:shadow-premium-xl hover:-translate-y-1 cursor-pointer active:scale-[0.98]' : 'cursor-default'}
+          hover:shadow-premium-xl hover:-translate-y-0.5 active:scale-[0.98]
+          ${href ? 'cursor-pointer' : 'cursor-default'}
         `}
       >
         <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-ink/[0.02] to-transparent pointer-events-none" />

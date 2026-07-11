@@ -79,7 +79,7 @@ export const InputGroup: React.FC<InputGroupProps> = ({
           max={max}
           step={step}
           inputMode={step === "1" ? "numeric" : "decimal"}
-          className={`w-full [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none bg-canvas border-[1.5px] border-hairline rounded-ui h-14 pl-5 ${unitOptions ? 'pr-20 sm:pr-24' : 'pr-16 sm:pr-18'} text-xl font-mono font-bold text-ink dark:text-[#f5f5f5] transition-all duration-300 placeholder:text-mute/20 dark:placeholder:text-mute/40 focus:outline-none focus:border-accent focus:ring-[3px] focus:ring-accent-wash shadow-premium-sm hover:border-hairline-strong focus:bg-canvas`}
+          className={`w-full [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none bg-canvas border-[1.5px] border-hairline rounded-ui h-14 pl-5 ${unitOptions ? 'pr-28' : 'pr-16 sm:pr-18'} text-xl font-mono font-bold text-ink dark:text-[#f5f5f5] transition-all duration-300 placeholder:text-mute/20 dark:placeholder:text-mute/40 focus:outline-none focus:border-accent focus:ring-[3px] focus:ring-accent-wash shadow-premium-sm hover:border-hairline-strong focus:bg-canvas`}
         />
         <div className={`absolute right-0 top-0 bottom-0 flex items-center border-l border-hairline bg-surface-2 px-4 rounded-r-[9px] ${unitOptions ? 'pointer-events-auto' : 'pointer-events-none'}`}>
           {unitOptions ? (
