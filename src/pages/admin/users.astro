@@ -9,7 +9,6 @@ const role = Astro.locals.role;
 if (!role || role !== 'admin') {
   return Astro.redirect('/403');
 }
-
 const title = "User Management | Admin | QuickBMICalculator";
 const description = "Manage registered users, profiles, and health reports.";
 ---

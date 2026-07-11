@@ -160,7 +160,8 @@ export const IdealWeightCalculatorCard: React.FC = () => {
       comparison: comp,
       waterIntake: water, 
       recommendations: recs,
-      statusColor: sColor
+      statusColor: sColor,
+      isInvalidInput: false
     };
   }, [system, weight, height, feet, inches, gender, heightUnitOther, weightUnitOther]);
 
@@ -213,7 +214,6 @@ export const IdealWeightCalculatorCard: React.FC = () => {
       const wKg = system === 'metric' ? wVal : system === 'us' ? wVal * LBS_TO_KG : (weightUnitOther === 'kg' ? wVal : wVal * LBS_TO_KG);
       const estimatedBmi = hCm > 0 ? wKg / ((hCm / 100) ** 2) : 0;
       const bmiPct = estimatedBmi > 0 ? Math.min(Math.max(((estimatedBmi - 15) / 25) * 100, 0), 100) : 50;
-
       await generateDataDrivenReport({
         profileName: trimmedName,
         calculatorType: 'ideal_weight',
@@ -245,7 +245,6 @@ export const IdealWeightCalculatorCard: React.FC = () => {
           { text: '25', pct: 40, align: 'center' },
           { text: '30', pct: 60, align: 'center' },
         ],
-
         sections: [
           {
             title: 'DAILY WATER INTAKE',

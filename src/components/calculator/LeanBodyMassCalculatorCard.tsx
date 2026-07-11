@@ -124,7 +124,6 @@ export const LeanBodyMassCalculatorCard: React.FC = () => {
           { text: `LEAN ${leanMassPct.toFixed(1)}%`, pct: leanMassPct / 2, align: 'center' },
           { text: `FAT ${(100 - leanMassPct).toFixed(1)}%`, pct: leanMassPct + (100 - leanMassPct) / 2, align: 'center' },
         ],
-
         sections: [
           {
             title: 'LBM FORMULAS COMPARISON',

@@ -491,8 +491,8 @@ export interface DataDrivenReport {
   splitSection?: {
     leftTitle: string;
     leftRows: DataDrivenProfileEntry[];
-    rightTitle: string;
-    rightRows: DataDrivenProfileEntry[];
+    rightTitle?: string;
+    rightRows?: DataDrivenProfileEntry[];
   };
 
   whoTable?: boolean;
@@ -707,7 +707,9 @@ export const generateDataDrivenReport = async (report: DataDrivenReport) => {
     pdf.setFont('helvetica', 'bold');
     pdf.setTextColor(150, 150, 150);
     pdf.text(report.splitSection.leftTitle, margin, y);
-    pdf.text(report.splitSection.rightTitle, margin + leftColWidth + 10, y);
+    if (report.splitSection.rightTitle) {
+      pdf.text(report.splitSection.rightTitle, margin + leftColWidth + 10, y);
+    }
 
     y += 6;
     pdf.setDrawColor(240, 240, 240);
@@ -721,17 +723,19 @@ export const generateDataDrivenReport = async (report: DataDrivenReport) => {
     pdf.setTextColor(100, 100, 100);
     pdf.text(report.splitSection.leftRows[0]?.label || '', margin + 8, y + 16);
 
-    pdf.roundedRect(margin + leftColWidth + 10, y, rightColWidth, 22, 2, 2, 'D');
-    (report.splitSection.rightRows || []).forEach((entry, i) => {
-      const ry = y + 8 + i * 8;
-      pdf.setFontSize(8);
-      pdf.setTextColor(100, 100, 100);
-      pdf.setFont('helvetica', 'normal');
-      pdf.text(entry.label, margin + leftColWidth + 18, ry);
-      pdf.setTextColor(23, 23, 23);
-      pdf.setFont('helvetica', 'bold');
-      pdf.text(entry.value, margin + leftColWidth + 55, ry);
-    });
+    if (report.splitSection.rightRows && report.splitSection.rightRows.length > 0) {
+      pdf.roundedRect(margin + leftColWidth + 10, y, rightColWidth, 22, 2, 2, 'D');
+      report.splitSection.rightRows.forEach((entry, i) => {
+        const ry = y + 8 + i * 8;
+        pdf.setFontSize(8);
+        pdf.setTextColor(100, 100, 100);
+        pdf.setFont('helvetica', 'normal');
+        pdf.text(entry.label, margin + leftColWidth + 18, ry);
+        pdf.setTextColor(23, 23, 23);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text(entry.value, margin + leftColWidth + 55, ry);
+      });
+    }
 
     y += 30;
   }
@@ -878,7 +882,7 @@ export const generateSavedReportPDF = async (data: PDFData) => {
   let barMarkerPct: number | undefined;
   let barMinLabel: string | undefined;
   let barMaxLabel: string | undefined;
-  let barLabels: { text: string; pct: number; align?: string }[] | undefined;
+  let barLabels: { text: string; pct: number; align?: 'left' | 'center' | 'right' }[] | undefined;
   let splitSection: DataDrivenReport['splitSection'] | undefined;
   let whoTable: boolean | undefined;
 
@@ -1025,7 +1029,6 @@ export const generateSavedReportPDF = async (data: PDFData) => {
       if (r.recommendations) recommendations = r.recommendations;
       break;
     }
-
     case 'body_fat': {
       addProfile('AGE', i.age ? `${i.age} YRS` : '');
       addProfile('GENDER', i.gender ? String(i.gender).toUpperCase() : '');
@@ -1097,7 +1100,6 @@ export const generateSavedReportPDF = async (data: PDFData) => {
           { text: `FAT ${(100 - leanMassPctVal).toFixed(1)}%`, pct: leanMassPctVal + (100 - leanMassPctVal) / 2, align: 'center' },
         ];
       }
-
       const boer = Number(r.boerLBM || r.boerDisplay || 0);
       const james = Number(r.jamesLBM || r.jamesDisplay || 0);
       const hume = Number(r.humeLBM || r.humeDisplay || 0);
@@ -1227,7 +1229,6 @@ export const generateSavedReportPDF = async (data: PDFData) => {
           { text: `FAT ${fPct}%`, pct: cPct + pPct + fPct / 2, align: 'center' },
         ];
       }
-
       addSection('CALORIE BREAKDOWN', [
         { label: 'CARBS', value: Number(r.carbsCalories || 0) ? `${Math.round(Number(r.carbsCalories))} kcal` : '--' },
         { label: 'PROTEIN', value: Number(r.proteinCalories || 0) ? `${Math.round(Number(r.proteinCalories))} kcal` : '--' },
@@ -1300,7 +1301,6 @@ export const generateSavedReportPDF = async (data: PDFData) => {
         { text: '25', pct: 40, align: 'center' },
         { text: '30', pct: 60, align: 'center' },
       ];
-
       const wIntake = Number(r.waterIntake || 0);
       addSection('DAILY WATER INTAKE', [
         { label: 'WATER', value: wIntake ? `${wIntake.toFixed(1)} L / day` : '--' },
@@ -1345,7 +1345,6 @@ export const generateSavedReportPDF = async (data: PDFData) => {
           { text: 'HIGH HYDRATION', pct: 70, align: 'left' },
         ];
       }
-
       if (i.activity || i.climate) {
         addSection('CLIMATE & ACTIVITY ADJUSTMENT', [
           { label: 'ACTIVITY', value: i.activity ? `${activityLabels[i.activity] || i.activity} (+${i.activity || 0}ml)` : '--' },

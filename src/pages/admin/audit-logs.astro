@@ -9,7 +9,6 @@ const role = Astro.locals.role;
 if (!role || role !== 'admin') {
   return Astro.redirect('/403');
 }
-
 const title = "Audit Logs | Admin | QuickBMICalculator";
 const description = "Admin platform audit logs and activity.";
 ---

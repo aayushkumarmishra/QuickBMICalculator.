@@ -9,7 +9,6 @@ const role = Astro.locals.role;
 if (!role || role !== 'admin') {
   return Astro.redirect('/403');
 }
-
 const title = "Admin Dashboard | QuickBMICalculator";
 const description = "QuickBMI Administration Panel. Monitor user growth and system health.";
 ---

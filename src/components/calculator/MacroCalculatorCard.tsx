@@ -108,7 +108,6 @@ export const MacroCalculatorCard: React.FC = () => {
           { text: `PROTEIN ${proteinPct}%`, pct: carbsPct + proteinPct / 2, align: 'center' },
           { text: `FAT ${fatPct}%`, pct: carbsPct + proteinPct + fatPct / 2, align: 'center' },
         ],
-
         sections: [
           {
             title: 'CALORIE BREAKDOWN',

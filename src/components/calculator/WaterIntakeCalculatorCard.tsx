@@ -150,7 +150,8 @@ export const WaterIntakeCalculatorCard: React.FC = () => {
         'Keep a bottle at your desk to sip throughout the day.',
         'Increase intake during and after physical activity.',
         'Monitor urine color - it should be pale yellow.'
-      ]
+      ],
+      isInvalidInput: false
     };
   }, [weightUnit, weight, activity, climate, age]);
 
@@ -201,7 +202,6 @@ export const WaterIntakeCalculatorCard: React.FC = () => {
           { text: 'NORMAL TARGET', pct: 30, align: 'left' },
           { text: 'HIGH HYDRATION', pct: 70, align: 'left' },
         ],
-
         sections: [
           {
             title: 'CLIMATE & ACTIVITY ADJUSTMENT',
